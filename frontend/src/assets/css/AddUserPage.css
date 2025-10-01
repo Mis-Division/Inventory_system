@@ -1,0 +1,143 @@
+.add-user-page {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  width: 250px;
+}
+
+.search-input:focus {
+  outline: none;
+  ring: 2px solid #3b82f6;
+}
+
+.add-btn {
+  background: #16a34a;
+  color: white;
+  padding: 0.25rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #15803d;
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+th {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+td {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+}
+
+tbody {
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.row-clickable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.row-clickable:hover {
+  background: #e5e7eb;
+}
+
+.row-disabled {
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.no-users {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  gap: 0.5rem;
+}
+
+.pagination button {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  background: #e5e7eb;
+  transition: background 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background: #3b82f6;
+  color: white;
+}
