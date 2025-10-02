@@ -1,96 +1,73 @@
 <template>
-  <aside class="bg-gray-100 w-64 h-[calc(100vh-56px)] fixed top-14 left-0 shadow-md overflow-y-auto">
-    <nav class="p-2 space-y-1">
+  <aside class="sidebar">
+    <nav class="nav">
+
       <!-- Dashboard -->
-      <router-link to="/dashboard"
-        class="flex items-center space-x-2 w-full px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-        :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Dashboard') }">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M3 12l9-9 9 9M4 10v10h16V10" />
-        </svg>
+      <router-link to="/dashboard" class="nav-link" 
+        :class="{ 'disabled': !hasAccess('Dashboard') }">
+         <img :src="DashboardIcon" alt="Dashboard" class="icon-md" />
         <span>Dashboard</span>
       </router-link>
 
       <!-- Inventory -->
       <div>
-        <button
-          class="w-full flex justify-between items-center font-medium px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-          :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Inventory') }" @click="toggle('Inventory')">
-          <span class="flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M3 7h18M3 12h18M3 17h18" />
-            </svg>
+        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Inventory') }" @click="toggle('Inventory')">
+          <span class="nav-label">
+            <img :src="InventoryIcon" alt="Dashboard" class="icon-md" />
             <span>Inventory</span>
           </span>
-          <svg v-if="hasAccess('Inventory')"
-            :class="['w-4 h-4 transition-transform', expanded.includes('Inventory') ? 'rotate-90' : '']" fill="none"
-            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg v-if="hasAccess('Inventory')" 
+            :class="['icon-sm rotate-toggle', expanded.includes('Inventory') ? 'rotate-90' : '']"
+            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
 
         <!-- Submenus -->
-        <ul v-show="expanded.includes('Inventory')" class="ml-2 space-y-1">
+        <ul v-show="expanded.includes('Inventory')" class="submenu">
           <!-- MRV -->
           <li>
-            <router-link to="/dashboard/mrv"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Materials Requisition Voucher') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 4v16m8-8H4" />
-              </svg>
+            <router-link to="/dashboard/mrv" class="submenu-link" 
+              :class="{ 'disabled': !hasAccess('Materials Requisition Voucher') }">
+              <img :src="Mrv2" alt="MRV" class="icon-sm" />
               <span>Materials Requisition Voucher</span>
             </router-link>
           </li>
 
           <!-- MCT -->
           <li>
-            <button
-              class="flex justify-between items-center w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Material Charge Ticket') }"
-              @click="toggle('MCT')">
-              <span class="flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
+            <button class="submenu-btn" :class="{ 'disabled': !hasAccess('Material Charge Ticket') }" @click="toggle('MCT')">
+              <span class="nav-label">
+                <img :src="Mct" alt="MCT" class="icon-sm" />
                 <span>Material Charge Ticket</span>
               </span>
-              <svg v-if="hasAccess('Material Charge Ticket')"
-                :class="['w-4 h-4 transition-transform', expanded.includes('MCT') ? 'rotate-90' : '']" fill="none"
-                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg v-if="hasAccess('Material Charge Ticket')" 
+                :class="['icon-sm rotate-toggle', expanded.includes('MCT') ? 'rotate-90' : '']"
+                fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M9 5l7 7-7 7" />
               </svg>
             </button>
 
             <!-- Sub-submenus -->
-            <ul v-show="expanded.includes('MCT')" class="ml-4 space-y-1">
+            <ul v-show="expanded.includes('MCT')" class="sub-submenu">
               <li>
-                <router-link to="/dashboard/line-hardware"
-                  class="flex items-center space-x-2 w-full px-8 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-xs"
-                  :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Line Hardware') }">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
+                <router-link to="/dashboard/line-hardware" class="sub-submenu-link" 
+                  :class="{ 'disabled': !hasAccess('Line Hardware') }">
+                 <img :src="lineHarware" alt="Line Hardware" class="icon-xs" />
                   <span>Line Hardware</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/dashboard/special-hardware"
-                  class="flex items-center space-x-2 w-full px-8 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-xs"
-                  :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Special Hardware') }">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M12 2l9 21H3L12 2z" />
-                  </svg>
+                <router-link to="/dashboard/special-hardware" class="sub-submenu-link" 
+                  :class="{ 'disabled': !hasAccess('Special Hardware') }">
+                 <img :src="specialhardware" alt="Special Hardware" class="icon-xs" />
                   <span>Special Hardware</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/dashboard/others"
-                  class="flex items-center space-x-2 w-full px-8 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-xs"
-                  :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Others') }">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
+                <router-link to="/dashboard/others" class="sub-submenu-link" 
+                  :class="{ 'disabled': !hasAccess('Others') }">
+                  <img :src="Others" alt="Others" class="icon-xs" />
                   <span>Others</span>
                 </router-link>
               </li>
@@ -99,24 +76,18 @@
 
           <!-- MST -->
           <li>
-            <router-link to="/dashboard/mst"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Material Salvage Ticket') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 21H5a2 2 0 01-2-2V7h18v12a2 2 0 01-2 2zM5 7l7-5 7 5" />
-              </svg>
+            <router-link to="/dashboard/mst" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('Material Salvage Ticket') }">
+              <img :src="salaveTicket" alt="MST" class="icon-sm" />
               <span>Material Salvage Ticket</span>
             </router-link>
           </li>
 
           <!-- MR -->
           <li>
-            <router-link to="/dashboard/mr"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Memorandum Receipt') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 20h9M12 4h9M4 9h16M4 15h16" />
-              </svg>
+            <router-link to="/dashboard/mr" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('Memorandum Receipt') }">
+              <img :src="memoReceipt" alt="MR" class="icon-sm" />
               <span>Memorandum Receipt</span>
             </router-link>
           </li>
@@ -124,51 +95,38 @@
       </div>
 
       <!-- Supplier -->
-      <router-link to="/dashboard/supplier"
-        class="flex items-center space-x-2 w-full px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-        :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Suppliers') }">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M20 13V7a2 2 0 00-2-2h-3V3h-6v2H6a2 2 0 00-2 2v6H2v7h20v-7h-2z" />
-        </svg>
+      <router-link to="/dashboard/supplier" class="nav-link" 
+        :class="{ 'disabled': !hasAccess('Suppliers') }">
+        <img :src="supplierIcon" alt="Supplier" class="icon-md" />
         <span>Supplier</span>
       </router-link>
 
       <!-- Reports -->
       <div>
-        <button
-          class="w-full flex justify-between items-center font-medium px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-          :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Reports') }" @click="toggle('Reports')">
-          <span class="flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M3 4h18M3 12h18M3 20h18" />
-            </svg>
+        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Reports') }" @click="toggle('Reports')">
+          <span class="nav-label">
+           
             <span>Reports</span>
           </span>
-          <svg v-if="hasAccess('Reports')"
-            :class="['w-4 h-4 transition-transform', expanded.includes('Reports') ? 'rotate-90' : '']" fill="none"
-            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg v-if="hasAccess('Reports')" 
+            :class="['icon-sm rotate-toggle', expanded.includes('Reports') ? 'rotate-90' : '']"
+            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
 
-        <ul v-show="expanded.includes('Reports')" class="ml-2 space-y-1">
+        <ul v-show="expanded.includes('Reports')" class="submenu">
           <li>
-            <router-link to="/dashboard/sample-reports"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Sample Reports') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 20h9M12 4h9" />
-              </svg>
+            <router-link to="/dashboard/sample-reports" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('Sample Reports') }">
+              
               <span>Material Requisition Voucher</span>
             </router-link>
           </li>
           <li>
-            <router-link to="/dashboard/demo-testing"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Demo Testing') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-              </svg>
+            <router-link to="/dashboard/demo-testing" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('Demo Testing') }">
+             
               <span>Demo Testing</span>
             </router-link>
           </li>
@@ -177,43 +135,30 @@
 
       <!-- Users -->
       <div>
-        <button
-          class="w-full flex justify-between items-center font-medium px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-          :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Users') }" @click="toggle('Users')">
-          <span class="flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17 20h5v-2a4 4 0 00-4-4h-1" />
-              <path d="M9 20H4v-2a4 4 0 014-4h1" />
-              <circle cx="9" cy="7" r="4" />
-              <circle cx="17" cy="7" r="4" />
-            </svg>
+        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Users') }" @click="toggle('Users')">
+          <span class="nav-label">
+            
             <span>Users</span>
           </span>
-          <svg v-if="hasAccess('Users')"
-            :class="['w-4 h-4 transition-transform', expanded.includes('Users') ? 'rotate-90' : '']" fill="none"
-            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg v-if="hasAccess('Users')" 
+            :class="['icon-sm rotate-toggle', expanded.includes('Users') ? 'rotate-90' : '']"
+            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
 
-        <ul v-show="expanded.includes('Users')" class="ml-2 space-y-1">
+        <ul v-show="expanded.includes('Users')" class="submenu">
           <li>
-            <router-link to="/dashboard/user"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Add Users') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 4v16m8-8H4" />
-              </svg>
+            <router-link to="/dashboard/user" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('Add Users') }">
+              
               <span>Add Users</span>
             </router-link>
           </li>
           <li>
-            <router-link to="/dashboard/employees"
-              class="flex items-center space-x-2 w-full px-6 py-2 rounded transition-colors duration-200 hover:bg-blue-100 text-sm"
-              :class="{ 'text-gray-400 pointer-events-none': !hasAccess('List of Employee') }">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+            <router-link to="/dashboard/employees" class="submenu-link"
+              :class="{ 'disabled': !hasAccess('List of Employee') }">
+              
               <span>List of Employee</span>
             </router-link>
           </li>
@@ -221,20 +166,28 @@
       </div>
 
       <!-- Logout -->
-      <button @click="userStore.logout"
-        class="flex items-center space-x-2 w-full text-left px-4 py-2 rounded transition-colors duration-200 hover:bg-red-200 font-medium">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17 16l4-4-4-4M7 12h14M3 21h6a2 2 0 002-2V5a2 2 0 00-2-2H3z" />
-        </svg>
+      <button @click="userStore.logout" class="logout-btn">
+       
         <span>Logout</span>
       </button>
     </nav>
   </aside>
 </template>
 
+
 <script setup>
 import { ref } from "vue";
 import { userStore } from "../stores/userStore";
+import DashboardIcon from "../assets/icons/dashboard.svg";
+import InventoryIcon from "../assets/icons/inventory.svg";
+import Mrv2 from "../assets/icons/voucher.png";
+import Mct from "../assets/icons/ticket.svg";
+import lineHarware from "../assets/icons/horzontal.svg";
+import specialhardware from "../assets/icons/special.svg";
+import Others from "../assets/icons/others.svg";
+import salaveTicket from "../assets/icons/restore.svg";
+import memoReceipt from "../assets/icons/memo.svg";
+import supplierIcon from "../assets/icons/supplier.png"
 
 const expanded = ref([]);
 
@@ -256,3 +209,165 @@ const hasAccess = (moduleName) => {
   );
 };
 </script>
+<style scoped>
+/* Sidebar */
+.sidebar {
+  background: #f7fafc;
+  width: 16.5rem;
+  height: calc(100vh - 56px);
+  position: fixed;
+  top: 3.5rem;
+  font-size: 16px;
+  left: 0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+  overflow-y: auto;
+}
+
+.nav {
+  padding: 0.5rem;
+}
+
+/* General link */
+.nav-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.nav-link > * + * {
+  margin-left: 0.5rem;
+}
+
+.nav-link:hover {
+  background: #bfdbfe;
+}
+
+/* Buttons for collapsible menus */
+.nav-btn, .submenu-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: left;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.nav-btn:hover, .submenu-btn:hover {
+  background: #bfdbfe;
+}
+
+.nav-label {
+  display: flex;
+  align-items: center;
+}
+
+.nav-label > * + * {
+  margin-left: 0.5rem;
+}
+
+/* Submenus */
+.submenu {
+  margin-left: 0.5rem;
+}
+
+.submenu > * + * {
+  margin-top: 0.25rem;
+}
+
+.submenu-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.submenu-link > * + * {
+  margin-left: 0.5rem;
+}
+
+.submenu-link:hover {
+  background: #dbeafe;
+}
+
+/* Sub-submenus */
+.sub-submenu {
+  margin-left: 1rem;
+}
+
+.sub-submenu > * + * {
+  margin-top: 0.25rem;
+}
+
+.sub-submenu-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 2rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.sub-submenu-link > * + * {
+  margin-left: 0.5rem;
+}
+
+.sub-submenu-link:hover {
+  background: #dbeafe;
+}
+
+/* Disabled */
+.disabled {
+  color: #9ca3af !important;
+  pointer-events: none !important;
+}
+
+/* Logout button */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.logout-btn > * + * {
+  margin-left: 0.5rem;
+}
+
+.logout-btn:hover {
+  background: #fecaca;
+}
+
+/* Icons */
+.icon-md {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-sm {
+  width: 1rem;
+
+}
+
+.icon-xs {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Rotation animation */
+.rotate-toggle {
+  transition: transform 0.2s;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+</style>

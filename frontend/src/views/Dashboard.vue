@@ -5,22 +5,14 @@
 
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
-      <aside
-        v-if="userStore.user"
-        class="w-64 bg-gray-200 p-4 flex flex-col overflow-y-auto"
-      >
+      <aside v-if="userStore.user" class="w-64 bg-gray-200 p-4 flex flex-col overflow-y-auto">
         <ul class="flex flex-col h-full">
           <!-- Dashboard -->
-          <MenuItem
-            label="Dashboard"
-            module="Dashboard"
-            icon="home"
-            to="/dashboard/home"
-            :disabled="!hasAccess('Dashboard')"
-          />
+          <MenuItem label="Dashboard" module="Dashboard" icon="home" to="/dashboard/home"
+            :disabled="!hasAccess('Dashboard')" />
 
           <!-- Inventory -->
-          <MenuItem
+          <!-- <MenuItem
             label="Inventory"
             module="Inventory"
             icon="box"
@@ -65,19 +57,19 @@
                 </ul>
               </MenuItem>
             </ul>
-          </MenuItem>
+          </MenuItem> -->
 
           <!-- Supplier -->
-          <MenuItem
+          <!-- <MenuItem
             label="Supplier"
             module="Supplier"
             icon="truck"
             to="/dashboard/supplier"
             :disabled="!hasAccess('Supplier')"
-          />
+          /> -->
 
           <!-- Reports -->
-          <MenuItem
+          <!-- <MenuItem
             label="Reports"
             module="Reports"
             icon="bar-chart-2"
@@ -99,10 +91,10 @@
                 :disabled="!hasAccess('Demo Testing')"
               />
             </ul>
-          </MenuItem>
+          </MenuItem> -->
 
           <!-- Users -->
-          <MenuItem
+          <!-- <MenuItem
             label="Users"
             module="Users"
             icon="users"
@@ -124,9 +116,9 @@
                 :disabled="!hasAccess('List of Employee')"
               />
             </ul>
-          </MenuItem>
+          </MenuItem> -->
 
-          <!-- Logout -->
+          <!-- Logout
           <li class="mt-auto">
             <button
               class="flex items-center gap-2 px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600 w-full text-left"
@@ -135,12 +127,12 @@
               <span>🚪</span>
               Logout
             </button>
-          </li>
+          </li> -->
         </ul>
       </aside>
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto p-6 mt-14">
+      <main class=" content-wrapper">
         <router-view />
       </main>
     </div>
@@ -182,3 +174,11 @@ export default {
   },
 };
 </script>
+<style scoped>
+.content-wrapper {
+  flex: 2 2 0%;         /* flex-2 */
+  overflow-y: auto;     /* overflow-y-auto */
+  padding: 2.5rem;      /* p-6 (24px) */
+  margin-top: 3.5rem;   /* mt-14 (56px) */
+}
+</style>
