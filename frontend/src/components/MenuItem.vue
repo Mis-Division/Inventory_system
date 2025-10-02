@@ -126,7 +126,7 @@
       <!-- Supplier -->
       <router-link to="/dashboard/supplier"
         class="flex items-center space-x-2 w-full px-4 py-2 rounded transition-colors duration-200 hover:bg-blue-200"
-        :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Supplier') }">
+        :class="{ 'text-gray-400 pointer-events-none': !hasAccess('Suppliers') }">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M20 13V7a2 2 0 00-2-2h-3V3h-6v2H6a2 2 0 00-2 2v6H2v7h20v-7h-2z" />
         </svg>
@@ -159,7 +159,7 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M12 20h9M12 4h9" />
               </svg>
-              <span>Sample Reports</span>
+              <span>Material Requisition Voucher</span>
             </router-link>
           </li>
           <li>
