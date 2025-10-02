@@ -105,7 +105,7 @@
       <div>
         <button class="nav-btn" :class="{ 'disabled': !hasAccess('Reports') }" @click="toggle('Reports')">
           <span class="nav-label">
-           
+           <img :src="reportsIcon" alt="Reports" class="icon-md" />
             <span>Reports</span>
           </span>
           <svg v-if="hasAccess('Reports')" 
@@ -119,15 +119,8 @@
           <li>
             <router-link to="/dashboard/sample-reports" class="submenu-link"
               :class="{ 'disabled': !hasAccess('Sample Reports') }">
-              
-              <span>Material Requisition Voucher</span>
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/dashboard/demo-testing" class="submenu-link"
-              :class="{ 'disabled': !hasAccess('Demo Testing') }">
-             
-              <span>Demo Testing</span>
+              <img :src="statIcon" alt="Mrv" class="icon-md" />
+              <span>MRV</span>
             </router-link>
           </li>
         </ul>
@@ -137,7 +130,7 @@
       <div>
         <button class="nav-btn" :class="{ 'disabled': !hasAccess('Users') }" @click="toggle('Users')">
           <span class="nav-label">
-            
+            <img :src="userIcon" alt="Users" class="icon-md" />
             <span>Users</span>
           </span>
           <svg v-if="hasAccess('Users')" 
@@ -151,14 +144,14 @@
           <li>
             <router-link to="/dashboard/user" class="submenu-link"
               :class="{ 'disabled': !hasAccess('Add Users') }">
-              
+              <img :src="addUserIcon" alt="Add Users" class="icon-md" />
               <span>Add Users</span>
             </router-link>
           </li>
           <li>
             <router-link to="/dashboard/employees" class="submenu-link"
               :class="{ 'disabled': !hasAccess('List of Employee') }">
-              
+              <img :src="employeeIcon" alt="List of Employee" class="icon-md" />
               <span>List of Employee</span>
             </router-link>
           </li>
@@ -167,7 +160,7 @@
 
       <!-- Logout -->
       <button @click="userStore.logout" class="logout-btn">
-       
+       <img :src="logoutIcon" alt="Logout" class="icon-md" />
         <span>Logout</span>
       </button>
     </nav>
@@ -188,6 +181,12 @@ import Others from "../assets/icons/others.svg";
 import salaveTicket from "../assets/icons/restore.svg";
 import memoReceipt from "../assets/icons/memo.svg";
 import supplierIcon from "../assets/icons/supplier.png"
+import reportsIcon from "../assets/icons/reports.svg";
+import statIcon from "../assets/icons/stat.svg";
+import userIcon from "../assets/icons/users.svg";
+import addUserIcon from "../assets/icons/users.svg";
+import employeeIcon from "../assets/icons/employee.svg";
+import logoutIcon from "../assets/icons/logout.svg";
 
 const expanded = ref([]);
 
