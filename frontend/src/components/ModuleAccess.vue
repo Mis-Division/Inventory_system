@@ -29,7 +29,7 @@
 
 <script setup>
 import ModuleAccess from "./ModuleAccess.vue";
-
+const emit = defineEmits(["delete"]);
 
 const props = defineProps({
   module: { type: Object, required: true },

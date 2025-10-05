@@ -123,9 +123,7 @@ const canAddUsers = computed(() => userStore.canAddUsers);
 async function addUser() {
   try {
     appStore.showLoading();
-    showAddModal.value = true; // open modal
-    
-    // keep loader visible briefly
+    showAddModal.value = true;
     await new Promise(resolve => setTimeout(resolve, 500));
   } catch (err) {
     console.error("Error preparing modal:", err);
@@ -138,7 +136,6 @@ function closeAddModal() {
   showAddModal.value = false;
 }
 
-
 // Modal functions
 function handleRowClick(user) {
   if (!canEditAddUsers.value) return;
@@ -148,7 +145,10 @@ async function openModal(user) {
   try {
     appStore.showLoading();
     const res = await api.get(`/users/display_user/${user.id}`);
-    selectedUser.value = res.data.data;
+    selectedUser.value = {
+      ...res.data?.data,
+      modules: res.data?.data?.modules || []
+    };
     showModal.value = true;
   } catch (err) {
     console.error(err);
@@ -217,8 +217,8 @@ async function saveUser(updatedUser) {
     appStore.showLoading();
     const res = await api.put(`/users/update_user/${updatedUser.id}`, payload);
 
-    users.value[index] = res.data.data;
-    alertMessage.value = res.data.message || "User updated successfully.";
+    users.value[index] = res.data?.data || updatedUser;
+    alertMessage.value = res.data?.message || "User updated successfully.";
     alertType.value = "alert";
     showAlert.value = true;
 
@@ -274,26 +274,30 @@ async function fetchUsers() {
   appStore.showLoading();
   try {
     const res = await api.get("/users/display_user/");
-    users.value = res.data.data;
+    users.value = res.data?.data || [];
   } catch (err) {
     console.error(err);
+    users.value = [];
   } finally {
     appStore.hideLoading();
   }
 }
+
 // Filtering & pagination
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value;
   const q = searchQuery.value.toLowerCase();
-  return users.value.filter(
-    (u) =>
-      u.fullname.toLowerCase().includes(q) ||
-      u.username.toLowerCase().includes(q) ||
-      u.role.toLowerCase().includes(q) ||
-      u.status.toLowerCase().includes(q) ||
-      String(u.id).includes(q)
-  );
+  return users.value.filter((u) => {
+    return (
+      (u.fullname?.toLowerCase().includes(q) ?? false) ||
+      (u.username?.toLowerCase().includes(q) ?? false) ||
+      (u.role?.toLowerCase().includes(q) ?? false) ||
+      (u.status?.toLowerCase().includes(q) ?? false) ||
+      String(u.id ?? "").includes(q)
+    );
+  });
 });
+
 const totalPages = computed(() =>
   Math.ceil(filteredUsers.value.length / pageSize)
 );
@@ -312,5 +316,6 @@ function nextPage() {
 function prevPage() {
   if (currentPage.value > 1) currentPage.value--;
 }
+
 onMounted(() => fetchUsers());
 </script>

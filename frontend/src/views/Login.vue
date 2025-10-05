@@ -66,7 +66,7 @@ async function handleLogin() {
       return;
     }
 
-    localStorage.setItem("access_token", token);
+    sessionStorage.setItem("access_token", token);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
     router.push("/dashboard");

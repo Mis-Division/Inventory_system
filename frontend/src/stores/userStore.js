@@ -27,7 +27,7 @@ export const userStore = reactive({
 
   // 🔹 Initialize user from stored token
   async initUser() {
-    const token = localStorage.getItem("access_token");
+    const token = sessionStorage.getItem("access_token");
     if (!token) return null;
 
     this.loading = true;
@@ -47,13 +47,13 @@ export const userStore = reactive({
 
   // 🔹 Login (store token + set header)
   login(token) {
-    localStorage.setItem("access_token", token);
+    sessionStorage.setItem("access_token", token);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   },
 
   // 🔹 Logout (clear session + redirect)
   logout() {
-    localStorage.removeItem("access_token");
+    sessionStorage.removeItem("access_token");
     delete api.defaults.headers.common["Authorization"];
     this.user = null;
     window.location.href = "/login";
@@ -63,8 +63,7 @@ export const userStore = reactive({
   get modules() {
     return Array.isArray(this.user?.modules) ? this.user.modules : [];
   },
-
-  //  Generic permission checker
+  // 🔹 Check permission for a module and action
   hasPermission(moduleName, action = "can_view") {
     const mod = findModule(this.modules, moduleName);
     return String(mod?.[action] ?? "0") === "1";

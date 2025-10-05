@@ -51,14 +51,14 @@
             <!-- Sub-submenus -->
             <ul v-show="expanded.includes('MCT')" class="sub-submenu">
               <li>
-                <router-link to="/dashboard/line-hardware" class="sub-submenu-link" 
+                <router-link to="/dashboard/LineHardware" class="sub-submenu-link" 
                   :class="{ 'disabled': !hasAccess('Line Hardware') }">
                  <img :src="lineHarware" alt="Line Hardware" class="icon-xs" />
                   <span>Line Hardware</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/dashboard/special-hardware" class="sub-submenu-link" 
+                <router-link to="/dashboard/specialhardware" class="sub-submenu-link" 
                   :class="{ 'disabled': !hasAccess('Special Hardware') }">
                  <img :src="specialhardware" alt="Special Hardware" class="icon-xs" />
                   <span>Special Hardware</span>
