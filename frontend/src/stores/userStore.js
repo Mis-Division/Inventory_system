@@ -178,4 +178,40 @@ export const userStore = reactive({
     get canDeleteStocks(){
       return this.hasPermission("Stocks", "can_delete");
     },
+    get canAddOrder(){
+      return this.hasPermission("Order", "can_add");
+    },
+    get canEditOrder(){
+      return this.hasPermission("Order", "can_edit");
+    },
+    get canViewOrder(){
+      return this.hasPermission("Order", "can_view");
+    },
+    get canDeleteOrder(){
+      return this.hasPermission("Order", "can_delete");
+    },
+    get cadAddCategory(){
+      return this.hasPermission("Categories", "can_add");
+    },
+    get canEditCategory(){
+      return this.hasPermission("Categories", "can_edit");
+    },
+    get canViewCategory(){
+      return this.hasPermission("Categories", "can_view");
+    },
+    get canDeleteCategory(){
+      return this.hasPermission("Categories", "can_delete");
+    },
+    get canAddSupplier(){
+      return this.hasPermission("Suppliers", "can_add");
+    },
+    get canEditSupplier(){
+      return this.hasPermission("Suppliers", "can_edit");
+    },
+    get canViewSupplier(){
+      return this.hasPermission("Suppliers", "can_view");
+    },
+    get canDeleteSupplier(){
+      return this.hasPermission("Suppliers", "can_delete");
+    },
 });

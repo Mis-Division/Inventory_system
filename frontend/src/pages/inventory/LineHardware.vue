@@ -22,6 +22,8 @@
 import { computed } from "vue";
 //import { useAppStore } from "../../stores/appStore";
 import { userStore } from "../../stores/userStore";
+import "../../assets/css/Global.css";
+
 
 //Permissions for Line hardware
 const canAddLineHardware = computed(() => userStore.canAddLineHardware);
@@ -30,15 +32,3 @@ const canDeleteLineHardware = computed(() => userStore.canDeleteLineHardware);
 
 </script>
 
-<style scoped>
-.main-container {
-    padding-left: 50px;
-    padding-right: 20px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    width: 100%;
-    overflow-y: hidden;
-    box-sizing: border-box;
-    transition: padding-left 0.3s;
-}
-</style>

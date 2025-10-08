@@ -1,0 +1,16 @@
+.main-container {
+    padding-left: 50px;
+    padding-right: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    width: 100%;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    transition: padding-left 0.3s;
+}
+.btn.btn-primary:disabled,
+.btn.btn-warning:disabled,
+.btn.btn-danger:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;    
+}

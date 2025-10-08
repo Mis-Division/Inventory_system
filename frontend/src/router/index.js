@@ -13,6 +13,8 @@ import Mr from "../pages/inventory/Mr.vue";
 import Supplier from "../pages/suppliers/Supplier.vue";
 import { useAppStore } from "../stores/appStore";
 import Stocks from "../pages/inventory/stocks.vue"
+import OrderItem from "../pages/order/OrderPage.vue"
+import CategoryItem from "../pages/categories/CategoryPages.vue"
 
 const routes = [
   {
@@ -50,6 +52,10 @@ const routes = [
       component: Supplier,},
       {path: "/dashboard/stocks",
       component: Stocks,},
+      {path: "/dashboard/order",
+      component: OrderItem,},
+      {path: "/dashboard/category",
+      component: CategoryItem,}
 
     ] // protect all children
   },

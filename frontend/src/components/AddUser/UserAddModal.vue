@@ -98,7 +98,7 @@
                   <tr v-for="item in flatModules" :key="item.node.module_name">
                     <td :style="{ paddingLeft: item.depth * 25 + 'px' }">
                       <strong style="padding-left: 10px;" v-if="!item.node.parent_module">{{ item.node.module_name
-                        }}</strong>
+                      }}</strong>
                       <span v-else>— {{ item.node.module_name }}</span>
                     </td>
                     <td class="text-center">
@@ -229,6 +229,8 @@ function defaultModules() {
     { module_name: "Others", parent_module: "Material Charge Ticket", can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Material Salvage Ticket", parent_module: "Inventory", can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Memorandum Receipts", parent_module: "Inventory", can_view: false, can_add: false, can_edit: false, can_delete: false },
+    { module_name: "Order", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
+    { module_name: "Categories", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Suppliers", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Reports", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "MRV Reports", parent_module: "Reports", can_view: false, can_add: false, can_edit: false, can_delete: false },

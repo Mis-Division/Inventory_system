@@ -29,6 +29,7 @@ import { userStore } from "../../stores/userStore";
 import AddMrvModal from "../../components/MRV/AddMrvModal.vue";
 import EditMrvModal from "../../components/MRV/EditMrvModal.vue";
 import DeleteMrvModal from "../../components/MRV/DeleteMvrModal.vue";
+import "../../assets/css/Global.css";
 
 
 const showAddMrvModal = ref(false);
@@ -91,15 +92,3 @@ function closeDeleteMrvModal() {
 }
 </script>
 
-<style scoped>
-.main-container {
-  padding-left: 50px;
-  padding-right: 20px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  width: 100%;
-  overflow-y: hidden;
-  box-sizing: border-box;
-  transition: padding-left 0.3s;
-}
-</style>
