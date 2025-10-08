@@ -214,4 +214,16 @@ export const userStore = reactive({
     get canDeleteSupplier(){
       return this.hasPermission("Suppliers", "can_delete");
     },
+    get canAddAdjustment(){
+      return this.hasPermission("Adjustment", "can_add");
+    },
+    get canEditAdjustment(){
+      return this.hasPermission("Adjustment", "can_edit");
+    },
+    get canViewAdjustment(){
+      return this.hasPermission("Adjustment", "can_view");
+    },
+    get canDeleteAdjustment(){
+      return this.hasPermission("Adjustment", "can_delete");
+    },
 });

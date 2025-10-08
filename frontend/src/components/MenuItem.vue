@@ -1,12 +1,12 @@
 <template>
-  <aside class="sidebar bg-light border-end vh-100 p-3 mt-5">
-    <nav class="nav flex-column">
+  <aside class="sidebar bg-light border-end vh-100 p-3 mt-5" >
+    <nav class="nav flex-column gap-1">
 
       <!-- Dashboard -->
       <router-link to="/dashboard" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Dashboard') }">
 
-        <span><i class="bi bi-speedometer2 me-2"></i> Dashboard</span>
+        <span><i class="bi bi-house me-2"></i> Dashboard</span>
       </router-link>
 
       <!-- Inventory -->
@@ -96,7 +96,7 @@
         <span> <i class="bi bi-cart me-2"></i>Order Item</span>
       </router-link>
       <!-- Catergory-->
-       <router-link to="/dashboard/category" class="nav-link d-flex align-items-center mb-2"
+      <router-link to="/dashboard/category" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Categories') }">
         <span> <i class="bi bi-tags me-2"></i>Category</span>
       </router-link>
@@ -105,7 +105,11 @@
         :class="{ 'disabled': !hasAccess('Suppliers') }">
         <span> <i class="bi bi-person-badge me-2"></i>Supplier</span>
       </router-link>
-
+      <!--Adjusment-->
+      <router-link to="/dashboard/adjustment" class="nav-link d-flex align-items-center mb-2"
+        :class="{ 'disabled': !hasAccess('Adjustment') }">
+        <span> <i class="bi bi-arrow-repeat me-2"></i>Adjustments</span>
+      </router-link>
       <!-- Reports -->
       <div class="mb-2">
         <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
@@ -182,11 +186,13 @@
           </li>
 
         </ul>
-        <button @click="userStore.logout" class="sidebar-item flex  rounded hover:bg-blue-100 text-gray-700">
-          <span> <i class="bi bi-box-arrow-right me-2"></i> Logout</span>
-        </button>
-      </div>
 
+      </div>
+      <!-- <div class="mb-2">
+        <button @click="userStore.logout" class="sidebar-item flex  rounded hover:bg-blue-100 text-gray-700">
+          <span> <i class="bi bi-power me-2"></i> Logout</span>
+        </button>
+      </div> -->
       <!-- Logout -->
 
 
@@ -224,10 +230,17 @@
 
 .nav-link.disabled {
   color: gray;
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
-
+.nav-link:active {
+  background-color: #81a00e;
+  border-radius: 6px;
+  color: black;
+}
+.active-link i{
+  color: rgb(141, 45, 45);
+}
 .nav-link:hover {
   background-color: #3a7aba;
   border-radius: 6px;
@@ -240,6 +253,7 @@
   position: fixed;
   left: 0;
   top: 0;
+  border: 2px;
   font-size: 15px;
 }
 

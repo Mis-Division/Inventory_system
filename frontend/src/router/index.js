@@ -15,6 +15,7 @@ import { useAppStore } from "../stores/appStore";
 import Stocks from "../pages/inventory/stocks.vue"
 import OrderItem from "../pages/order/OrderPage.vue"
 import CategoryItem from "../pages/categories/CategoryPages.vue"
+import Adjustment from "../pages/Adjustment/AdjustmentPage.vue"
 
 const routes = [
   {
@@ -55,7 +56,9 @@ const routes = [
       {path: "/dashboard/order",
       component: OrderItem,},
       {path: "/dashboard/category",
-      component: CategoryItem,}
+      component: CategoryItem,},
+      {path: "/dashboard/adjustment",
+      component: Adjustment,}
 
     ] // protect all children
   },

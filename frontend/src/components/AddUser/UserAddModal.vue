@@ -232,6 +232,7 @@ function defaultModules() {
     { module_name: "Order", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Categories", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Suppliers", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
+    { module_name: "Adjustment", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Reports", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "MRV Reports", parent_module: "Reports", can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Line Hardware Reports", parent_module: "Reports", can_view: false, can_add: false, can_edit: false, can_delete: false },
