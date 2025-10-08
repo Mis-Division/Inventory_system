@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import Dashboard from "../views/Dashboard.vue";
 import DashboardHome from "../pages/DashboardHome.vue";
-import AddUserPage from "../pages/users/AddUserPage.vue";
+import UserManagement from "../pages/users/UserManagement.vue";
 import AddEmployeePage from "../pages/users/AddEmployeePage.vue";
 import Mrv from "../pages/inventory/Mrv.vue";
 import LineHardware from "../pages/inventory/LineHardware.vue";
@@ -11,8 +11,8 @@ import Others from "../pages/inventory/Others.vue";
 import Mst from "../pages/inventory/Mst.vue";
 import Mr from "../pages/inventory/Mr.vue";
 import Supplier from "../pages/suppliers/Supplier.vue";
-
-
+import { useAppStore } from "../stores/appStore";
+import Stocks from "../pages/inventory/stocks.vue"
 
 const routes = [
   {
@@ -30,7 +30,7 @@ const routes = [
       {path: "/dashboard/employees",
       component: AddEmployeePage,},
       {path: "/dashboard/user",
-      component: AddUserPage,},
+      component: UserManagement,},
       {path: "/dashboard",
         name: "Dashboard",
       component: DashboardHome,},
@@ -48,6 +48,8 @@ const routes = [
       component: Mr,},
       {path: "/dashboard/supplier",
       component: Supplier,},
+      {path: "/dashboard/stocks",
+      component: Stocks,},
 
     ] // protect all children
   },
@@ -67,6 +69,10 @@ const router = createRouter({
 // Global route guard
 router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem("access_token"); // ✅ use the same key everywhere
+  const appStore = useAppStore();
+
+  // ✅ show loader at the start of navigation
+  appStore.showLoading();
 
   if (to.meta.requiresAuth && !token) {
     // not logged in → force login
@@ -78,5 +84,11 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
-
+router.afterEach(() => {
+  const appStore = useAppStore();
+  // ✅ hide loader after navigation
+  setTimeout(() => {
+    appStore.hideLoading();
+  }, 700);
+});
 export default router;

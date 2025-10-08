@@ -9,8 +9,8 @@
 
       <!-- Confirm buttons -->
       <div v-if="type === 'confirm'" class="modal-actions">
-        <button @click="respond(true)" class="btn btn-danger">Yes</button>
-        <button @click="respond(false)" class="btn btn-secondary">No</button>
+        <button @click="respond(true)" class="btn btn-success">Yes</button>
+        <button @click="respond(false)" class="btn btn-warning">No</button>
       </div>
 
       <!-- Alert button -->
@@ -20,7 +20,7 @@
     </div>
   </div>
 </template>
-<style src="../assets/css/ConfirmModal.css"></style>
+<style src="../../assets/css/ConfirmModal.css"></style>
 <script setup>
 import { ref, watch } from "vue";
 // import "../../../";

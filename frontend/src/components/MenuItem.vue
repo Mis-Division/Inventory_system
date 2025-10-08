@@ -1,192 +1,300 @@
 <template>
-  <aside class="sidebar">
-    <nav class="nav">
+  <aside class="sidebar bg-light border-end vh-100 p-3 mt-5">
+    <nav class="nav flex-column">
 
       <!-- Dashboard -->
-      <router-link to="/dashboard" class="nav-link" 
+      <router-link to="/dashboard" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Dashboard') }">
-         <img :src="DashboardIcon" alt="Dashboard" class="icon-md" />
-        <span>Dashboard</span>
+
+        <span><i class="bi bi-speedometer2 me-2"></i> Dashboard</span>
       </router-link>
 
       <!-- Inventory -->
-      <div>
-        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Inventory') }" @click="toggle('Inventory')">
-          <span class="nav-label">
-            <img :src="InventoryIcon" alt="Dashboard" class="icon-md" />
-            <span>Inventory</span>
-          </span>
-          <svg v-if="hasAccess('Inventory')" 
-            :class="['icon-sm rotate-toggle', expanded.includes('Inventory') ? 'rotate-90' : '']"
-            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
+      <div class="mb-2">
+        <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
+          @click="toggle('Inventory')" :class="{ 'disabled': !hasAccess('Inventory') }">
+
+          <span> <i class="bi bi-list text-black me-2"></i> Inventory</span>
+          <i v-if="hasAccess('Inventory')" class="bi bi-chevron-right transition"
+            :class="{ 'rotate-90': expanded.includes('Inventory') }"></i>
         </button>
 
-        <!-- Submenus -->
-        <ul v-show="expanded.includes('Inventory')" class="submenu">
-          <!-- MRV -->
+        <!-- Inventory submenu -->
+        <ul v-show="expanded.includes('Inventory')" class="list-unstyled ms-3 mt-">
           <li>
-            <router-link to="/dashboard/mrv" class="submenu-link" 
-              :class="{ 'disabled': !hasAccess('Materials Requisition Voucher') }">
-              <img :src="Mrv2" alt="MRV" class="icon-sm" />
-              <span>Materials Requisition Voucher</span>
+            <router-link to="/dashboard/stocks" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Stocks') }">
+
+              <span><i class="bi bi-box-seam me-2"></i> Stocks</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/mrv" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Material Requisition Voucher') }">
+
+              <span><i class="bi bi-ticket-perforated me-2"></i> Materials Requisition Voucher</span>
             </router-link>
           </li>
 
           <!-- MCT -->
-          <li>
-            <button class="submenu-btn" :class="{ 'disabled': !hasAccess('Material Charge Ticket') }" @click="toggle('MCT')">
-              <span class="nav-label">
-                <img :src="Mct" alt="MCT" class="icon-sm" />
-                <span>Material Charge Ticket</span>
-              </span>
-              <svg v-if="hasAccess('Material Charge Ticket')" 
-                :class="['icon-sm rotate-toggle', expanded.includes('MCT') ? 'rotate-90' : '']"
-                fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M9 5l7 7-7 7" />
-              </svg>
+          <li class="mt-1">
+            <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between"
+              @click="toggle('MCT')" :class="{ 'disabled': !hasAccess('Material Charge Ticket') }">
+
+              <span> <i class="bi bi-ticket me-2"></i>Material Charge Ticket</span>
+              <i v-if="hasAccess('Material Charge Ticket')" class="bi bi-chevron-right transition"
+                :class="{ 'rotate-90': expanded.includes('MCT') }"></i>
             </button>
 
-            <!-- Sub-submenus -->
-            <ul v-show="expanded.includes('MCT')" class="sub-submenu">
+            <!-- MCT submenu -->
+            <ul v-show="expanded.includes('MCT')" class="list-unstyled ms-4 mt-1">
               <li>
-                <router-link to="/dashboard/LineHardware" class="sub-submenu-link" 
+                <router-link to="/dashboard/LineHardware" class="nav-link d-flex align-items-center"
                   :class="{ 'disabled': !hasAccess('Line Hardware') }">
-                 <img :src="lineHarware" alt="Line Hardware" class="icon-xs" />
-                  <span>Line Hardware</span>
+
+                  <span><i class="bi bi-tools me-2"></i>Line Hardware</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/dashboard/specialhardware" class="sub-submenu-link" 
+                <router-link to="/dashboard/specialhardware" class="nav-link d-flex align-items-center"
                   :class="{ 'disabled': !hasAccess('Special Hardware') }">
-                 <img :src="specialhardware" alt="Special Hardware" class="icon-xs" />
-                  <span>Special Hardware</span>
+
+                  <span> <i class="bi bi-lightning me-2"></i> Special Hardware</span>
                 </router-link>
               </li>
               <li>
-                <router-link to="/dashboard/others" class="sub-submenu-link" 
+                <router-link to="/dashboard/others" class="nav-link d-flex align-items-center"
                   :class="{ 'disabled': !hasAccess('Others') }">
-                  <img :src="Others" alt="Others" class="icon-xs" />
-                  <span>Others</span>
+
+                  <span><i class="bi bi-question-circle me-2"></i> Others</span>
                 </router-link>
               </li>
             </ul>
           </li>
 
           <!-- MST -->
-          <li>
-            <router-link to="/dashboard/mst" class="submenu-link"
+          <li class="mt-1">
+            <router-link to="/dashboard/mst" class="nav-link d-flex align-items-center"
               :class="{ 'disabled': !hasAccess('Material Salvage Ticket') }">
-              <img :src="salaveTicket" alt="MST" class="icon-sm" />
-              <span>Material Salvage Ticket</span>
+              <span><i class="bi-exclamation-triangle me-2"></i>Material Salvage Ticket</span>
             </router-link>
           </li>
 
           <!-- MR -->
-          <li>
-            <router-link to="/dashboard/mr" class="submenu-link"
-              :class="{ 'disabled': !hasAccess('Memorandum Receipt') }">
-              <img :src="memoReceipt" alt="MR" class="icon-sm" />
-              <span>Memorandum Receipt</span>
+          <li class="mt-1">
+            <router-link to="/dashboard/mr" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Memorandum Receipts') }">
+
+              <span><i class="bi bi-clipboard me-2"></i> Memorandum Receipt</span>
             </router-link>
           </li>
         </ul>
       </div>
 
       <!-- Supplier -->
-      <router-link to="/dashboard/supplier" class="nav-link" 
+      <router-link to="/dashboard/supplier" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Suppliers') }">
-        <img :src="supplierIcon" alt="Supplier" class="icon-md" />
-        <span>Supplier</span>
+
+        <span> <i class="bi bi-person-badge me-2"></i>Supplier</span>
       </router-link>
 
       <!-- Reports -->
-      <div>
-        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Reports') }" @click="toggle('Reports')">
-          <span class="nav-label">
-           <img :src="reportsIcon" alt="Reports" class="icon-md" />
-            <span>Reports</span>
-          </span>
-          <svg v-if="hasAccess('Reports')" 
-            :class="['icon-sm rotate-toggle', expanded.includes('Reports') ? 'rotate-90' : '']"
-            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
+      <div class="mb-2">
+        <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
+          @click="toggle('Reports')" :class="{ 'disabled': !hasAccess('Reports') }">
+          <span><i class="bi bi-clipboard-data me-2"></i>Reports</span>
+
+          <i v-if="hasAccess('Reports')" class="bi bi-chevron-right transition"
+            :class="{ 'rotate-90': expanded.includes('Reports') }"></i>
         </button>
 
-        <ul v-show="expanded.includes('Reports')" class="submenu">
+        <ul v-show="expanded.includes('Reports')" class="list-unstyled ms-4 mt-2">
           <li>
-            <router-link to="/dashboard/sample-reports" class="submenu-link"
-              :class="{ 'disabled': !hasAccess('Sample Reports') }">
-              <img :src="statIcon" alt="Mrv" class="icon-md" />
-              <span>MRV</span>
+            <router-link to="/dashboard/sample-reports" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('MRV Reports') }">
+              <span><i class="bi bi-file-earmark-text me-2"></i> MRV</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/reports_line" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Line Hardware Reports') }">
+              <span><i class="bi bi-tools me-2"></i> Line Hardware</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/reports_Special" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Special Hardware Reports') }">
+              <span><i class="bi bi-lightning me-2"></i> Special Hardware</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/reports_Others" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('Others Reports') }">
+              <span><i class="bi bi-question-circle me-2"></i> Others</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/reports_salvage" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('MST Reports') }">
+              <span><i class="bi-exclamation-triangle me-2"></i> Salvage Ticket</span>
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/dashboard/reports_memo" class="nav-link d-flex align-items-center"
+              :class="{ 'disabled': !hasAccess('MR Reports') }">
+              <span><i class="bi bi-clipboard me-2"></i> Memorandum Receipt</span>
             </router-link>
           </li>
         </ul>
       </div>
 
       <!-- Users -->
-      <div>
-        <button class="nav-btn" :class="{ 'disabled': !hasAccess('Users') }" @click="toggle('Users')">
-          <span class="nav-label">
-            <img :src="userIcon" alt="Users" class="icon-md" />
-            <span>Users</span>
-          </span>
-          <svg v-if="hasAccess('Users')" 
-            :class="['icon-sm rotate-toggle', expanded.includes('Users') ? 'rotate-90' : '']"
-            fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
+      <div class="mb-2">
+        <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between"
+          @click="toggle('Users')" :class="{ 'disabled': !hasAccess('Users') }">
+
+          <span> <i class="bi bi-people me-2"></i> Users</span>
+          <i v-if="hasAccess('Users')" class="bi bi-chevron-right transition"
+            :class="{ 'rotate-90': expanded.includes('Users') }"></i>
         </button>
 
-        <ul v-show="expanded.includes('Users')" class="submenu">
+        <ul v-show="expanded.includes('Users')" class="list-unstyled ms-4 mt-2">
           <li>
-            <router-link to="/dashboard/user" class="submenu-link"
+            <router-link to="/dashboard/user" class="nav-link d-flex align-items-center"
               :class="{ 'disabled': !hasAccess('Add Users') }">
-              <img :src="addUserIcon" alt="Add Users" class="icon-md" />
-              <span>Add Users</span>
+              <span><i class="bi bi-person-plus me-2"></i> Add Users</span>
+
             </router-link>
           </li>
           <li>
-            <router-link to="/dashboard/employees" class="submenu-link"
+            <router-link to="/dashboard/employees" class="nav-link d-flex align-items-center"
               :class="{ 'disabled': !hasAccess('List of Employee') }">
-              <img :src="employeeIcon" alt="List of Employee" class="icon-md" />
-              <span>List of Employee</span>
+              <span><i class="bi bi-person-badge me-2"></i>List of Employee</span>
             </router-link>
           </li>
+
         </ul>
+        <button @click="userStore.logout" class="sidebar-item flex  rounded hover:bg-blue-100 text-gray-700">
+          <span> <i class="bi bi-box-arrow-right me-2"></i> Logout</span>
+        </button>
       </div>
 
       <!-- Logout -->
-      <button @click="userStore.logout" class="logout-btn">
-       <img :src="logoutIcon" alt="Logout" class="icon-md" />
-        <span>Logout</span>
-      </button>
+
+
     </nav>
   </aside>
 </template>
+
+<style scoped>
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  /* same as sidebar menu */
+  color: #374151;
+  /* same text color as sidebar links */
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebar-item:hover {
+  background-color: #3a7aba;
+  /* match sidebar hover */
+}
+
+
+
+.nav-link {
+  color: black;
+  text-decoration: none;
+
+}
+
+.nav-link.disabled {
+  color: gray;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nav-link:hover {
+  background-color: #3a7aba;
+  border-radius: 6px;
+  color: black;
+}
+
+.sidebar {
+  width: 300px;
+  overflow-y: auto;
+  position: fixed;
+  left: 0;
+  top: 0;
+  font-size: 15px;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-sm {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-xs {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-toggle {
+  background: none;
+  border: none;
+  color: #3a7aba;
+
+  padding: 0.5rem 0.75rem;
+  transition: background-color 0.3s;
+}
+
+.btn-toggle:hover {
+  background-color: #3a7aba;
+  border-radius: 6px;
+}
+
+.transition {
+  transition: transform 0.3s ease;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Scrollbar styling (optional for aesthetic) */
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #3b3d3e;
+  border-radius: 4px;
+}
+
+span {
+  font-weight: 600;
+  font-size: 17px;
+  color: black;
+}
+</style>
+
 
 
 <script setup>
 import { ref } from "vue";
 import { userStore } from "../stores/userStore";
-import DashboardIcon from "../assets/icons/dashboard.svg";
-import InventoryIcon from "../assets/icons/inventory.svg";
-import Mrv2 from "../assets/icons/voucher.png";
-import Mct from "../assets/icons/ticket.svg";
-import lineHarware from "../assets/icons/horzontal.svg";
-import specialhardware from "../assets/icons/special.svg";
-import Others from "../assets/icons/others.svg";
-import salaveTicket from "../assets/icons/restore.svg";
-import memoReceipt from "../assets/icons/memo.svg";
-import supplierIcon from "../assets/icons/supplier.png"
-import reportsIcon from "../assets/icons/reports.svg";
-import statIcon from "../assets/icons/stat.svg";
-import userIcon from "../assets/icons/users.svg";
-import addUserIcon from "../assets/icons/users.svg";
-import employeeIcon from "../assets/icons/employee.svg";
-import logoutIcon from "../assets/icons/logout.svg";
+
 
 const expanded = ref([]);
 
@@ -208,165 +316,3 @@ const hasAccess = (moduleName) => {
   );
 };
 </script>
-<style scoped>
-/* Sidebar */
-.sidebar {
-  background: #f7fafc;
-  width: 16.5rem;
-  height: calc(100vh - 56px);
-  position: fixed;
-  top: 3.5rem;
-  font-size: 16px;
-  left: 0;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-  overflow-y: auto;
-}
-
-.nav {
-  padding: 0.5rem;
-}
-
-/* General link */
-.nav-link {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.nav-link > * + * {
-  margin-left: 0.5rem;
-}
-
-.nav-link:hover {
-  background: #bfdbfe;
-}
-
-/* Buttons for collapsible menus */
-.nav-btn, .submenu-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: left;
-  width: 100%;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.nav-btn:hover, .submenu-btn:hover {
-  background: #bfdbfe;
-}
-
-.nav-label {
-  display: flex;
-  align-items: center;
-}
-
-.nav-label > * + * {
-  margin-left: 0.5rem;
-}
-
-/* Submenus */
-.submenu {
-  margin-left: 0.5rem;
-}
-
-.submenu > * + * {
-  margin-top: 0.25rem;
-}
-
-.submenu-link {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.submenu-link > * + * {
-  margin-left: 0.5rem;
-}
-
-.submenu-link:hover {
-  background: #dbeafe;
-}
-
-/* Sub-submenus */
-.sub-submenu {
-  margin-left: 1rem;
-}
-
-.sub-submenu > * + * {
-  margin-top: 0.25rem;
-}
-
-.sub-submenu-link {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 0.5rem 2rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.sub-submenu-link > * + * {
-  margin-left: 0.5rem;
-}
-
-.sub-submenu-link:hover {
-  background: #dbeafe;
-}
-
-/* Disabled */
-.disabled {
-  color: #9ca3af !important;
-  pointer-events: none !important;
-}
-
-/* Logout button */
-.logout-btn {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s;
-}
-
-.logout-btn > * + * {
-  margin-left: 0.5rem;
-}
-
-.logout-btn:hover {
-  background: #fecaca;
-}
-
-/* Icons */
-.icon-md {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.icon-sm {
-  width: 1rem;
-
-}
-
-.icon-xs {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-/* Rotation animation */
-.rotate-toggle {
-  transition: transform 0.2s;
-}
-
-.rotate-90 {
-  transform: rotate(90deg);
-}
-</style>

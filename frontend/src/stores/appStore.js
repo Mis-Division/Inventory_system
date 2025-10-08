@@ -48,6 +48,6 @@ export const useAppStore = defineStore("app", () => {
     hideLoading,
     setError,
     clearError,
-    showAlert, // ✅ now available
+    showAlert, 
   };
 });

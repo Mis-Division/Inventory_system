@@ -14,7 +14,7 @@
 import { useAppStore } from "./stores/appStore";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 import logoImg from "./assets/ISELCO1LOGO.png";
-import AlertToast from "./components/AlertToast.vue";
+import AlertToast from "./components/AddUser/AlertToast.vue";
 
 const appStore = useAppStore();
 </script>
@@ -23,6 +23,7 @@ const appStore = useAppStore();
 body {
   font-family: Georgia, 'Times New Roman', Times, serif;
 }
+
 </style>
 
 

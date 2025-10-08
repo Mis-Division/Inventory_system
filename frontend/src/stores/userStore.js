@@ -69,7 +69,7 @@ export const userStore = reactive({
     return String(mod?.[action] ?? "0") === "1";
   },
 
-    //  Permission shortcuts
+    //  Permission shortcuts for user actions
     get canViewUsers() {
       return this.hasPermission("Users", "can_view");
     },
@@ -81,5 +81,101 @@ export const userStore = reactive({
     },
     get canAddUsers() {
       return this.hasPermission("Add Users", "can_add");
+    },
+
+    // Permission shortcuts for Materials Requisition Voucher actions
+    get canViewMVR() {
+      return this.hasPermission("Material Requisition Voucher", "can_view");
+    },
+    get canEditMRV() {
+      return this.hasPermission("Material Requisition Voucher", "can_edit");
+    },
+    get canDeleteMRV() {
+      return this.hasPermission("Material Requisition Voucher", "can_delete");
+    },
+    get canAddMRV() {
+      return this.hasPermission("Material Requisition Voucher", "can_add");
+    },
+
+    // Permission shortcut for line Hardware actions
+    get canViewLineHardware(){
+      return this.hasPermission("Line Hardware", "can_view");
+    },
+    get canEditLineHardware(){
+      return this.hasPermission("LIne Hardware","can_edit");
+    },
+    get canDeleteLineHardware(){
+      return this.hasPermission("Line Hardware", "can_delete");
+    },
+    get canAddLineHardware(){
+      return this.hasPermission("Line Hardware", "can_add");
+    },
+
+    // Permission shortcut for Special Hardware actions
+    get canViewSpecialHardware(){
+      return this.hasPermission("Special Hardware", "can_view")
+    },
+     get canEditSpecialHardware(){
+      return this.hasPermission("Special Hardware","can_edit");
+     },
+     get canDeleteSpecialHardware(){
+      return this.hasPermission("Special Hardware", "can_delete");
+     },
+     get canAddSpecialHardware(){
+      return this.hasPermission("Special Hardware", "can_add");
+     },
+
+    // Permission shourcut for Others actions
+    get canViewOthers(){
+      return this.hasPermission("Others", "can_view");
+    },
+    get canEditOthers(){
+      return this.hasPermission("Others", "can_edit");
+    },
+    get canDeleteOthers(){
+      return this.hasPermission("Others", "can_delete");
+    },
+    get canAddOthers(){
+      return this.hasPermission("Others", "can_add");
+    },
+
+    //Permission Shorcut for Material Salavage ticket
+    get canAddSalvageTicket(){
+      return this.hasPermission("Material Salvage Ticket","can_add");
+    },
+    get canEditSalvageTicket(){
+      return this.hasPermission("Material salvage Ticket", "can_edit");
+    },
+    get canViewSalvageTicket(){
+      return this.hasPermission("Material Salvage Ticket", "can_view");
+    },
+    get canDeleteSalvageTicket(){
+      return this.hasPermission("Material Salvage Ticket", "can_delete");
+    },
+
+    //Permission shortcut for Memorandum Receipt
+    get canAddMemorandumReceipt(){
+      return this.hasPermission("Memorandum Receipts", "can_add");
+    },
+    get canEditMemorandumReceipt(){
+      return this.hasPermission("Memorandum Receipts", "can_edit");
+    },
+    get canViewMemorandumReceipt(){
+      return this.hasPermission("Memorandum Receipts", "can_view");
+    },
+    get canDeleteMemorandumReceipt(){
+      return this.hasPermission("Memorandum Receipts", "can_delete");
+    },
+    get canAddStocks(){
+      return this.hasPermission("Stocks", "can_add");
+    },
+    get canEditStocks(){
+      return this.hasPermission("Stocks", "can_edit");
+    },
+    get canViewStocks(){
+      return this.hasPermission("Stocks", "can_view");
+    },
+    get canDeleteStocks(){
+      return this.hasPermission("Stocks", "can_delete");
     },
 });

@@ -58,6 +58,7 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'role' => $control->role ?? null,
                 'status' => $control->status ?? null,
+                'department' => $user->department,
                 'modules' => $modules,
             ],
             'access_token' => $token,

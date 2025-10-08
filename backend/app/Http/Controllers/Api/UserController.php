@@ -197,6 +197,7 @@ class UserController extends Controller
                 'username' => $user->username,
                 'role' => $user->control->role ?? null,
                 'status' => $user->control->status ?? null,
+                'department' => $user->department,
                 'modules' => $modules,
             ];
         });

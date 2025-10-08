@@ -1,26 +1,25 @@
 <template>
   <header
-    class="bg-slate-800 text-white h-14 flex items-center shadow-md fixed top-0 left-0 right-0 z-50 px-6"
+    class="bg-dark text-white d-flex align-items-center justify-content-between shadow fixed-top px-4"
+    style="height: 56px; z-index: 1050;"
   >
-     <!-- Logo + Title -->
-    <div class="flex items-center gap-2">
-      <img
-        src="../assets/ISELCO1LOGO.png"
-        alt="Logo"
-        class="h-8 w-8 object-contain"
-      />
-      <h1 class="text-lg font-bold">Warehouse Inventory System</h1>
+    <!-- Left: Logo + Title -->
+    <div class="d-flex align-items-center gap-2">
+      <img src="../assets/ISELCO1LOGO.png" alt="Logo" class="img-icon" />
+      <h2 class="h5 mb-0">Warehouse Inventory System</h2>
     </div>
 
-    <!-- Right side -->
-    <div class="flex flex-col items-end ml-auto">
-      <h1 class="text-base font-medium">
-        Welcome, {{ userStore.user?.fullname || userStore.user?.username || "Guest" }}
-      </h1>
-      <span class="text-xs text-gray-300">{{ currentDateTime }}</span>
+    <!-- Right: User Info -->
+    <div class="d-flex flex-column align-items-end">
+      <h6 class="mb-0 fw-medium">
+        Welcome,
+        {{ userStore.user?.fullname || userStore.user?.username || "Guest" }}
+      </h6>
+      <small class="text-light opacity-75">{{ currentDateTime }}</small>
     </div>
   </header>
 </template>
+
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
@@ -42,3 +41,10 @@ onMounted(async () => {
 });
 onUnmounted(() => clearInterval(interval));
 </script>
+<style scoped>
+.img-icon {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+</style>

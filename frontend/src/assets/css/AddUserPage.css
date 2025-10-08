@@ -56,6 +56,42 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+.edit-btn {
+  background: hsla(120, 97%, 51%, 0.951);
+  color: rgb(0, 0, 0);
+  padding: 0.25rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.edit-btn:hover {
+  background: #d8d508;
+}
+
+.edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.delete-btn {
+  background: hsla(353, 91%, 45%, 0.951);
+  color: rgb(255, 255, 255);
+  padding: 0.25rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #e23e56;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* Table */
 .table-wrapper {
