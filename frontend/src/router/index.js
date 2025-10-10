@@ -22,7 +22,7 @@ const routes = [
     path: "/login",
     name: "Login",
     component: Login,
-    meta: { guestOnly: true }, // prevent access if already logged in
+    meta: { guestOnly: true },
   },
 
   {
@@ -30,7 +30,7 @@ const routes = [
     component: Dashboard,
     meta: { requiresAuth: true },
     children: [
-      {path: "/dashboard/employees",
+      {path: "/dashboard/employees/",
       component: AddEmployeePage,},
       {path: "/dashboard/user",
       component: UserManagement,},

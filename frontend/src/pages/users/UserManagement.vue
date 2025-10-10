@@ -52,7 +52,7 @@
           </tr>
 
           <tr v-if="filteredUsers.length === 0">
-            <td colspan="5" class="text-center py-3 text-muted">
+            <td colspan="6" class="text-center py-3 text-muted">
               No users found
             </td>
           </tr>

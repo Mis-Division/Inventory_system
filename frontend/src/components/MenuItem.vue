@@ -179,7 +179,7 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/dashboard/employees" class="nav-link d-flex align-items-center"
+            <router-link to="/dashboard/employees/" class="nav-link d-flex align-items-center"
               :class="{ 'disabled': !hasAccess('List of Employee') }">
               <span><i class="bi bi-person-badge me-2"></i>List of Employee</span>
             </router-link>

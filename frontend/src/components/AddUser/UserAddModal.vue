@@ -131,7 +131,7 @@
             <i class="bi bi-x-circle me-1"></i> Close
           </button>
           <button type="button" class="btn btn-success" @click="handleCreateClick">
-            <i class="bi bi-plus-circle me-1"></i> Create
+            <i class="bi bi-plus-circle me-1"></i> Save
           </button>
         </div>
       </div>
