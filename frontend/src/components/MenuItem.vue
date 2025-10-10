@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar bg-light border-end vh-100 p-3 mt-5" >
+  <aside class="sidebar bg-light border-end vh-100 p-3 mt-5">
     <nav class="nav flex-column gap-1">
 
       <!-- Dashboard -->
@@ -233,14 +233,17 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
 .nav-link:active {
   background-color: #81a00e;
   border-radius: 6px;
   color: black;
 }
-.active-link i{
+
+.active-link i {
   color: rgb(141, 45, 45);
 }
+
 .nav-link:hover {
   background-color: #3a7aba;
   border-radius: 6px;

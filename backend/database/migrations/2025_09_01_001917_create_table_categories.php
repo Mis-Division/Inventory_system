@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id('category_id');
             $table->string('category_name')->unique();
             $table->string('description');
-            $table->string('created_by')->nullable();
-            $table->string('updated_by');
+            $table->string('created_at')->nullable();
             $table->timestamp('updated_at');
         });
     }

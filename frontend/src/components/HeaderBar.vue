@@ -48,8 +48,8 @@ onUnmounted(() => clearInterval(interval));
 </script>
 <style scoped>
 .img-icon {
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   object-fit: contain;
 }
 .btn-outline-light:hover {
