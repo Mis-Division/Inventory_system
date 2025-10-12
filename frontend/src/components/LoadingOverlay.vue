@@ -1,27 +1,37 @@
 <template>
   <div 
     v-if="show" 
-    class="fixed inset-0 bg-black/10 backdrop-blur-sm flex flex-col items-center justify-center z-50"
+    class="fixed top-0 left-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50"
+    style="z-index: 9999;"
   >
     <img 
       :src="logo" 
       :alt="altText"
-      class="animate-spin rounded-full object-cover"
-      :class="typeof size === 'string' ? size : ''"
+      class="spinner"
       :style="typeof size === 'number' ? { width: size + 'px', height: size + 'px' } : {}"
     />
-    <p v-if="message" class="mt-4 text-white text-lg">{{ message }}</p>
+    <p v-if="message" class="mt-3 text-white fw-bold">{{ message }}</p>
   </div>
 </template>
 
 <script setup>
-import { defineProps } from "vue";
-
 const props = defineProps({
   show: { type: Boolean, default: false },
   logo: { type: String, default: "../assets/ISELCO1LOGO.png" },
-  size: { type: [String, Number], default: 70 }, // now default is 50px
+  size: { type: [String, Number], default: 70 },
   message: { type: String, default: "" },
   altText: { type: String, default: "Loading..." }
 });
 </script>
+
+<style scoped>
+.spinner {
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>

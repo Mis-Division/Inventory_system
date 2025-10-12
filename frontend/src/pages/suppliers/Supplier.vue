@@ -18,8 +18,7 @@
 
     <!-- Table -->
     <div class="table-wrapper">
-      <table v-if="!loading && suppliers.length"
-        class="table table-hover table-bordered align-middle mb-2 table-striped"
+      <table class="table table-hover table-bordered align-middle mb-2 table-striped"
         style="font-size: 20px; margin-top: 10px;">
         <thead class="table-secondary text-center">
           <tr>
@@ -31,7 +30,7 @@
             <th style="width: 9%;">Action</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="!loading && suppliers.length">
           <tr class="text-center" v-for="supplier in suppliers" :key="supplier.supplier_id">
             <td>{{ supplier.supplier_id }}</td>
             <td>{{ supplier.supplier_name }}</td>
@@ -39,24 +38,33 @@
             <td>{{ supplier.phone }}</td>
             <td>{{ supplier.email }}</td>
             <td>
-              <button :disabled="!canEditSupplier" class="btn btn-warning" title="Edit Supplier">
+              <button :disabled="!canEditSupplier" @click="UpdateSupplierInfo(supplier)" class="btn btn-warning"
+                title="Edit Supplier">
                 <i class="bi bi-pencil"></i>
               </button>
               |
-              <button :disabled="!canDeleteSupplier" class="btn btn-danger" title="Delete Supplier">
+              <button :disabled="!canDeleteSupplier" @click="DeleteSupplierInfo(supplier)" class="btn btn-danger"
+                title="Delete Supplier">
                 <i class="bi bi-trash"></i>
               </button>
             </td>
           </tr>
         </tbody>
+        <tbody v-else-if="!loading && !suppliers.length">
+          <tr>
+            <td colspan="6" class="text-center py-3 text-muted">
+              No suppliers found.
+            </td>
+          </tr>
+        </tbody>
       </table>
-
-      <div v-if="!loading && suppliers.length === 0" class="text-center">
-        No suppliers found.
-      </div>
     </div>
   </div>
   <AddSupplier v-if="showAddSupply" @close="closeAddSupply" />
+  <UpdateSupplier v-if="showSupplierInfo" :supplier="selectedSupplier" @close="showSupplierInfo = false"
+    @updated="fetchSuppliers" />
+  <DeleteSupplier v-if="deleteSupplier" :supplier="selectedSupplier" @close="deleteSupplier = false"
+    @updated="fetchSuppliers" />
 
 </template>
 
@@ -67,7 +75,8 @@ import { userStore } from "../../stores/userStore";
 import { useAppStore } from "../../stores/appStore";
 import "../../assets/css/Global.css";
 import AddSupplier from "../../components/Supplier/AddSupplier.vue";
-
+import UpdateSupplier from "../../components/Supplier/UpdateSupplier.vue";
+import DeleteSupplier from "../../components/Supplier/DeleteSupplier.vue";
 
 const suppliers = ref([]);
 const loading = ref(true);
@@ -75,8 +84,10 @@ const error = ref(null);
 const appStore = useAppStore();
 
 //modal
-
+const showSupplierInfo = ref(false);
+const deleteSupplier = ref(false);
 const showAddSupply = ref(false);
+const selectedSupplier = ref(null);
 
 // ✅ Use consistent naming
 const canAddSupplier = computed(() => userStore.canAddSupplier);
@@ -99,6 +110,33 @@ async function addSupply() {
 async function closeAddSupply() {
   showAddSupply.value = false;
   fetchSuppliers();
+}
+// show modal Sir for update supplier
+async function UpdateSupplierInfo(supplier) {
+  try {
+    appStore.showLoading();
+    const res = await api.get(`/suppliers/get_supplier/${supplier.supplier_id}`);
+    selectedSupplier.value = res.data.supplier;
+    showSupplierInfo.value = true;
+  } catch (err) {
+    console.error("Failed to fetch supplier info:", err);
+  } finally {
+    appStore.hideLoading();
+  }
+}
+
+//
+async function DeleteSupplierInfo(supplier) {
+  try {
+    appStore.showLoading();
+    const res = await api.get(`/suppliers/get_supplier/${supplier.supplier_id}`);
+    selectedSupplier.value = res.data.supplier;
+    deleteSupplier.value = true;
+  } catch (err) {
+    console.error("Failed to fetch supplier for deletion:", err);
+  } finally {
+    appStore.hideLoading();
+  }
 }
 
 const fetchSuppliers = async () => {

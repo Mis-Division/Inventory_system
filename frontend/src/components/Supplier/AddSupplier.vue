@@ -1,6 +1,6 @@
 <template>
     <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document"  :class="{ 'modal-sm': isMobile }">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5>Add Supplier</h5>
@@ -110,9 +110,9 @@
         </div>
     </div>
 </template>
-<style src="../../assets/css/Global.css"/>
+
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, onBeforeUnmount, onMounted  } from "vue";
 import api from "../../services/api";
 
 
@@ -122,6 +122,8 @@ const modalLoading = ref(false);
 const showConfirm = ref(false);
 const showSuccess = ref(false);
 const showError = ref(false);
+const isMobile = ref(window.innerWidth < 768);
+
 
 const form = reactive({
     supplier_name: "",
@@ -175,4 +177,9 @@ function closeSuccess() {
     showSuccess.value = false;
     emit("close");
 }
+function handleResize() {
+  isMobile.value = window.innerWidth < 768;
+}
+onMounted(() => window.addEventListener("resize", handleResize));
+onBeforeUnmount(() => window.removeEventListener("resize", handleResize));
 </script>

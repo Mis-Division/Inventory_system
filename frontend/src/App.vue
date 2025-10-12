@@ -15,6 +15,7 @@ import { useAppStore } from "./stores/appStore";
 import LoadingOverlay from "./components/LoadingOverlay.vue";
 import logoImg from "./assets/ISELCO1LOGO.png";
 import AlertToast from "./components/AddUser/AlertToast.vue";
+import "../src/assets/css/Global.css";
 
 const appStore = useAppStore();
 </script>
