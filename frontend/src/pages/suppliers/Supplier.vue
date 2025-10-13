@@ -1,9 +1,16 @@
 <template>
   <div class="main-container">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <h1 class="mb-3">Supplier List</h1>
+      <h1 class="mb-3">Supplier Management</h1>
       <div class="d-flex gap-2 flex-wrap mt-2 mt-md-0">
-        <input type="text" class="form-control" placeholder="Search Supplier..." style="max-width: 200px;" />
+        <input
+          type="text"
+          v-model="searchQuery"
+          class="form-control"
+          placeholder="Search Supplier..."
+          style="max-width: 200px;"
+        />
         <button :disabled="!canAddSupplier" @click="addSupply" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Add
         </button>
@@ -23,20 +30,23 @@
         <thead class="table-secondary text-center">
           <tr>
             <th style="width: 5%;">ID</th>
-            <th style="width: 30%;">Supplier Name</th>
-            <th style="width: 15%;">Contact Person</th>
-            <th style="width: 15%;">Phone Number</th>
-            <th style="width: 25%;">Email</th>
-            <th style="width: 9%;">Action</th>
+            <th style="width: 10%;">Supplier #</th>
+            <th style="width: 20%;">Supplier Name</th>
+            <th style="width: 15%;">Contact#</th>
+            <th style="width: 15%">Tin</th>
+            <th style="width: 20%">Vat/Nvat</th>
+            <th style="width: 14%;">Action</th>
           </tr>
         </thead>
-        <tbody v-if="!loading && suppliers.length">
-          <tr class="text-center" v-for="supplier in suppliers" :key="supplier.supplier_id">
+
+        <tbody v-if="!loading && paginatedSuppliers.length">
+          <tr class="text-center" v-for="supplier in paginatedSuppliers" :key="supplier.supplier_id">
             <td>{{ supplier.supplier_id }}</td>
+            <td>{{ supplier.supplier_no }}</td>
             <td>{{ supplier.supplier_name }}</td>
-            <td>{{ supplier.contact_person }}</td>
-            <td>{{ supplier.phone }}</td>
-            <td>{{ supplier.email }}</td>
+            <td>{{ supplier.contact_no }}</td>
+            <td>{{ supplier.tin }}</td>
+            <td>{{ supplier.vat_no }}</td>
             <td>
               <button :disabled="!canEditSupplier" @click="UpdateSupplierInfo(supplier)" class="btn btn-warning"
                 title="Edit Supplier">
@@ -50,22 +60,35 @@
             </td>
           </tr>
         </tbody>
-        <tbody v-else-if="!loading && !suppliers.length">
+
+        <tbody v-else-if="!loading && !paginatedSuppliers.length">
           <tr>
-            <td colspan="6" class="text-center py-3 text-muted">
-              No suppliers found.
-            </td>
+            <td colspan="6" class="text-center py-3 text-muted">No suppliers found.</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Controls -->
+    <div v-if="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-3">
+      <button class="btn btn-outline-secondary" @click="prevPage" :disabled="currentPage === 1">
+        <i class="bi bi-chevron-left"></i> Prev
+      </button>
+
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+      <button class="btn btn-outline-secondary" @click="nextPage" :disabled="currentPage === totalPages">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
   </div>
+
+  <!-- Modals -->
   <AddSupplier v-if="showAddSupply" @close="closeAddSupply" />
   <UpdateSupplier v-if="showSupplierInfo" :supplier="selectedSupplier" @close="showSupplierInfo = false"
     @updated="fetchSuppliers" />
   <DeleteSupplier v-if="deleteSupplier" :supplier="selectedSupplier" @close="deleteSupplier = false"
     @updated="fetchSuppliers" />
-
 </template>
 
 <script setup>
@@ -83,19 +106,45 @@ const loading = ref(true);
 const error = ref(null);
 const appStore = useAppStore();
 
-//modal
+// Pagination state
+const currentPage = ref(1);
+const itemsPerPage = 10; // adjust this number as needed
+const searchQuery = ref("");
+
+// modal
 const showSupplierInfo = ref(false);
 const deleteSupplier = ref(false);
 const showAddSupply = ref(false);
 const selectedSupplier = ref(null);
 
-// ✅ Use consistent naming
+// Permissions
 const canAddSupplier = computed(() => userStore.canAddSupplier);
 const canEditSupplier = computed(() => userStore.canEditSupplier);
 const canDeleteSupplier = computed(() => userStore.canDeleteSupplier);
 
-//show modal sir for addSupply
+// Search and Pagination Computed
+const filteredSuppliers = computed(() => {
+  if (!searchQuery.value) return suppliers.value;
+  return suppliers.value.filter(s =>
+    s.supplier_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
+const totalPages = computed(() => Math.ceil(filteredSuppliers.value.length / itemsPerPage));
+
+const paginatedSuppliers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return filteredSuppliers.value.slice(start, start + itemsPerPage);
+});
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+}
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value--;
+}
+
+// modal functions
 async function addSupply() {
   try {
     appStore.showLoading();
@@ -111,7 +160,6 @@ async function closeAddSupply() {
   showAddSupply.value = false;
   fetchSuppliers();
 }
-// show modal Sir for update supplier
 async function UpdateSupplierInfo(supplier) {
   try {
     appStore.showLoading();
@@ -124,8 +172,6 @@ async function UpdateSupplierInfo(supplier) {
     appStore.hideLoading();
   }
 }
-
-//
 async function DeleteSupplierInfo(supplier) {
   try {
     appStore.showLoading();
@@ -141,7 +187,6 @@ async function DeleteSupplierInfo(supplier) {
 
 const fetchSuppliers = async () => {
   try {
-    // ✅ Axios syntax (no need for response.ok or .json())
     const response = await api.get("/suppliers/get_supplier");
     suppliers.value = response.data.suppliers;
   } catch (err) {

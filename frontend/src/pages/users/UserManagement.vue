@@ -19,11 +19,11 @@
         <thead class="table-primary ">
           <tr>
             <th style="width: 5%;">ID</th>
-            <th style="width: 22%;">Full Name</th>
+            <th style="width: 20%;">Full Name</th>
             <th style="width: 15%;">Username</th>
             <th style="width: 15%;">Role</th>
             <th style="width: 35%;">Department</th>
-            <th style="width: 8%;">Status</th>
+            <th style="width: 10%;">Status</th>
           </tr>
         </thead>
         <tbody>

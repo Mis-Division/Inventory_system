@@ -93,13 +93,13 @@
       <!--OrderItem-->
       <router-link to="/dashboard/order" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Order') }">
-        <span> <i class="bi bi-cart me-2"></i>Order Item</span>
+        <span> <i class="bi bi-cart me-2"></i>Purchase Order</span>
       </router-link>
       <!-- Catergory-->
-      <router-link to="/dashboard/category" class="nav-link d-flex align-items-center mb-2"
+      <!-- <router-link to="/dashboard/category" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Categories') }">
         <span> <i class="bi bi-tags me-2"></i>Category</span>
-      </router-link>
+      </router-link> -->
       <!-- Supplier -->
       <router-link to="/dashboard/supplier" class="nav-link d-flex align-items-center mb-2"
         :class="{ 'disabled': !hasAccess('Suppliers') }">

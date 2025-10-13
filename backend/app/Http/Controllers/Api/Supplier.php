@@ -12,21 +12,25 @@ class Supplier extends Controller
     public function CreateSupplier(Request $request)
     {
         $request->validate([
+            'supplier_no' => 'required|string|max:255',
             'supplier_name' => 'required|string|max:255',
-            'contact_person' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'contact_no' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
+            'tin' => 'nullable|string|max:500',
+            'vat_no' => 'nullable|string|max:500',
         ]);
 
        DB::beginTransaction();
        try {
            $supplier = suppliers::create([
+               'supplier_no' => $request->supplier_no,
                'supplier_name' => $request->supplier_name,
-               'contact_person' => $request->contact_person,
                'email' => $request->email,
-               'phone' => $request->phone,
+               'contact_no' => $request->contact_no,
                'address' => $request->address,
+               'tin' => $request->tin,
+               'vat_no'=> $request->vat_no,
            ]);
 
            DB::commit();
@@ -60,18 +64,20 @@ class Supplier extends Controller
     public function UpdateSupplier(Request $request, $id)
     {
         $request->validate([
+            'supplier_no' => 'sometimes|required|string|max:255',
             'supplier_name' => 'sometimes|required|string|max:255',
-            'contact_person' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|nullable|email|max:255',
-            'phone' => 'sometimes|nullable|string|max:20',
+            'contact_no' => 'sometimes|nullable|string|max:20',
             'address' => 'sometimes|nullable|string|max:500',
+            'tin' => 'sometimes|nullable|string|max:500',
+            'vat_no' => 'sometimes|nullable|string|max:500',
         ]);
 
        DB::beginTransaction();
        try {
            $supplier = suppliers::find($id);
 
-           $supplier->update($request->only(['supplier_name', 'contact_person', 'email', 'phone', 'address']));
+           $supplier->update($request->only(['supplier_no', 'supplier_name', 'email', 'contact_no', 'address','tin','vat_no']));
 
            DB::commit();
            return response()->json(['message' => 'Supplier updated successfully', 'supplier' => $supplier], 200);

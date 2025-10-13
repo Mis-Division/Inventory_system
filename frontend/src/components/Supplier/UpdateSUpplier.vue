@@ -9,29 +9,37 @@
 
                 <div class="modal-body">
                     <form class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Supplier Name <span class="text-danger">*</span></label>
+                        <div class="col-md-12">
+                            <label class="form-label">Supplier # <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.supplier_no" type="text" class="form-control" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">Contact Person <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.supplier_name" type="text" class="form-control" />
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Contact Person <span class="text-danger">*</span></label>
-                            <input v-model="localSupplier.contact_person" type="text" class="form-control" />
-                        </div>
-
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label">Email <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.email" type="text" class="form-control" />
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input v-model="localSupplier.phone" type="text" class="form-control" />
+                            <input v-model="localSupplier.contact_no" type="text" class="form-control" />
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label">Address <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.address" type="text" class="form-control" />
+                        </div>
+                         <div class="col-md-12">
+                            <label class="form-label">Tin <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.tin" type="text" class="form-control" />
+                        </div>
+                         <div class="col-md-12">
+                            <label class="form-label">Vat / Nvat Reg <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.vat_no" type="text" class="form-control" />
                         </div>
                     </form>
                 </div>
