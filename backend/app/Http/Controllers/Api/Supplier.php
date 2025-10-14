@@ -40,15 +40,51 @@ class Supplier extends Controller
            return response()->json(['error' => 'Failed to create supplier', 'message' => $e->getMessage()], 500);
        }
     }
-    public function GetSuppliers()
-    {
-       try{
-              $suppliers = suppliers::all();
-              return response()->json(['suppliers' => $suppliers], 200);
-         } catch (\Exception $e) {
-              return response()->json(['error' => 'Failed to fetch suppliers', 'message' => $e->getMessage()], 500);
-       }
+  public function GetSuppliers(Request $request)
+{
+    try {
+        // Get search and pagination parameters from the request
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10); // Default 10 per page
+
+        // Query suppliers
+        $query = Suppliers::query();
+
+        // 🔍 Apply search filter
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('supplier_name', 'like', "%{$search}%")
+                  ->orwhere('supplier_no', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('contact_no', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        // 📄 Paginate results
+        $suppliers = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Suppliers fetched successfully',
+            'data' => $suppliers->items(),
+            'meta' => [
+                'current_page' => $suppliers->currentPage(),
+                'last_page' => $suppliers->lastPage(),
+                'per_page' => $suppliers->perPage(),
+                'total' => $suppliers->total(),
+            ]
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Failed to fetch suppliers',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
     public function GetSupplierById($id)
     {
        try{

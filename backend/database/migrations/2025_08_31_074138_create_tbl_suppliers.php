@@ -16,7 +16,7 @@ return new class extends Migration
             $table-foreignId('supplier_no')->unique();
             $table->string('supplier_name')->unique();
             $table->string('email')->unique();
-            $table->string('phone')->nullable();
+            $table->string('contact_no')->nullable();
             $table->string('address')->nullable();
             $table->string('tin')->nullable();
             $table->string('vat_no')->nullable();

@@ -11,16 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_products_item', function (Blueprint $table) {
+        Schema::create('tbl_products', function (Blueprint $table) {
             $table->id('product_id');
-            $table->foreignId('category_id')->onDelete('cascade');
-            $table->string('sku')->unique();
             $table->string('product_name');
             $table->text('description')->nullable();
-            $table->integer('quantity')->default(0);
-            $table->enum('unit', ['pcs', 'box', 'kg'])->default('pcs');
+            $table->foreignId('category_id')->onDelete('cascade');
+            $table->foreignId('supplier_id')->onDelete('cascade');
+            $table->integer('quantity_inStock')->default(0);
+            $table->decimal('unitPrice', 10, 2);
             $table->enum('product_type', ['Line_hardware', 'Special_Equipments', 'None'])->default('Line_hardware');
-            $table->string('created_by');
+            $table->string('created_at');
             $table->string('updated_by')->nullable();
             $table->timestamp('updated_at');
         });
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_products_item');
+        Schema::dropIfExists('tbl_products');
     }
 };

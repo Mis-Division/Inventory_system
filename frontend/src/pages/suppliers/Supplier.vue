@@ -1,46 +1,41 @@
 <template>
   <div class="main-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
       <h1 class="mb-3">Supplier Management</h1>
-      <div class="d-flex gap-2 flex-wrap mt-2 mt-md-0">
-        <input
-          type="text"
-          v-model="searchQuery"
-          class="form-control"
-          placeholder="Search Supplier..."
-          style="max-width: 200px;"
-        />
+
+      <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+        <input v-model="searchQuery" @input="fetchSuppliers" type="text" class="form-control"
+          placeholder="Search Supplier..." style="width: 500px; flex: 0 0 auto;" />
         <button :disabled="!canAddSupplier" @click="addSupply" class="btn btn-primary">
-          <i class="bi bi-plus-circle me-1"></i> Add
+          <i class="bi bi-plus-circle me-1"></i> Supplier
         </button>
       </div>
     </div>
 
-    <!-- Loading Indicator -->
-    <div v-if="loading" class="text-center">Loading suppliers...</div>
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-4 text-muted">Loading suppliers...</div>
 
-    <!-- Error Message -->
+    <!-- Error -->
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
-    <!-- Table -->
-    <div class="table-wrapper">
-      <table class="table table-hover table-bordered align-middle mb-2 table-striped"
-        style="font-size: 20px; margin-top: 10px;">
-        <thead class="table-secondary text-center">
+    <!-- Supplier Table -->
+    <div v-if="!loading" class="table-responsive">
+      <table class="table table-hover table-bordered align-middle mb-2  text-center">
+        <thead class="table-secondary">
           <tr>
             <th style="width: 5%;">ID</th>
             <th style="width: 10%;">Supplier #</th>
             <th style="width: 20%;">Supplier Name</th>
-            <th style="width: 15%;">Contact#</th>
-            <th style="width: 15%">Tin</th>
-            <th style="width: 20%">Vat/Nvat</th>
-            <th style="width: 14%;">Action</th>
+            <th style="width: 15%;">Contact #</th>
+            <th style="width: 15%;">TIN</th>
+            <th style="width: 15%;">VAT/NVAT</th>
+            <th style="width: 15%;">Action</th>
           </tr>
         </thead>
 
-        <tbody v-if="!loading && paginatedSuppliers.length">
-          <tr class="text-center" v-for="supplier in paginatedSuppliers" :key="supplier.supplier_id">
+        <tbody v-if="suppliers.length > 0">
+          <tr v-for="supplier in suppliers" :key="supplier.supplier_id">
             <td>{{ supplier.supplier_id }}</td>
             <td>{{ supplier.supplier_no }}</td>
             <td>{{ supplier.supplier_name }}</td>
@@ -61,26 +56,32 @@
           </tr>
         </tbody>
 
-        <tbody v-else-if="!loading && !paginatedSuppliers.length">
+        <tbody v-else>
           <tr>
-            <td colspan="6" class="text-center py-3 text-muted">No suppliers found.</td>
+            <td colspan="7" class="text-center py-3 text-muted">No suppliers found.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Pagination Controls -->
-    <div v-if="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-3">
-      <button class="btn btn-outline-secondary" @click="prevPage" :disabled="currentPage === 1">
-        <i class="bi bi-chevron-left"></i> Prev
-      </button>
+    <!-- Pagination -->
+    <nav v-if="meta && meta.last_page > 1" class="mt-3">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: meta.current_page === 1 }" @click="changePage(meta.current_page - 1)">
+          <a class="page-link">Previous</a>
+        </li>
 
-      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <li v-for="page in meta.last_page" :key="page" class="page-item" :class="{ active: page === meta.current_page }"
+          @click="changePage(page)">
+          <a class="page-link">{{ page }}</a>
+        </li>
 
-      <button class="btn btn-outline-secondary" @click="nextPage" :disabled="currentPage === totalPages">
-        Next <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+        <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }"
+          @click="changePage(meta.current_page + 1)">
+          <a class="page-link">Next</a>
+        </li>
+      </ul>
+    </nav>
   </div>
 
   <!-- Modals -->
@@ -92,11 +93,10 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import api from "../../services/api";
 import { userStore } from "../../stores/userStore";
 import { useAppStore } from "../../stores/appStore";
-import "../../assets/css/Global.css";
 import AddSupplier from "../../components/Supplier/AddSupplier.vue";
 import UpdateSupplier from "../../components/Supplier/UpdateSupplier.vue";
 import DeleteSupplier from "../../components/Supplier/DeleteSupplier.vue";
@@ -104,62 +104,64 @@ import DeleteSupplier from "../../components/Supplier/DeleteSupplier.vue";
 const suppliers = ref([]);
 const loading = ref(true);
 const error = ref(null);
-const appStore = useAppStore();
-
-// Pagination state
-const currentPage = ref(1);
-const itemsPerPage = 10; // adjust this number as needed
 const searchQuery = ref("");
+const meta = ref({});
+const currentPage = ref(1);
+const perPage = 10;
 
-// modal
+const showAddSupply = ref(false);
 const showSupplierInfo = ref(false);
 const deleteSupplier = ref(false);
-const showAddSupply = ref(false);
 const selectedSupplier = ref(null);
+
+const appStore = useAppStore();
 
 // Permissions
 const canAddSupplier = computed(() => userStore.canAddSupplier);
 const canEditSupplier = computed(() => userStore.canEditSupplier);
 const canDeleteSupplier = computed(() => userStore.canDeleteSupplier);
 
-// Search and Pagination Computed
-const filteredSuppliers = computed(() => {
-  if (!searchQuery.value) return suppliers.value;
-  return suppliers.value.filter(s =>
-    s.supplier_name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-});
-
-const totalPages = computed(() => Math.ceil(filteredSuppliers.value.length / itemsPerPage));
-
-const paginatedSuppliers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  return filteredSuppliers.value.slice(start, start + itemsPerPage);
-});
-
-function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++;
-}
-function prevPage() {
-  if (currentPage.value > 1) currentPage.value--;
-}
-
-// modal functions
-async function addSupply() {
+// Fetch suppliers with API search + pagination
+const fetchSuppliers = async () => {
+  loading.value = true;
   try {
-    appStore.showLoading();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    showAddSupply.value = true;
+    const response = await api.get("/suppliers/get_supplier", {
+      params: {
+        search: searchQuery.value,
+        page: currentPage.value,
+        per_page: perPage,
+      },
+    });
+
+    suppliers.value = response.data.data;
+    meta.value = response.data.meta;
   } catch (err) {
-    console.error("show preparing modal:", err);
+    error.value = err.response?.data?.message || err.message;
   } finally {
-    appStore.hideLoading();
+    loading.value = false;
   }
+};
+
+// Pagination handler
+function changePage(page) {
+  if (page < 1 || page > meta.value.last_page) return;
+  currentPage.value = page;
+  fetchSuppliers();
 }
+
+// Modal functions
+async function addSupply() {
+  appStore.showLoading();
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  showAddSupply.value = true;
+  appStore.hideLoading();
+}
+
 async function closeAddSupply() {
   showAddSupply.value = false;
   fetchSuppliers();
 }
+
 async function UpdateSupplierInfo(supplier) {
   try {
     appStore.showLoading();
@@ -172,6 +174,7 @@ async function UpdateSupplierInfo(supplier) {
     appStore.hideLoading();
   }
 }
+
 async function DeleteSupplierInfo(supplier) {
   try {
     appStore.showLoading();
@@ -185,18 +188,14 @@ async function DeleteSupplierInfo(supplier) {
   }
 }
 
-const fetchSuppliers = async () => {
-  try {
-    const response = await api.get("/suppliers/get_supplier");
-    suppliers.value = response.data.suppliers;
-  } catch (err) {
-    error.value = err.response?.data?.message || err.message;
-  } finally {
-    loading.value = false;
-  }
-};
-
 onMounted(() => {
   fetchSuppliers();
 });
 </script>
+
+<style scoped>
+.table th,
+.table td {
+  vertical-align: middle;
+}
+</style>

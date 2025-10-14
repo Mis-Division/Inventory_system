@@ -9,7 +9,7 @@ class Employee extends Model
     // Primary key (optional, only if not "id")
     protected $primaryKey = 'id';
 
-    protected $table = 'tbl_employess_list';
+    protected $table = 'tbl_employee';
 
     // Mass-assignable fields
     protected $fillable = [

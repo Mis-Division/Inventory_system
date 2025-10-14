@@ -1,198 +1,116 @@
 <template>
   <div class="main-container">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <h1 class="mb-3">Category List</h1>
-      <div class="d-flex gap-2 flex-wrap mt-2 mt-md-0">
-        <input
-          type="text"
-          v-model="searchQuery"
-          class="form-control"
-          placeholder="Search Supplier..."
-          style="max-width: 200px;"
-        />
-        <button :disabled="!cadAddCategory" @click="addCaegory" class="btn btn-primary">
-          <i class="bi bi-plus-circle me-1"></i> Add
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+      <h1 class="mb-0">Items</h1>
+      <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+        <input type="text" v-model="search" @input="fetchItems" class="form-control" placeholder="Search Item..."
+          style="width: 500px; flex: 0 0 auto;" />
+        <button :disabled="!canAddCategory" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-1"></i> Item Code
         </button>
       </div>
     </div>
 
-    <!-- Loading Indicator -->
-    <div v-if="loading" class="text-center">Loading suppliers...</div>
+    <table class="table table-bordered table-hover text-center">
+      <thead class="table-secondary">
+        <tr>
+          <th style="width: 5%;">ID</th>
+          <th style="width: 15%;">ItemCode</th>
+          <th style="width: 35%;">Description</th>
+          <th style="width: 15%;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in items" :key="item.id" v-if="items.length > 0">
+          <td>{{ item.ItemCode_id }}</td>
+          <td>{{ item.ItemCode }}</td>
+          <td>{{ item.description }}</td>
+          <td>
+            <button :disabled="!canEditCategory" class="btn btn-warning" title="Edit Supplier">
+              <i class="bi bi-pencil"></i>
+            </button>
+            |
+            <button :disabled="!canDeleteCategory" class="btn btn-danger" title="Delete Supplier">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+        <tr v-else>
+          <td colspan="4" class="text-center py-3 text-muted">
+            No items found.
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Error Message -->
-    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+    <!-- Pagination -->
+    <nav>
+      <ul class="pagination justify-content-center">
+        <li class="page-item" :class="{ disabled: meta.current_page === 1 }" @click="changePage(meta.current_page - 1)">
+          <a class="page-link">Previous</a>
+        </li>
 
-    <!-- Table -->
-    <div class="table-wrapper">
-      <table class="table table-hover table-bordered align-middle mb-2 table-striped"
-        style="font-size: 20px; margin-top: 10px;">
-        <thead class="table-secondary text-center">
-          <tr>
-            <th style="width: 5%;">ID</th>
-            <th style="width: 30%;">Category Name</th>
-            <th style="width: 15%;">Description</th>
+        <li v-for="page in meta.last_page" :key="page" class="page-item" :class="{ active: page === meta.current_page }"
+          @click="changePage(page)">
+          <a class="page-link">{{ page }}</a>
+        </li>
 
-            <th style="width: 9%;">Action</th>
-          </tr>
-        </thead>
-
-        <tbody v-if="!loading && paginatedSuppliers.length">
-          <tr class="text-center" v-for="supplier in paginatedSuppliers" :key="supplier.supplier_id">
-            <td>{{ supplier.supplier_id }}</td>
-            <td>{{ supplier.supplier_name }}</td>
-            <td>{{ supplier.contact_person }}</td>
-
-            <td>
-              <button :disabled="!canEditCategory" @click="UpdateCategoryInfo(supplier)" class="btn btn-warning"
-                title="Edit Supplier">
-                <i class="bi bi-pencil"></i>
-              </button>
-              |
-              <button :disabled="!canDeleteCategory" @click="DeleteSupplierInfo(supplier)" class="btn btn-danger"
-                title="Delete Supplier">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-
-        <tbody v-else-if="!loading && !paginatedSuppliers.length">
-          <tr>
-            <td colspan="6" class="text-center py-3 text-muted">No suppliers found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination Controls -->
-    <div v-if="!loading && totalPages > 1" class="d-flex justify-content-center align-items-center gap-2 mt-3">
-      <button class="btn btn-outline-secondary" @click="prevPage" :disabled="currentPage === 1">
-        <i class="bi bi-chevron-left"></i> Prev
-      </button>
-
-      <span>Page {{ currentPage }} of {{ totalPages }}</span>
-
-      <button class="btn btn-outline-secondary" @click="nextPage" :disabled="currentPage === totalPages">
-        Next <i class="bi bi-chevron-right"></i>
-      </button>
-    </div>
+        <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }"
+          @click="changePage(meta.current_page + 1)">
+          <a class="page-link">Next</a>
+        </li>
+      </ul>
+    </nav>
   </div>
-
-  <!-- Modals -->
-  <AddSupplier v-if="showAddSupply" @close="closeAddSupply" />
-  <UpdateSupplier v-if="showSupplierInfo" :supplier="selectedSupplier" @close="showSupplierInfo = false"
-    @updated="fetchSuppliers" />
-  <DeleteSupplier v-if="deleteSupplier" :supplier="selectedSupplier" @close="deleteSupplier = false"
-    @updated="fetchSuppliers" />
 </template>
 
-<script setup>
-import { computed, ref, onMounted } from "vue";
+<script>
+import { computed } from "vue";
 import api from "../../services/api";
 import { userStore } from "../../stores/userStore";
-import { useAppStore } from "../../stores/appStore";
-import "../../assets/css/Global.css";
-import AddSupplier from "../../components/Supplier/AddSupplier.vue";
-import UpdateSupplier from "../../components/Supplier/UpdateSupplier.vue";
-import DeleteSupplier from "../../components/Supplier/DeleteSupplier.vue";
 
-const suppliers = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const appStore = useAppStore();
-
-// Pagination state
-const currentPage = ref(1);
-const itemsPerPage = 5; // adjust this number as needed
-const searchQuery = ref("");
-
-// modal
-const showSupplierInfo = ref(false);
-const deleteSupplier = ref(false);
-const showAddSupply = ref(false);
-const selectedSupplier = ref(null);
-
-// Permissions
-const cadAddCategory = computed(() => userStore.cadAddCategory);
-const canEditCategory = computed(() => userStore.canEditCategory);
-const canDeleteCategory = computed(() => userStore.canDeleteCategory);
-
-// Search and Pagination Computed
-const filteredSuppliers = computed(() => {
-  if (!searchQuery.value) return suppliers.value;
-  return suppliers.value.filter(s =>
-    s.supplier_name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-});
-
-const totalPages = computed(() => Math.ceil(filteredSuppliers.value.length / itemsPerPage));
-
-const paginatedSuppliers = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage;
-  return filteredSuppliers.value.slice(start, start + itemsPerPage);
-});
-
-function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++;
-}
-function prevPage() {
-  if (currentPage.value > 1) currentPage.value--;
-}
-
-// modal functions
-async function addCaegory() {
-  try {
-    appStore.showLoading();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    showAddSupply.value = true;
-  } catch (err) {
-    console.error("show preparing modal:", err);
-  } finally {
-    appStore.hideLoading();
-  }
-}
-async function closeAddSupply() {
-  showAddSupply.value = false;
-  fetchSuppliers();
-}
-async function UpdateCategoryInfo(supplier) {
-  try {
-    appStore.showLoading();
-    const res = await api.get(`/suppliers/get_supplier/${supplier.supplier_id}`);
-    selectedSupplier.value = res.data.supplier;
-    showSupplierInfo.value = true;
-  } catch (err) {
-    console.error("Failed to fetch supplier info:", err);
-  } finally {
-    appStore.hideLoading();
-  }
-}
-async function DeleteSupplierInfo(supplier) {
-  try {
-    appStore.showLoading();
-    const res = await api.get(`/suppliers/get_supplier/${supplier.supplier_id}`);
-    selectedSupplier.value = res.data.supplier;
-    deleteSupplier.value = true;
-  } catch (err) {
-    console.error("Failed to fetch supplier for deletion:", err);
-  } finally {
-    appStore.hideLoading();
-  }
-}
-
-const fetchSuppliers = async () => {
-  try {
-    const response = await api.get("/suppliers/get_supplier");
-    suppliers.value = response.data.suppliers;
-  } catch (err) {
-    error.value = err.response?.data?.message || err.message;
-  } finally {
-    loading.value = false;
-  }
+export default {
+  data() {
+    return {
+      items: [],
+      meta: {},
+      search: "",
+      perPage: 10,
+      currentPage: 1,
+    };
+  },
+  computed: {
+    // ✅ Just read properties directly from userStore
+    canAddCategory() {
+      return userStore.cadAddCategory;
+    },
+    canEditCategory() {
+      return userStore.canEditCategory;
+    },
+    canDeleteCategory() {
+      return userStore.canDeleteCategory;
+    },
+  },
+  mounted() {
+    this.fetchItems();
+  },
+  methods: {
+    async fetchItems() {
+      const res = await api.get("/Items/getItemCode", {
+        params: {
+          search: this.search,
+          page: this.currentPage,
+          per_page: this.perPage,
+        },
+      });
+      this.items = res.data.data;
+      this.meta = res.data.meta;
+    },
+    changePage(page) {
+      if (page < 1 || page > this.meta.last_page) return;
+      this.currentPage = page;
+      this.fetchItems();
+    },
+  },
 };
-
-onMounted(() => {
-  fetchSuppliers();
-});
 </script>

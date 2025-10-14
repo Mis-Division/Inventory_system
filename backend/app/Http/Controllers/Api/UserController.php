@@ -138,11 +138,34 @@ class UserController extends Controller
         }
     }
 
-    public function getAllUsers()
-    {
-        $users = User::with('control', 'access')->get();
 
-        // Recursive function to fetch children of any depth
+
+public function getAllUsers(Request $request)
+{
+    try {
+        // 🕵️‍♂️ Handle search input (optional)
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 10); // default: 10 users per page
+
+        // ✅ Base query with eager loading
+        $query = User::with('control', 'access');
+
+        // 🔍 Apply search filter if search is provided
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('fullname', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('department', 'like', "%{$search}%")
+                  ->orWhereHas('control', function ($q2) use ($search) {
+                      $q2->where('role', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 🧮 Paginate the results
+        $users = $query->paginate($perPage);
+
+        // Recursive function to fetch module hierarchy
         $buildTree = function ($allModules, $parentName) use (&$buildTree) {
             $children = $allModules->where('parent_module', $parentName)->values();
 
@@ -156,7 +179,7 @@ class UserController extends Controller
                     'can_delete' => $child->can_delete,
                 ];
 
-                // 🔁 Recursive: get sub-children of this child
+                // Recursive fetch for nested children
                 $subChildren = $buildTree($allModules, $child->module_name);
                 if ($subChildren->count() > 0) {
                     $childArr['children'] = $subChildren;
@@ -166,10 +189,11 @@ class UserController extends Controller
             });
         };
 
-        $response = $users->map(function ($user) use ($buildTree) {
+        // 🧩 Format each user for frontend
+        $formattedUsers = $users->getCollection()->map(function ($user) use ($buildTree) {
             $allModules = $user->access;
 
-            // Top-level modules (no parent_module)
+            // Get top-level modules
             $parents = $allModules->whereNull('parent_module')->values();
 
             $modules = $parents->map(function ($parent) use ($allModules, $buildTree) {
@@ -182,7 +206,7 @@ class UserController extends Controller
                     'can_delete' => $parent->can_delete,
                 ];
 
-                // 🔁 Fetch children recursively
+                // Recursive children
                 $children = $buildTree($allModules, $parent->module_name);
                 if ($children->count() > 0) {
                     $parentArr['children'] = $children;
@@ -202,11 +226,25 @@ class UserController extends Controller
             ];
         });
 
+        // 🔄 Return formatted paginated response
         return response()->json([
             'message' => 'Users fetched successfully',
-            'data' => $response,
+            'data' => $formattedUsers,
+            'meta' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
         ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to fetch users',
+            'message' => $e->getMessage(),
+        ], 500);
     }
+}
+
 
     public function getUserById($id)
     {

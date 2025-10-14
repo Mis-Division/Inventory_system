@@ -230,7 +230,7 @@ function defaultModules() {
     { module_name: "Material Salvage Ticket", parent_module: "Inventory", can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Memorandum Receipts", parent_module: "Inventory", can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Order", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
-    // { module_name: "Categories", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
+    { module_name: "Categories", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Suppliers", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Adjustment", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },
     { module_name: "Reports", parent_module: null, can_view: false, can_add: false, can_edit: false, can_delete: false },

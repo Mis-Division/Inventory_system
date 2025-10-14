@@ -1,0 +1,185 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Items;
+use Illuminate\Support\Facades\DB;
+
+class ItemsController extends Controller
+{
+    public function CreateItemCode(Request $request){
+        $request->validate([
+
+            'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode',
+            'description' => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // ✅ Create record
+            $item = Items::create([
+                'ItemCode' => $request->ItemCode,
+                'description' => $request->description,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Item code created successfully',
+                'data' => $item
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to create item code',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+public function GetItemCode(Request $request)
+{
+    try {
+        // Get search keyword and pagination parameters
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 10); // Default 10 per page
+
+        // Build query
+        $query = Items::query();
+
+        // Apply search if keyword provided
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('ItemCode', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Paginate results
+        $items = $query->orderBy('created_at', 'asc')->paginate($perPage);
+
+        // Return Vue-friendly JSON
+        return response()->json([
+            'success' => true,
+            'message' => $search 
+                ? "Item codes matching '{$search}' fetched successfully"
+                : 'All item codes fetched successfully',
+            'data' => $items->items(), // current page data
+            'meta' => [
+                'current_page' => $items->currentPage(),
+                'per_page' => $items->perPage(),
+                'total' => $items->total(),
+                'last_page' => $items->lastPage(),
+                'from' => $items->firstItem(),
+                'to' => $items->lastItem()
+            ]
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Failed to fetch item codes',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+    public function GetItemCodeId($id)
+        {
+            try {
+                $item = Items::find($id);
+
+                if (!$item) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Item code not found',
+                    ], 404);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Item code fetched successfully',
+                    'data' => $item
+                ], 200);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to fetch item code',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+
+        public function UpdateItemCode(Request $request, $id)
+            {
+                try {
+                    $item = Items::find($id);
+
+                    if (!$item) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Item code not found',
+                        ], 404);
+                    }
+
+                    $validated = $request->validate([
+                        'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode,' . $id . ',ItemCode_id',
+                        'description' => 'nullable|string',
+                    ]);
+
+                    $item->update([
+                        'ItemCode' => $validated['ItemCode'],
+                        'description' => $validated['description'] ?? $item->description,
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Item code updated successfully',
+                        'data' => $item
+                    ], 200);
+
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Failed to update item code',
+                        'message' => $e->getMessage()
+                    ], 500);
+                }
+            }
+
+            public function DeleteItemCode($id)
+                {
+                    try {
+                        $item = Items::find($id);
+
+                        if (!$item) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Item code not found',
+                            ], 404);
+                        }
+
+                        $item->delete();
+
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Item code deleted successfully'
+                        ], 200);
+
+                    } catch (\Exception $e) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'Failed to delete item code',
+                            'message' => $e->getMessage()
+                        ], 500);
+                    }
+                }
+
+
+
+}

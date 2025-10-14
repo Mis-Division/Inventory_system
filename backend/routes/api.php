@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Supplier;
 use App\Http\Controllers\Api\Categories;
+use App\Http\Controllers\Api\StocksController;
+use App\Http\Controllers\Api\ItemsController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -61,5 +63,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get_category/{id}', [Categories::class, 'GetCategoryById']);
         Route::put('/update_category/{id}', [Categories::class, 'UpdateCategory']);
         Route::delete('/delete_category/{id}', [Categories::class, 'DeleteCategory']);
+    });
+    //stocks
+    Route::prefix('stocks')->group(function(){
+        Route::post('/createStock', [StocksController::class, 'CreateProductStocks']);
+    });
+
+    //itemcode
+    Route::prefix('Items')->group(function () {
+    Route::post('createCode', [ItemsController::class, 'CreateItemCode']);
+    Route::get('getItemCode', [ItemsController::class, 'GetItemCode']);
+    Route::get('getItemCode/{id}', [ItemsController::class, 'GetItemCodeId']);
+    Route::put('updateItemCode/{id}', [ItemsController::class, 'UpdateItemCode']);
+    Route::delete('deleteItemCode/{id}', [ItemsController::class, 'DeleteItemCode']);
     });
 });

@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_stocks', function (Blueprint $table) {
-            $table->id('stock_id');
+        Schema::create('tbl_transactions', function (Blueprint $table) {
+            $table->id('transaction_id');
             $table->foreignId('product_id')->onDelete('cascade');
+            $table->string('transaction_type')->nullable();
             $table->integer('quantity')->default(0);
+            $table->string('reference')->nullable();
             $table->string('created_by');
             $table->string('updated_by')->nullable();
             $table->timestamp('updated_at');
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_stocks');
+        Schema::dropIfExists('tbl_transactions');
     }
 };

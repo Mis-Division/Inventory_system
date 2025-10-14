@@ -54,8 +54,8 @@ const routes = [
       {path: "/dashboard/stocks",
       component: Stocks,},
       {path: "/dashboard/order",
-      // component: OrderItem,},
-      // {path: "/dashboard/category",
+      component: OrderItem,},
+      {path: "/dashboard/category",
       component: CategoryItem,},
       {path: "/dashboard/adjustment",
       component: Adjustment,}

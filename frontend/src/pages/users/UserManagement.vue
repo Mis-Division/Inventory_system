@@ -3,10 +3,9 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
       <h2 class="mb-0">User Management</h2>
-
-      <div class="d-flex gap-3 flex-wrap mt-2 mt-md-0">
-        <input v-model="searchQuery" type="text" class="form-control" placeholder="Search users..."
-          style="max-width: 200px;" />
+      <div class="d-flex gap-3 flex-wrap mt-2 mt-md-0"  style="white-space: nowrap;">
+        <input v-model="searchQuery" @input="searchUsers" type="text" class="form-control" placeholder="Search users..."
+            style="width: 500px; flex: 0 0 auto;" />
         <button @click="addUser" :disabled="!canAddUsers" class="btn btn-primary">
           <i class="bi bi-person-plus"></i> Add User
         </button>
@@ -15,8 +14,8 @@
 
     <!-- Table -->
     <div class="table-wrapper shadow-sm rounded bg-white">
-      <table class="table table-hover table-bordered align-middle mb-1 table-striped" style="font-size: 20px;">
-        <thead class="table-primary ">
+      <table class="table table-hover table-bordered align-middle mb-1 " style="font-size: 20px;">
+        <thead class="table-primary">
           <tr>
             <th style="width: 5%;">ID</th>
             <th style="width: 20%;">Full Name</th>
@@ -27,52 +26,45 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in paginatedUsers" :key="user.id"
+          <tr v-for="user in users" :key="user.id"
             :class="canEditAddUsers ? 'table-row-clickable' : 'table-secondary text-muted'"
             @click="handleRowClick(user)" :title="canEditAddUsers ? 'Click to edit user' : 'No permission to edit'"
             style="cursor: pointer;">
             <td>{{ user.id }}</td>
             <td>{{ user.fullname }}</td>
             <td>{{ user.username }}</td>
-
             <td>{{ user.role }}</td>
             <td>{{ user.department }}</td>
             <td>
-              <span class="badge" :class="{
-                'bg-primary': user.status === 'Active',
-                'bg-danger': user.status === 'Inactive'
-              }">
-                <i :class="{
-                  'bi bi-check me-1': user.status === 'Active',
-                  'bi bi-x me-1': user.status === 'Inactive'
-                }"></i>
+              <span class="badge" :class="user.status === 'Active' ? 'bg-primary' : 'bg-danger'">
+                <i :class="user.status === 'Active' ? 'bi bi-check' : 'bi bi-x'"></i>
                 {{ user.status }}
               </span>
             </td>
           </tr>
-
-          <tr v-if="filteredUsers.length === 0">
-            <td colspan="6" class="text-center py-3 text-muted">
-              No users found
-            </td>
+          <tr v-if="users.length === 0">
+            <td colspan="6" class="text-center py-3 text-muted">No users found</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <nav v-if="totalPages > 1" class="mt-4">
+    <nav v-if="meta.last_page > 1" class="mt-4">
       <ul class="pagination justify-content-center flex-wrap">
-        <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <button class="page-link" @click="prevPage">Prev</button>
+        <li class="page-item" :class="{ disabled: meta.current_page === 1 }">
+          <button class="page-link" @click="goToPage(meta.current_page - 1)"
+            :disabled="meta.current_page === 1">Prev</button>
         </li>
-        <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: page === currentPage }">
-          <button class="page-link" @click="goToPage(page)">
-            {{ page }}
-          </button>
+
+        <li v-for="page in totalPagesArray" :key="page" class="page-item"
+          :class="{ active: page === meta.current_page }">
+          <button class="page-link" @click="goToPage(page)">{{ page }}</button>
         </li>
-        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-          <button class="page-link" @click="nextPage">Next</button>
+
+        <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }">
+          <button class="page-link" @click="goToPage(meta.current_page + 1)"
+            :disabled="meta.current_page === meta.last_page">Next</button>
         </li>
       </ul>
     </nav>
@@ -80,7 +72,6 @@
     <!-- Modals -->
     <UserModal v-if="showUserModal" :user="selectedUser" :can-edit="canEditAddUsers" :can-delete="canDeleteUsers"
       @close="closeUserModal" @updated="handleUserUpdated" @deleted="handleUserDeleted" />
-
     <AddModal v-if="showAddModal" @close="closeAddModal" />
   </div>
 </template>
@@ -96,8 +87,7 @@ import AddModal from "../../components/AddUser/UserAddModal.vue";
 const appStore = useAppStore();
 const users = ref([]);
 const searchQuery = ref("");
-const currentPage = ref(1);
-const pageSize = 15;
+const meta = ref({ current_page: 1, last_page: 1, per_page: 15, total: 0 });
 
 // Modals
 const showUserModal = ref(false);
@@ -109,14 +99,39 @@ const canEditAddUsers = computed(() => userStore.canEditUsers);
 const canDeleteUsers = computed(() => userStore.canDeleteUsers);
 const canAddUsers = computed(() => userStore.canAddUsers);
 
-// === Add User Modal ===
-async function addUser() {
+// Debounce timer
+let searchTimeout = null;
+
+// Fetch users from API (server-side pagination)
+async function fetchUsers(query = "", page = 1) {
+  appStore.showLoading();
   try {
-    appStore.showLoading();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    showAddModal.value = true;
+    const res = await api.get("/users/display_user/", {
+      params: { search: query, page, per_page: meta.value.per_page },
+    });
+    users.value = res.data?.data || [];
+    meta.value = res.data?.meta || { current_page: 1, last_page: 1, per_page: 15, total: 0 };
   } catch (err) {
-    console.error("Error preparing modal:", err);
+    console.error(err);
+    users.value = [];
+    meta.value = { current_page: 1, last_page: 1, per_page: 15, total: 0 };
+  } finally {
+    appStore.hideLoading();
+  }
+}
+
+// Search users with debounce
+function searchUsers() {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => fetchUsers(searchQuery.value, 1), 300);
+}
+
+// Add/Edit user modals
+async function addUser() {
+  appStore.showLoading();
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    showAddModal.value = true;
   } finally {
     appStore.hideLoading();
   }
@@ -124,26 +139,20 @@ async function addUser() {
 
 function closeAddModal() {
   showAddModal.value = false;
-  fetchUsers(); // Refresh list after adding a new user
+  fetchUsers(searchQuery.value, meta.value.current_page);
 }
 
-// === Edit User Modal ===
 function handleRowClick(user) {
   if (!canEditAddUsers.value) return;
   openUserModal(user);
 }
 
 async function openUserModal(user) {
+  appStore.showLoading();
   try {
-    appStore.showLoading();
     const res = await api.get(`/users/display_user/${user.id}`);
-    selectedUser.value = {
-      ...res.data?.data,
-      modules: res.data?.data?.modules || [],
-    };
+    selectedUser.value = { ...res.data?.data, modules: res.data?.data?.modules || [] };
     showUserModal.value = true;
-  } catch (err) {
-    console.error(err);
   } finally {
     appStore.hideLoading();
   }
@@ -154,70 +163,31 @@ function closeUserModal() {
   selectedUser.value = null;
 }
 
-// === Handlers for Update/Delete ===
 function handleUserUpdated() {
-  showUserModal.value = false;
-  selectedUser.value = null;
-  fetchUsers();
+  closeUserModal();
+  fetchUsers(searchQuery.value, meta.value.current_page);
 }
 
 function handleUserDeleted() {
-  showUserModal.value = false;
-  selectedUser.value = null;
-  fetchUsers();
+  closeUserModal();
+  fetchUsers(searchQuery.value, meta.value.current_page);
 }
 
-// === Fetch Users ===
-async function fetchUsers() {
-  appStore.showLoading();
-  try {
-    const res = await api.get("/users/display_user/");
-    users.value = res.data?.data || [];
-  } catch (err) {
-    console.error(err);
-    users.value = [];
-  } finally {
-    appStore.hideLoading();
-  }
+// Pagination
+function goToPage(page) {
+  if (page < 1 || page > meta.value.last_page) return;
+  fetchUsers(searchQuery.value, page);
 }
 
-// === Filter & Pagination ===
-const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value;
-  const q = searchQuery.value.toLowerCase();
-  return users.value.filter((u) =>
-    (u.fullname?.toLowerCase().includes(q) ?? false) ||
-    (u.username?.toLowerCase().includes(q) ?? false) ||
-    (u.role?.toLowerCase().includes(q) ?? false) ||
-    (u.status?.toLowerCase().includes(q) ?? false) ||
-    String(u.id ?? "").includes(q)
-  );
-});
-
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / pageSize));
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize;
-  return filteredUsers.value.slice(start, start + pageSize);
-});
-
-function goToPage(page) { currentPage.value = page; }
-function nextPage() { if (currentPage.value < totalPages.value) currentPage.value++; }
-function prevPage() { if (currentPage.value > 1) currentPage.value--; }
+// Computed array of page numbers
+const totalPagesArray = computed(() => Array.from({ length: meta.value.last_page }, (_, i) => i + 1));
 
 onMounted(() => fetchUsers());
 </script>
 
 <style scoped>
 .main-container {
-  padding-left: 50px;
-  padding-right: 20px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  width: 100%;
-
-  overflow-y: hidden;
-  box-sizing: border-box;
-  transition: padding-left 0.3s;
+  padding: 20px 20px 20px 50px;
 }
 
 .table-wrapper {
