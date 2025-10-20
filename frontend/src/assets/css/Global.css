@@ -18,6 +18,10 @@
   width: 100%;
   overflow: hidden;
 }
+.table th,
+.table td {
+  vertical-align: middle;
+}
 
 .table-wrapper table {
   width: 100%;
@@ -55,3 +59,55 @@
 .custom-body {
   padding: 1rem;
 }
+.custom-headers {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.custom-headers h1 {
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.custom-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+
+.custom-actions .form-control {
+  width: 400px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+}
+
+.custom-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 8px 14px;
+}
+
+@media (max-width: 768px) {
+  .custom-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-actions {
+    width: 100%;
+  }
+
+  .custom-actions .form-control {
+    width: 100%;
+  }
+}
+

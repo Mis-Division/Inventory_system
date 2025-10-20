@@ -7,18 +7,18 @@ use Illuminate\Http\Request;
 use App\Models\suppliers;
 use Illuminate\Support\Facades\DB;
 
-class Supplier extends Controller
+class SupplierController extends Controller
 {
     public function CreateSupplier(Request $request)
     {
         $request->validate([
             'supplier_no' => 'required|string|max:255',
             'supplier_name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'contact_no' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:500',
-            'tin' => 'nullable|string|max:500',
-            'vat_no' => 'nullable|string|max:500',
+            'email' => 'required|email|max:255',
+            'contact_no' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'tin' => 'required|string|max:500',
+            'vat_no' => 'required|string|max:500',
         ]);
 
        DB::beginTransaction();

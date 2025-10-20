@@ -14,6 +14,7 @@ class ItemsController extends Controller
 
             'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode',
             'description' => 'nullable|string',
+            'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code',
         ]);
 
         DB::beginTransaction();
@@ -23,6 +24,7 @@ class ItemsController extends Controller
             $item = Items::create([
                 'ItemCode' => $request->ItemCode,
                 'description' => $request->description,
+                'accounting_code' => $request->accounting_code,
             ]);
 
             DB::commit();
@@ -54,7 +56,8 @@ public function GetItemCode(Request $request)
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('ItemCode', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('accounting_code', 'LIKE', "%{$search}%");
             });
         }
 
@@ -116,41 +119,47 @@ public function GetItemCode(Request $request)
         }
 
         public function UpdateItemCode(Request $request, $id)
-            {
-                try {
-                    $item = Items::find($id);
+        {
+            try {
+                $item = Items::find($id);
 
-                    if (!$item) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Item code not found',
-                        ], 404);
-                    }
-
-                    $validated = $request->validate([
-                        'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode,' . $id . ',ItemCode_id',
-                        'description' => 'nullable|string',
-                    ]);
-
-                    $item->update([
-                        'ItemCode' => $validated['ItemCode'],
-                        'description' => $validated['description'] ?? $item->description,
-                    ]);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Item code updated successfully',
-                        'data' => $item
-                    ], 200);
-
-                } catch (\Exception $e) {
+                if (!$item) {
                     return response()->json([
                         'success' => false,
-                        'error' => 'Failed to update item code',
-                        'message' => $e->getMessage()
-                    ], 500);
+                        'message' => 'Item code not found',
+                    ], 404);
                 }
+
+                $validated = $request->validate([
+                    'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode,' . $id . ',ItemCode_id',
+                    'description' => 'nullable|string',
+                    'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code,' . $id . ',ItemCode_id',
+                ]);
+$accountingCode = $request->input('accounting_code');
+if ($accountingCode === '') {
+    $accountingCode = null;
+}
+                $item->update([
+                    'ItemCode' => $validated['ItemCode'],
+                    'description' => $validated['description'] ?? $item->description,
+                    'accounting_code' => $accountingCode,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Item code updated successfully',
+                    'data' => $item
+                ], 200);
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Failed to update item code',
+                    'message' => $e->getMessage()
+                ], 500);
             }
+        }
+
 
             public function DeleteItemCode($id)
                 {

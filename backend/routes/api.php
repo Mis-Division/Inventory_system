@@ -5,8 +5,8 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Supplier;
-use App\Http\Controllers\Api\Categories;
+use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\CategoriesController;
 use App\Http\Controllers\Api\StocksController;
 use App\Http\Controllers\Api\ItemsController;
 
@@ -50,19 +50,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     // Supplier routes
     Route::prefix('suppliers')->group(function () {
-        Route::post('/create_supplier', [Supplier::class, 'CreateSupplier']);
-        Route::get('/get_supplier', [Supplier::class, 'GetSuppliers']);
-        Route::get('/get_supplier/{id}', [Supplier::class, 'GetSupplierById']);
-        Route::put('/update_supplier/{id}', [Supplier::class, 'UpdateSupplier']);
-        Route::delete('/delete_supplier/{id}', [Supplier::class, 'DeleteSupplier']);
+        Route::post('/create_supplier', [SupplierController::class, 'CreateSupplier']);
+        Route::get('/get_supplier', [SupplierController::class, 'GetSuppliers']);
+        Route::get('/get_supplier/{id}', [SupplierController::class, 'GetSupplierById']);
+        Route::put('/update_supplier/{id}', [SupplierController::class, 'UpdateSupplier']);
+        Route::delete('/delete_supplier/{id}', [SupplierController::class, 'DeleteSupplier']);
     });
     // Category routes
     Route::prefix('categories')->group(function () {
-        Route::post('/create_category', [Categories::class, 'CreateCategory']);
-        Route::get('/get_category', [Categories::class, 'GetCategories']);
-        Route::get('/get_category/{id}', [Categories::class, 'GetCategoryById']);
-        Route::put('/update_category/{id}', [Categories::class, 'UpdateCategory']);
-        Route::delete('/delete_category/{id}', [Categories::class, 'DeleteCategory']);
+        Route::post('/create_category', [CategoriesController::class, 'CreateCategory']);
+        Route::get('/get_category', [CategoriesController::class, 'GetCategories']);
+        Route::get('/get_category/{id}', [CategoriesController::class, 'GetCategoryById']);
+        Route::put('/update_category/{id}', [CategoriesController::class, 'UpdateCategory']);
+        Route::delete('/delete_category/{id}', [CategoriesController::class, 'DeleteCategory']);
     });
     //stocks
     Route::prefix('stocks')->group(function(){

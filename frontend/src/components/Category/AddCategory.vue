@@ -27,6 +27,14 @@
                                 placeholder="Please input Description" :class="{ 'is-invalid': errors.description }" />
                             <div v-if="errors.description" class="invalid-feedback">{{ errors.description }}</div>
                         </div>
+                            <!-- Accounting Code -->
+                         <div class="col-md-12 mt-3">
+                            <label class="form-label" for="accounting_code">Acct. Code <span
+                                    class="text-danger">*</span></label>
+                            <input v-model="form.accounting_code" type="text" id="accounting_code" class="form-control"
+                                placeholder="Please input accounting_code" :class="{ 'is-invalid': errors.accounting_code }" />
+                            <div v-if="errors.accounting_code" class="invalid-feedback">{{ errors.accounting_code }}</div>
+                        </div>
                     </form>
                 </div>
 
@@ -106,17 +114,20 @@ const isMobile = ref(window.innerWidth < 768);
 const form = reactive({
     ItemCode: "",
     description: "",
+     accounting_code: "",
 });
 
 const errors = reactive({
     ItemCode: "",
     description: "",
+    // accounting_code: "",
 });
 
 // ✅ Proper validation with return value
 function validateForm() {
     errors.ItemCode = form.ItemCode ? "" : "Please input Item Code";
     errors.description = form.description ? "" : "Please input the Description";
+    // errors.accounting_code = form.accounting_code ? "" : "please input Accounting Code";
 
     return !errors.ItemCode && !errors.description;
 }

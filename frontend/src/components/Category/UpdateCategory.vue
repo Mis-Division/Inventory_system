@@ -13,13 +13,17 @@
                                                 <div class="mb-3">
                                                         <label class="form-label">Item Code</label>
                                                         <input v-model="form.ItemCode" type="text" class="form-control"
-                                                                required />
+                                                                 />
                                                 </div>
 
                                                 <div class="mb-3">
                                                         <label class="form-label">Description</label>
                                                         <textarea v-model="form.description" class="form-control"
-                                                                rows="3" required></textarea>
+                                                                rows="3" ></textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                        <label class="form-label">Acct. Code</label>
+                                                        <input v-model="form.accounting_code" type="text" class="form-control"  />
                                                 </div>
 
                                                 <div v-if="errorMessage" class="alert alert-danger py-2">
@@ -123,6 +127,7 @@ watch(
                 if (newItem) {
                         form.value.ItemCode = newItem.ItemCode || "";
                         form.value.description = newItem.description || "";
+                        form.value.accounting_code = newItem.accounting_code || "";
                 }
         },
         { immediate: true }
@@ -147,6 +152,7 @@ async function updateItemCode() {
                 const payload = {
                         ItemCode: form.value.ItemCode,
                         description: form.value.description,
+                        accounting_code: form.value.accounting_code,
                 };
                 await api.put(`/Items/updateItemCode/${props.item.ItemCode_id}`, payload);
                 showSuccess.value = true;

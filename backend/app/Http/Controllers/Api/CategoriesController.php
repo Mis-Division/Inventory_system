@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Facades\DB;
-class Categories extends Controller
+
+class CategoriesController extends Controller
 {
     public function CreateCategory(Request $request)
     {

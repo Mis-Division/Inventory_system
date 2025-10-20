@@ -1,12 +1,12 @@
 <template>
   <div class="main-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div class="custom-headers">
       <h1 class="mb-3">ItemCode Management</h1>
 
-      <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+      <div class="custom-actions">
         <input v-model="searchQuery" @input="fetchItemCode" type="text" class="form-control"
-          placeholder="Search ItemCode and Descriptions..." style="width: 500px; flex: 0 0 auto;" />
+          placeholder="Search ItemCode and Descriptions..." />
         <button :disabled="!cadAddCategory" @click="AddItem" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Item Code
         </button>
@@ -28,7 +28,8 @@
           <tr>
             <th style="width: 5%;">ID</th>
             <th style="width: 15%;">Item Code</th>
-            <th style="width: 40%;">Descriptions</th>
+            <th style="width: 20%;">Descriptions</th>
+            <th style="width: 20%;">Acct. Code</th>
             <th style="width: 10%;">Action</th>
           </tr>
         </thead>
@@ -38,6 +39,7 @@
             <td>{{ item.ItemCode_id }}</td>
             <td>{{ item.ItemCode }}</td>
             <td>{{ item.description }}</td>
+            <td>{{ item.accounting_code }}</td>
             <td>
               <button :disabled="!canEditCategory" @click="editCategory(item)" class="btn btn-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
@@ -226,9 +228,4 @@ function changePage(page) {
 onMounted(fetchItemCode);
 </script>
 
-<style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
-}
-</style>
+

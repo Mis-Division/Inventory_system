@@ -1,12 +1,12 @@
 <template>
   <div class="main-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div class="custom-headers">
       <h1 class="mb-3">Supplier Management</h1>
 
-      <div class="d-flex align-items-center gap-2" style="white-space: nowrap;">
+      <div class="custom-actions" >
         <input v-model="searchQuery" @input="fetchSuppliers" type="text" class="form-control"
-          placeholder="Search Supplier..." style="width: 500px; flex: 0 0 auto;" />
+          placeholder="Search Supplier..."/>
         <button :disabled="!canAddSupplier" @click="addSupply" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Supplier
         </button>

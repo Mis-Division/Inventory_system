@@ -1,11 +1,10 @@
 <template>
   <div class="main-container">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <h2 class="mb-0">User Management</h2>
-      <div class="d-flex gap-3 flex-wrap mt-2 mt-md-0"  style="white-space: nowrap;">
-        <input v-model="searchQuery" @input="searchUsers" type="text" class="form-control" placeholder="Search users..."
-            style="width: 500px; flex: 0 0 auto;" />
+    <div class="custom-headers">
+      <h1 class="mb-3">User Management</h1>
+      <div class="custom-actions">
+        <input v-model="searchQuery" @input="searchUsers" type="text" class="form-control" placeholder="Search users..." />
         <button @click="addUser" :disabled="!canAddUsers" class="btn btn-primary">
           <i class="bi bi-person-plus"></i> Add User
         </button>
@@ -185,30 +184,4 @@ const totalPagesArray = computed(() => Array.from({ length: meta.value.last_page
 onMounted(() => fetchUsers());
 </script>
 
-<style scoped>
-.main-container {
-  padding: 20px 20px 20px 50px;
-}
 
-.table-wrapper {
-  width: 100%;
-  overflow: hidden;
-}
-
-.table-wrapper table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.table-wrapper th,
-.table-wrapper td {
-  word-break: break-word;
-}
-
-@media (max-width: 768px) {
-  .main-container {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-}
-</style>

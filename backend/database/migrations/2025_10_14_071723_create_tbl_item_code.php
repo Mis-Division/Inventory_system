@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('ItemCode_id');
             $table->string('ItemCode')->unique();
             $table->string('description');
+            $table->string('accounting_code')->unique();
             $table->string('created_at')->nullable();
             $table->timestamp('updated_at');
         });
