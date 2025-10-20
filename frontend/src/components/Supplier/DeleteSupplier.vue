@@ -1,6 +1,6 @@
 <template>
     <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-sm modal-dialog-centered" role="document" :class="{ 'modal-sm': isMobile }">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="mb-0"><i class="bi bi-trash me-2"></i>Delete Supplier</h5>
@@ -58,7 +58,7 @@ const props = defineProps({
         required: true,
     },
 });
-const emit = defineEmits(["close", "updated"]);
+const emit = defineEmits(["close", "deleted"]);
 
 const appStore = useAppStore();
 const localSupplier = reactive({ ...props.supplier });
@@ -68,12 +68,7 @@ async function deleteSupplier() {
     try {
         appStore.showLoading();
         await api.delete(`/suppliers/delete_supplier/${localSupplier.supplier_id}`);
-        emit("updated");
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        emit("close");
         showSuccess.value = true;
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        showSuccess.value = false;
     } catch (err) {
         console.error("Delete failed:", err);
     } finally {
@@ -88,6 +83,7 @@ function closeModal() {
 
 function closeSuccess() {
     showSuccess.value = false;
-    emit("updated");
+    emit("deleted");
 }
+
 </script>

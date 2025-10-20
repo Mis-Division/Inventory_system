@@ -88,8 +88,8 @@
   <AddSupplier v-if="showAddSupply" @close="closeAddSupply" />
   <UpdateSupplier v-if="showSupplierInfo" :supplier="selectedSupplier" @close="showSupplierInfo = false"
     @updated="fetchSuppliers" />
-  <DeleteSupplier v-if="deleteSupplier" :supplier="selectedSupplier" @close="deleteSupplier = false"
-    @updated="fetchSuppliers" />
+  <DeleteSupplier v-if="showDeleteSupplier" :supplier="selectedSupplier" @close="closeDeleteSupplier"
+    @deleted="onDeletedSupplier" />
 </template>
 
 <script setup>
@@ -111,7 +111,7 @@ const perPage = 10;
 
 const showAddSupply = ref(false);
 const showSupplierInfo = ref(false);
-const deleteSupplier = ref(false);
+const showDeleteSupplier = ref(false);
 const selectedSupplier = ref(null);
 
 const appStore = useAppStore();
@@ -179,13 +179,26 @@ async function DeleteSupplierInfo(supplier) {
   try {
     appStore.showLoading();
     const res = await api.get(`/suppliers/get_supplier/${supplier.supplier_id}`);
-    selectedSupplier.value = res.data.supplier;
-    deleteSupplier.value = true;
+    if(res?.data?.supplier){
+      selectedSupplier.value = res.data.supplier;
+      showDeleteSupplier.value = true;
+    }else{
+      console.error("No Supplier data return from API ", res.supplier);
+    }
   } catch (err) {
     console.error("Failed to fetch supplier for deletion:", err);
   } finally {
     appStore.hideLoading();
   }
+}
+function closeDeleteSupplier(){
+  showDeleteSupplier.value = false;
+  selectedSupplier.value = null;
+}
+async function onDeletedSupplier() {
+  showDeleteSupplier.value = false;
+  selectedSupplier.value = null;
+  await fetchSuppliers();
 }
 
 onMounted(() => {

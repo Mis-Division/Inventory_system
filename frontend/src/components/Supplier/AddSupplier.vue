@@ -175,6 +175,7 @@ function validateForm() {
     errors.tin = form.tin ? "" : "Tin Number is Required";
     errors.vat_no =  form.vat_no ? "" : "VAT / NVAT is Required"
     return Object.values(errors).every((e) => !e);
+    
 }
 
 async function confirmSave() {
