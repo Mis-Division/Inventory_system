@@ -216,7 +216,7 @@ async function updateUser() {
       modules: flattenModules(localUser.value.modules || [])
     };
 
-    const res = await api.put(`/users/update_user/${localUser.value.id}`, payload);
+    const res = await api.put(`/users/update_user/${localUser.value.user_id}`, payload);
     alertMessage.value = res.data?.message || "User updated successfully.";
     alertType.value = "success";
     showAlert.value = true;
@@ -240,7 +240,7 @@ async function updateUser() {
 async function deleteUser() {
   try {
     modalLoading.value = true;
-    const res = await api.delete(`/users/delete_user/${localUser.value.id}`);
+    const res = await api.delete(`/users/delete_user/${localUser.value.user_id}`);
     alertMessage.value = res.data?.message || "User deleted successfully.";
     alertType.value = "success";
     showAlert.value = true;

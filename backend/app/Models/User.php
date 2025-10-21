@@ -11,12 +11,16 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $primaryKey = 'user_id';
+
     protected $fillable = [
         'fullname',
         'email',
         'username',
         'password',
         'department',
+        'role',
+        'status',
     ];
 
     protected $hidden = [
@@ -24,9 +28,12 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Automatically hash password when setting
-     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'role' => 'string',
+        'status' => 'string',
+    ];
+
     public function setPasswordAttribute($value)
     {
         if ($value) {
@@ -35,20 +42,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Relation: user has one control
+     * User has many access modules
      */
-    public function access()
+    public function accessModules()
     {
-        return $this->hasMany(UserAccess::class);
-    }
-
-    public function control()
-    {
-        return $this->hasOne(UserControl::class);
-    }
-
-    public function modules()
-    {
-        return $this->hasMany(UserAccess::class, 'user_id', 'id');
+        return $this->hasMany(UserAccess::class, 'user_id', 'user_id');
     }
 }

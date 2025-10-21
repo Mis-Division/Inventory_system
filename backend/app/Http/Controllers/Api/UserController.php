@@ -5,228 +5,209 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserAccess;
-use App\Models\UserControl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function store(Request $request)
-    {
-        // ✅ Validate request
-        $request->validate([
+
+public function store(Request $request)
+{
+    DB::beginTransaction();
+
+    try {
+        // ✅ Validate input
+        $validated = $request->validate([
             'fullname' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
             'username' => 'required|string|max:255|unique:users,username',
+            'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
             'department' => 'nullable|string|max:255',
-            'role' => 'required|string',
+            'role' => ['required', Rule::in(['Administrator', 'Warehouse_Staff', 'Manager', 'GM'])],
             'status' => ['required', Rule::in(['Active', 'Inactive'])],
-            'modules' => 'required|array|min:1',
-            'modules.*.module_name' => 'required|string',
-            'modules.*.parent_module' => 'nullable|string',
-            'modules.*.can_view' => 'required|boolean',
-            'modules.*.can_add' => 'required|boolean',
-            'modules.*.can_edit' => 'required|boolean',
-            'modules.*.can_delete' => 'required|boolean',
+            'modules' => 'nullable|array',
         ]);
 
-        DB::beginTransaction();
+        // ✅ Create user
+        $user = User::create([
+            'fullname' => $validated['fullname'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'department' => $validated['department'] ?? null,
+            'role' => $validated['role'],
+            'status' => $validated['status'],
+        ]);
 
-        try {
-            // 1️⃣ Create user
-            $user = User::create([
-                'fullname' => $request->fullname,
-                'email' => $request->email,
-                'username' => $request->username,
-                'password' => $request->password, // hashed automatically
-                'department' => $request->department ?? null,
-            ]);
-
-            // 2️⃣ Create user control
-            $control = UserControl::create([
-                'user_id' => $user->id,
-                'role' => $request->role,
-                'status' => $request->status,
-            ]);
-
-            // 3️⃣ Create user access modules
-            foreach ($request->modules as $module) {
-                UserAccess::create([
-                    'user_id' => $user->id,
-                    'module_name' => $module['module_name'],
-                    'parent_module' => $module['parent_module'] ?? null,
-                    'can_view' => $module['can_view'],
-                    'can_add' => $module['can_add'],
-                    'can_edit' => $module['can_edit'],
-                    'can_delete' => $module['can_delete'],
-                ]);
+        // ✅ Assign module access recursively
+        if (!empty($validated['modules'])) {
+            foreach ($validated['modules'] as $module) {
+                $this->createModuleAccess($user->user_id, $module);
             }
+        }
 
-            DB::commit();
+        DB::commit();
 
-            // 4️⃣ Fetch all modules for nesting
-            $allModules = UserAccess::where('user_id', $user->id)
-                ->get(['module_name', 'parent_module', 'can_view', 'can_add', 'can_edit', 'can_delete'])
-                ->toArray();
+        // ✅ Load modules for response
+        $user->load('accessModules');
 
-            $modulesNested = [];
-            $map = [];
+        // ✅ Recursive formatter for nested modules
+        $buildTree = function ($modules, $parent = null) use (&$buildTree) {
+            $children = $modules->where('parent_module', $parent);
+            return $children->map(function ($mod) use ($modules, $buildTree) {
+                $data = [
+                    'module_name' => $mod->module_name,
+                    'parent_module' => $mod->parent_module,
+                    'can_view' => (bool) $mod->can_view,
+                    'can_add' => (bool) $mod->can_add,
+                    'can_edit' => (bool) $mod->can_edit,
+                    'can_delete' => (bool) $mod->can_delete,
+                ];
 
-            // Map each module
-            foreach ($allModules as $mod) {
-                $mod['children'] = [];
-                $map[$mod['module_name']] = $mod;
-            }
-
-            // Nest children under parent
-            foreach ($allModules as $mod) {
-                if ($mod['parent_module']) {
-                    if (isset($map[$mod['parent_module']])) {
-                        $map[$mod['parent_module']]['children'][] = $mod;
-                    }
-                } else {
-                    $modulesNested[] = $mod;
-                }
-            }
-
-            // Remove empty children arrays
-            function cleanChildren($modules)
-            {
-                foreach ($modules as &$mod) {
-                    if (empty($mod['children'])) {
-                        unset($mod['children']);
-                    } else {
-                        $mod['children'] = cleanChildren($mod['children']);
-                    }
+                $subModules = $buildTree($modules, $mod->module_name);
+                if ($subModules->isNotEmpty()) {
+                    $data['children'] = $subModules;
                 }
 
-                return $modules;
-            }
+                return $data;
+            })->values();
+        };
 
-            $modulesNested = cleanChildren($modulesNested);
+        $modulesTree = $buildTree($user->accessModules);
 
-            // 5️⃣ Generate token
-            $token = $user->createToken('api_token')->plainTextToken;
+        // ✅ Return complete user data with modules
+        return response()->json([
+            'success' => true,
+            'message' => 'User created successfully.',
+            'user' => [
+                'user_id' => $user->user_id,
+                'fullname' => $user->fullname,
+                'email' => $user->email,
+                'username' => $user->username,
+                'department' => $user->department,
+                'role' => $user->role,
+                'status' => $user->status,
+                'modules' => $modulesTree,
+            ],
+        ], 201);
 
-            $response = [
-                'user' => [
-                    'id' => $user->id,
-                    'fullname' => $user->fullname,
-                    'username' => $user->username,
-                    'role' => $control->role,
-                    'status' => $control->status,
-                    'modules' => $modulesNested,
-                ],
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-            ];
+    } catch (\Throwable $e) {
+        DB::rollBack();
 
-            return response()->json([
-                'message' => 'User created successfully',
-                'data' => $response,
-            ], 201);
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+private function createModuleAccess($userId, $module, $parentModule = null)
+{
+    // ✅ Create the module record
+    $access = UserAccess::create([
+        'user_id' => $userId,
+        'module_name' => $module['module_name'],
+        'parent_module' => $module['parent_module'] ?? $parentModule,
+        'can_view' => $module['can_view'] ?? false,
+        'can_add' => $module['can_add'] ?? false,
+        'can_edit' => $module['can_edit'] ?? false,
+        'can_delete' => $module['can_delete'] ?? false,
+    ]);
 
-            return response()->json([
-                'message' => 'Failed to create user',
-                'error' => $e->getMessage(),
-            ], 500);
+    // ✅ Recursively create child modules
+    if (!empty($module['children'])) {
+        foreach ($module['children'] as $child) {
+            $this->createModuleAccess($userId, $child, $module['module_name']);
         }
     }
+}
 
 
 
 public function getAllUsers(Request $request)
 {
     try {
-        // 🕵️‍♂️ Handle search input (optional)
         $search = $request->input('search');
-        $perPage = $request->input('per_page', 10); // default: 10 users per page
+        $role = $request->input('role');
+        $status = $request->input('status');
+        $department = $request->input('department');
+        $perPage = $request->input('per_page', 10);
+        $sortBy = $request->input('sort_by', 'user_id');
+        $sortDir = $request->input('sort_dir', 'asc'); // newest first by default
 
-        // ✅ Base query with eager loading
-        $query = User::with('control', 'access');
+        // ✅ Eager load accessModules relationship
+        $query = User::with('accessModules')
+            ->orderBy($sortBy, $sortDir);
 
-        // 🔍 Apply search filter if search is provided
+        // 🔍 Search filter
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('fullname', 'like', "%{$search}%")
                   ->orWhere('username', 'like', "%{$search}%")
                   ->orWhere('department', 'like', "%{$search}%")
-                  ->orWhereHas('control', function ($q2) use ($search) {
-                      $q2->where('role', 'like', "%{$search}%");
-                  });
+                  ->orWhere('role', 'like', "%{$search}%");
             });
         }
 
-        // 🧮 Paginate the results
+        // 🎯 Optional filters
+        if (!empty($role)) {
+            $query->where('role', $role);
+        }
+
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
+
+        if (!empty($department)) {
+            $query->where('department', $department);
+        }
+
+        // 🧮 Paginate results
         $users = $query->paginate($perPage);
 
-        // Recursive function to fetch module hierarchy
-        $buildTree = function ($allModules, $parentName) use (&$buildTree) {
+        // 🔁 Recursive module tree builder
+        $buildTree = function ($allModules, $parentName = null) use (&$buildTree) {
             $children = $allModules->where('parent_module', $parentName)->values();
 
             return $children->map(function ($child) use ($allModules, $buildTree) {
-                $childArr = [
+                $node = [
                     'module_name' => $child->module_name,
                     'parent_module' => $child->parent_module,
-                    'can_view' => $child->can_view,
-                    'can_add' => $child->can_add,
-                    'can_edit' => $child->can_edit,
-                    'can_delete' => $child->can_delete,
+                    'can_view' => (bool) $child->can_view,
+                    'can_add' => (bool) $child->can_add,
+                    'can_edit' => (bool) $child->can_edit,
+                    'can_delete' => (bool) $child->can_delete,
                 ];
 
-                // Recursive fetch for nested children
                 $subChildren = $buildTree($allModules, $child->module_name);
-                if ($subChildren->count() > 0) {
-                    $childArr['children'] = $subChildren;
+                if ($subChildren->isNotEmpty()) {
+                    $node['children'] = $subChildren;
                 }
 
-                return $childArr;
+                return $node;
             });
         };
 
         // 🧩 Format each user for frontend
         $formattedUsers = $users->getCollection()->map(function ($user) use ($buildTree) {
-            $allModules = $user->access;
-
-            // Get top-level modules
-            $parents = $allModules->whereNull('parent_module')->values();
-
-            $modules = $parents->map(function ($parent) use ($allModules, $buildTree) {
-                $parentArr = [
-                    'module_name' => $parent->module_name,
-                    'parent_module' => $parent->parent_module,
-                    'can_view' => $parent->can_view,
-                    'can_add' => $parent->can_add,
-                    'can_edit' => $parent->can_edit,
-                    'can_delete' => $parent->can_delete,
-                ];
-
-                // Recursive children
-                $children = $buildTree($allModules, $parent->module_name);
-                if ($children->count() > 0) {
-                    $parentArr['children'] = $children;
-                }
-
-                return $parentArr;
-            });
+            $allModules = $user->accessModules;
+            $modules = $buildTree($allModules, null);
 
             return [
-                'id' => $user->id,
+                'user_id' => $user->user_id,
                 'fullname' => $user->fullname,
                 'username' => $user->username,
-                'role' => $user->control->role ?? null,
-                'status' => $user->control->status ?? null,
+                'email' => $user->email,
                 'department' => $user->department,
+                'role' => $user->role,
+                'status' => $user->status,
                 'modules' => $modules,
             ];
         });
 
-        // 🔄 Return formatted paginated response
+        // 🔄 Return paginated response
         return response()->json([
             'message' => 'Users fetched successfully',
             'data' => $formattedUsers,
@@ -246,68 +227,55 @@ public function getAllUsers(Request $request)
 }
 
 
-    public function getUserById($id)
-    {
-        $user = User::with('control', 'access')->find($id);
 
-        if (! $user) {
+
+   public function getUserById($id)
+{
+    try {
+        // ✅ Eager load accessModules
+        $user = User::with('accessModules')->where('user_id', $id)->first();
+
+        if (!$user) {
             return response()->json([
                 'message' => 'User not found',
             ], 404);
         }
 
-        // recursive builder
-        $buildTree = function ($allModules, $parentName) use (&$buildTree) {
+        // 🔁 Recursive module builder
+        $buildTree = function ($allModules, $parentName = null) use (&$buildTree) {
             $children = $allModules->where('parent_module', $parentName)->values();
 
             return $children->map(function ($child) use ($allModules, $buildTree) {
-                $childArr = [
+                $node = [
                     'module_name' => $child->module_name,
                     'parent_module' => $child->parent_module,
-                    'can_view' => $child->can_view,
-                    'can_add' => $child->can_add,
-                    'can_edit' => $child->can_edit,
-                    'can_delete' => $child->can_delete,
+                    'can_view' => (bool)$child->can_view,
+                    'can_add' => (bool)$child->can_add,
+                    'can_edit' => (bool)$child->can_edit,
+                    'can_delete' => (bool)$child->can_delete,
                 ];
 
-                // recursion
                 $subChildren = $buildTree($allModules, $child->module_name);
-                if ($subChildren->count() > 0) {
-                    $childArr['children'] = $subChildren;
+                if ($subChildren->isNotEmpty()) {
+                    $node['children'] = $subChildren;
                 }
 
-                return $childArr;
+                return $node;
             });
         };
 
-        $parents = $user->access->whereNull('parent_module')->values();
+        // 🧩 Build full module hierarchy
+        $modules = $buildTree($user->accessModules, null);
 
-        $modules = $parents->map(function ($parent) use ($user, $buildTree) {
-            $parentArr = [
-                'module_name' => $parent->module_name,
-                'parent_module' => $parent->parent_module,
-                'can_view' => $parent->can_view,
-                'can_add' => $parent->can_add,
-                'can_edit' => $parent->can_edit,
-                'can_delete' => $parent->can_delete,
-            ];
-
-            $children = $buildTree($user->access, $parent->module_name);
-            if ($children->count() > 0) {
-                $parentArr['children'] = $children;
-            }
-
-            return $parentArr;
-        });
-
+        // ✅ Prepare formatted response
         $response = [
-            'id' => $user->id,
+            'user_id' => $user->user_id,
             'fullname' => $user->fullname,
             'email' => $user->email,
-            'department' => $user->department,
             'username' => $user->username,
-            'role' => $user->control->role ?? null,
-            'status' => $user->control->status ?? null,
+            'department' => $user->department,
+            'role' => $user->role,
+            'status' => $user->status,
             'modules' => $modules,
         ];
 
@@ -315,158 +283,200 @@ public function getAllUsers(Request $request)
             'message' => 'User fetched successfully',
             'data' => $response,
         ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to fetch user',
+            'message' => $e->getMessage(),
+        ], 500);
     }
+}
 
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'fullname' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255|unique:users,email,'.$id,
-            'username' => 'sometimes|string|max:255|unique:users,username,'.$id,
-            'department' => 'sometimes|string|max:255',
-            'role' => 'sometimes|string',
-            'status' => ['sometimes', Rule::in(['Active', 'Inactive'])],
-            'modules' => 'sometimes|array',
-            'modules.*.module_name' => 'required|string',
-            'modules.*.can_view' => 'required|boolean',
-            'modules.*.can_add' => 'required|boolean',
-            'modules.*.can_edit' => 'required|boolean',
-            'modules.*.can_delete' => 'required|boolean',
+
+  public function update(Request $request, $id)
+{
+    $request->validate([
+        'fullname' => 'sometimes|string|max:255',
+        'email' => 'sometimes|email|max:255|unique:users,email,' . $id . ',user_id',
+        'username' => 'sometimes|string|max:255|unique:users,username,' . $id . ',user_id',
+        'department' => 'sometimes|string|max:255',
+        'role' => 'sometimes|string',
+        'status' => ['sometimes', Rule::in(['Active', 'Inactive'])],
+        'modules' => 'sometimes|array',
+        'modules.*.module_name' => 'required|string',
+        'modules.*.can_view' => 'required|boolean',
+        'modules.*.can_add' => 'required|boolean',
+        'modules.*.can_edit' => 'required|boolean',
+        'modules.*.can_delete' => 'required|boolean',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        $user = User::findOrFail($id);
+
+        // ✅ 1. Update user info (no password involved)
+        $user->update([
+            'fullname' => $request->fullname ?? $user->fullname,
+            'email' => $request->email ?? $user->email,
+            'username' => $request->username ?? $user->username,
+            'department' => $request->department ?? $user->department,
+            'role' => $request->role ?? $user->role,
+            'status' => $request->status ?? $user->status,
         ]);
 
-        DB::beginTransaction();
-        try {
-            $user = User::findOrFail($id);
-
-            // 1️⃣ Update user info (remove password completely)
-            $user->update([
-                'fullname' => $request->fullname ?? $user->fullname,
-                'email' => $request->email ?? $user->email,
-                'username' => $request->username ?? $user->username,
-                'department' => $request->department ?? $user->department,
-            ]);
-
-            // 2️⃣ Update control
-            if ($request->has('role') || $request->has('status')) {
-                $control = $user->control;
-                $control->update([
-                    'role' => $request->role ?? $control->role,
-                    'status' => $request->status ?? $control->status,
-                ]);
+        // ✅ 2. Update or create access modules
+        if ($request->has('modules')) {
+            foreach ($request->modules as $mod) {
+                UserAccess::updateOrCreate(
+                    [
+                        'user_id' => $user->user_id,
+                        'module_name' => $mod['module_name'],
+                    ],
+                    [
+                        'parent_module' => $mod['parent_module'] ?? null,
+                        'can_view' => (int) $mod['can_view'],
+                        'can_add' => (int) $mod['can_add'],
+                        'can_edit' => (int) $mod['can_edit'],
+                        'can_delete' => (int) $mod['can_delete'],
+                    ]
+                );
             }
+        }
 
-            // 3️⃣ Update modules
-            if ($request->has('modules')) {
-                foreach ($request->modules as $mod) {
-                    UserAccess::updateOrCreate(
-                        ['user_id' => $user->id, 'module_name' => $mod['module_name']],
-                        [
-                            'parent_module' => $mod['parent_module'] ?? null,
-                            'can_view' => (int) $mod['can_view'],
-                            'can_add' => (int) $mod['can_add'],
-                            'can_edit' => (int) $mod['can_edit'],
-                            'can_delete' => (int) $mod['can_delete'],
-                        ]
-                    );
-                }
-            }
+        DB::commit();
 
-            DB::commit();
+        // ✅ 3. Fetch updated access modules
+        $modules = $user->accessModules()->get()->toArray();
 
-            // 4️⃣ Return updated user with nested modules
-            $modules = $user->access()->get()->toArray();
-
-            // Recursive tree builder
-            $buildTree = function ($elements, $parent = null) use (&$buildTree) {
-                $branch = [];
-                foreach ($elements as $element) {
-                    if ($element['parent_module'] === $parent) {
-                        $children = $buildTree($elements, $element['module_name']);
-                        if ($children) {
-                            $element['children'] = $children;
-                        }
-                        $branch[] = $element;
+        // Recursive builder for nested structure
+        $buildTree = function ($elements, $parent = null) use (&$buildTree) {
+            $branch = [];
+            foreach ($elements as $element) {
+                if ($element['parent_module'] === $parent) {
+                    $children = $buildTree($elements, $element['module_name']);
+                    if ($children) {
+                        $element['children'] = $children;
                     }
+                    $branch[] = $element;
                 }
+            }
+            return $branch;
+        };
 
-                return $branch;
-            };
+        $nestedModules = $buildTree($modules);
 
-            $nestedModules = $buildTree($modules);
+        // ✅ 4. Response payload
+        $response = [
+            'user_id' => $user->user_id,
+            'fullname' => $user->fullname,
+            'email' => $user->email,
+            'username' => $user->username,
+            'department' => $user->department,
+            'role' => $user->role,
+            'status' => $user->status,
+            'modules' => $nestedModules,
+        ];
 
-            $response = [
-                'id' => $user->id,
-                'fullname' => $user->fullname,
-                'email' => $user->email,
-                'username' => $user->username,
-                'role' => $user->control->role ?? null,
-                'department' => $user->department,
-                'status' => $user->control->status ?? null,
-                'modules' => $nestedModules,
-            ];
+        return response()->json([
+            'message' => 'User updated successfully',
+            'data' => $response,
+        ], 200);
 
-            return response()->json([
-                'message' => 'User updated successfully',
-                'data' => $response,
-            ], 200);
+    } catch (\Exception $e) {
+        DB::rollBack();
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'message' => 'Failed to update user',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Failed to update user',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
-    public function deleteUser($id)
-    {
-        DB::beginTransaction();
 
-        try {
-            $user = User::findOrFail($id);
+   public function deleteUser($id)
+{
+    DB::beginTransaction();
 
-            // Delete related records using relationships
-            $user->access()->delete();
-            $user->control()->delete();
+    try {
+        $user = User::findOrFail($id);
 
-            $user->delete();
+        // ✅ Delete related access modules
+        $user->accessModules()->delete();
 
-            DB::commit();
+        // ✅ Then delete the user itself
+        $user->delete();
 
-            return response()->json([
-                'message' => 'User deleted successfully',
-            ], 200);
+        DB::commit();
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+        return response()->json([
+            'message' => 'User deleted successfully',
+        ], 200);
 
-            return response()->json([
-                'message' => 'Failed to delete user',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'message' => 'Failed to delete user',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+public function getUserModules(Request $request)
+{
+    try {
+        $authUser = $request->user();
 
-    public function getUserModules(Request $request)
-    {
-        $user = User::with('modules')->find($request->user()->id);
+        if (!$authUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized user or invalid token',
+            ], 401);
+        }
 
-        // Optional: format modules like your frontend expects
-        $modules = $user->modules->map(function ($m) {
+        // ✅ Use user_id instead of id
+        $user = User::with('accessModules')->where('user_id', $authUser->user_id)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // ✅ Format module data
+        $modules = $user->accessModules->map(function ($m) {
             return [
-                'module_name' => $m->module_name,
+                'module_name'   => $m->module_name,
                 'parent_module' => $m->parent_module,
-                'can_add' => (int) $m->can_add,
-                'can_edit' => (int) $m->can_edit,
-                'can_view' => (int) $m->can_view,
-                'can_delete' => (int) $m->can_delete,
+                'can_add'       => (bool) $m->can_add,
+                'can_edit'      => (bool) $m->can_edit,
+                'can_view'      => (bool) $m->can_view,
+                'can_delete'    => (bool) $m->can_delete,
             ];
         });
 
-        $user->modules = $modules;
+        return response()->json([
+            'success' => true,
+            'message' => 'User modules fetched successfully',
+            'user' => [
+                'user_id'   => $user->user_id,
+                'fullname'  => $user->fullname,
+                'email'     => $user->email,
+                'username'  => $user->username,
+                'role'      => $user->role,
+                'modules'   => $modules,
+            ],
+        ]);
 
-        return response()->json(['user' => $user]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch user modules',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
+
+
 }

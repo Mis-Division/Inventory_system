@@ -29,7 +29,7 @@
             :class="canEditAddUsers ? 'table-row-clickable' : 'table-secondary text-muted'"
             @click="handleRowClick(user)" :title="canEditAddUsers ? 'Click to edit user' : 'No permission to edit'"
             style="cursor: pointer;">
-            <td>{{ user.id }}</td>
+            <td>{{ user.user_id }}</td>
             <td>{{ user.fullname }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.role }}</td>
@@ -149,7 +149,7 @@ function handleRowClick(user) {
 async function openUserModal(user) {
   appStore.showLoading();
   try {
-    const res = await api.get(`/users/display_user/${user.id}`);
+    const res = await api.get(`/users/display_user/${user.user_id}`);
     selectedUser.value = { ...res.data?.data, modules: res.data?.data?.modules || [] };
     showUserModal.value = true;
   } finally {
