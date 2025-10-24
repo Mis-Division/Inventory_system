@@ -15,7 +15,10 @@
                                                         <input v-model="form.ItemCode" type="text" class="form-control"
                                                                  />
                                                 </div>
-
+                                                <div class="mb-3">
+                                                        <label class="form-label">Product Name</label>
+                                                        <input v-model="form.product_name" type="text" class="form-control"/>
+                                                </div>
                                                 <div class="mb-3">
                                                         <label class="form-label">Description</label>
                                                         <textarea v-model="form.description" class="form-control"
@@ -111,6 +114,7 @@ const emit = defineEmits(["close", "updated"]);
 const appStore = useAppStore();
 const form = ref({
         ItemCode: "",
+        product_name: "",
         description: "",
 });
 
@@ -126,6 +130,7 @@ watch(
         (newItem) => {
                 if (newItem) {
                         form.value.ItemCode = newItem.ItemCode || "";
+                        form.value.product_name = newItem.product_name || "";
                         form.value.description = newItem.description || "";
                         form.value.accounting_code = newItem.accounting_code || "";
                 }
@@ -151,6 +156,7 @@ async function updateItemCode() {
                 appStore.showLoading();
                 const payload = {
                         ItemCode: form.value.ItemCode,
+                        product_name: form.value.product_name,
                         description: form.value.description,
                         accounting_code: form.value.accounting_code,
                 };

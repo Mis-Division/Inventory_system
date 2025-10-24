@@ -13,6 +13,7 @@ class ItemsController extends Controller
         $request->validate([
 
             'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode',
+            'product_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code',
         ]);
@@ -23,6 +24,7 @@ class ItemsController extends Controller
             // ✅ Create record
             $item = Items::create([
                 'ItemCode' => $request->ItemCode,
+                'product_name' =>$request->product_name,
                 'description' => $request->description,
                 'accounting_code' => $request->accounting_code,
             ]);
@@ -56,6 +58,7 @@ public function GetItemCode(Request $request)
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('ItemCode', 'LIKE', "%{$search}%")
+                  ->orWhere('product_name', 'LIKE', "%{$search}%")
                   ->orWhere('description', 'LIKE', "%{$search}%")
                   ->orWhere('accounting_code', 'LIKE', "%{$search}%");
             });
@@ -132,7 +135,8 @@ public function GetItemCode(Request $request)
 
                 $validated = $request->validate([
                     'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode,' . $id . ',ItemCode_id',
-                    'description' => 'nullable|string',
+                    'product_name' => 'required|string|max:255',
+                    'description' => 'nullable|string|max:255',
                     'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code,' . $id . ',ItemCode_id',
                 ]);
 $accountingCode = $request->input('accounting_code');
@@ -141,6 +145,7 @@ if ($accountingCode === '') {
 }
                 $item->update([
                     'ItemCode' => $validated['ItemCode'],
+                    'product_name' =>$validated['product_name'] ?? $item->product_name,
                     'description' => $validated['description'] ?? $item->description,
                     'accounting_code' => $accountingCode,
                 ]);

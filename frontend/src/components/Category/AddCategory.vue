@@ -19,6 +19,16 @@
                             <div v-if="errors.ItemCode" class="invalid-feedback">{{ errors.ItemCode }}</div>
                         </div>
 
+                        <div class="col-md-12 mt-3">
+                            <label class="form-label" for="product_name">Product Name <span
+                                    class="text-danger">*</span></label>
+                            <input v-model="form.product_name" type="text" id="product_name" class="form-control"
+                                placeholder="Please input Product Name"
+                                :class="{ 'is-invalid': errors.product_name }" />
+                            <div v-if="errors.descriptproduct_nameion" class="invalid-feedback">
+                                {{ errors.product_name  }}
+                            </div>
+                        </div>
                         <!-- Description -->
                         <div class="col-md-12 mt-3">
                             <label class="form-label" for="description">Description <span
@@ -27,13 +37,16 @@
                                 placeholder="Please input Description" :class="{ 'is-invalid': errors.description }" />
                             <div v-if="errors.description" class="invalid-feedback">{{ errors.description }}</div>
                         </div>
-                            <!-- Accounting Code -->
-                         <div class="col-md-12 mt-3">
+
+                        <!-- Accounting Code -->
+                        <div class="col-md-12 mt-3">
                             <label class="form-label" for="accounting_code">Acct. Code <span
                                     class="text-danger">*</span></label>
                             <input v-model="form.accounting_code" type="text" id="accounting_code" class="form-control"
-                                placeholder="Please input accounting_code" :class="{ 'is-invalid': errors.accounting_code }" />
-                            <div v-if="errors.accounting_code" class="invalid-feedback">{{ errors.accounting_code }}</div>
+                                placeholder="Please input accounting_code"
+                                :class="{ 'is-invalid': errors.accounting_code }" />
+                            <div v-if="errors.accounting_code" class="invalid-feedback">{{ errors.accounting_code }}
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -44,7 +57,7 @@
                     </button>
                     <button type="button" class="btn btn-success" @click="createItemCode" :disabled="modalLoading">
                         <i class="bi bi-plus-circle me-1"></i>
-                        <span v-if="!modalLoading">Save</span>
+                        <span v-if="!modalLoading">Create</span>
                         <span v-else>Saving...</span>
                     </button>
                 </div>
@@ -113,12 +126,14 @@ const isMobile = ref(window.innerWidth < 768);
 
 const form = reactive({
     ItemCode: "",
+    product_name: "",
     description: "",
-     accounting_code: "",
+    accounting_code: "",
 });
 
 const errors = reactive({
     ItemCode: "",
+    product_name: "",
     description: "",
     // accounting_code: "",
 });
@@ -126,6 +141,7 @@ const errors = reactive({
 // ✅ Proper validation with return value
 function validateForm() {
     errors.ItemCode = form.ItemCode ? "" : "Please input Item Code";
+    errors.product_name = form.product_name ? "" : "Please input product name";
     errors.description = form.description ? "" : "Please input the Description";
     // errors.accounting_code = form.accounting_code ? "" : "please input Accounting Code";
 

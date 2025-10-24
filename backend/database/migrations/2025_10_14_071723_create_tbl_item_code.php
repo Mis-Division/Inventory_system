@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tbl_item_code', function (Blueprint $table) {
             $table->id('ItemCode_id');
             $table->string('ItemCode')->unique();
+            $table->string('product_name')->nullable();
             $table->string('description');
             $table->string('accounting_code')->unique();
             $table->string('created_at')->nullable();

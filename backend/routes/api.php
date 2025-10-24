@@ -66,7 +66,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     //stocks
     Route::prefix('stocks')->group(function(){
-        Route::post('/createStock', [StocksController::class, 'CreateProductStocks']);
+           Route::post('/createStock', [StocksController::class, 'CreateProductStocks']);
+           Route::get('/getStocks', [StocksController::class, 'getStocks']);
+           Route::get('/getStocks/{id}', [StocksController::class, 'getStockById']);
+           Route::put('/updateStocks/{id}',[StocksController::class, 'updateStockById']);
+           Route::delete('/deleteStocks/{id}', [StocksController::class, 'deleteStocksById']);
     });
 
     //itemcode

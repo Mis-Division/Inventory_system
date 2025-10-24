@@ -28,6 +28,7 @@
           <tr>
             <th style="width: 5%;">ID</th>
             <th style="width: 15%;">Item Code</th>
+            <th style="width: 20%;">Product Name</th>
             <th style="width: 20%;">Descriptions</th>
             <th style="width: 20%;">Acct. Code</th>
             <th style="width: 10%;">Action</th>
@@ -38,6 +39,7 @@
           <tr v-for="item in Items" :key="item.ItemCode_id">
             <td>{{ item.ItemCode_id }}</td>
             <td>{{ item.ItemCode }}</td>
+            <td>{{ item.product_name }}</td>
             <td>{{ item.description }}</td>
             <td>{{ item.accounting_code }}</td>
             <td>
@@ -123,7 +125,7 @@ const selectedItemCode = ref(null);
 const appStore = useAppStore();
 
 // Permissions
-const cadAddCategory = computed(() => userStore.cadAddCategory);
+const cadAddCategory = computed(() => userStore.canAddCategory);
 const canEditCategory = computed(() => userStore.canEditCategory);
 const canDeleteCategory = computed(() => userStore.canDeleteCategory);
 

@@ -8,6 +8,6 @@ class Items extends Model
 {
      protected $table = 'tbl_item_code';
     protected $primaryKey = 'ItemCode_id';
-    protected $fillable = ['ItemCode', 'description','accounting_code'];
+    protected $fillable = ['ItemCode','product_name', 'description','accounting_code'];
     public $timestamps = true; 
 }

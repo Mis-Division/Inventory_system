@@ -12,9 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tbl_stocks', function (Blueprint $table) {
-            $table->id('stock_id');
-            $table->foreignId('product_id')->onDelete('cascade');
+            $table->id('id');
+            $table->string('itemCode')->unique();
+            $table->string('product_name');
+            $table->string('descriptions')->nullable();
             $table->integer('quantity_onhand')->default(0);
+            $able->integer('quantity_inStock')->default(0);
+            $table->decimal('unitCost', 10,2);
+            $table->string('product_Type')->nullable();
             $table->string('created_at');
             $table->string('updated_by')->nullable();
             $table->timestamp('updated_at');
