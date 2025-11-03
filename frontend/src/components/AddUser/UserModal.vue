@@ -102,17 +102,19 @@
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer d-flex justify-content-between">
-          <button class="btn btn-primary" @click="$emit('close')">
-            <i class="bi bi-x-circle"></i> Close
-          </button>
-          <div class="d-flex gap-3">
-            <button class="btn btn-success" @click="confirmSave" :disabled="!canEdit">
+        <div class="modal-footer">
+          
+          <div class="d-flex gap-2">
+            <button class="btn btn-warning" @click="confirmSave" :disabled="!canEdit">
               <i class="bi bi-pencil-square"></i> Update
             </button>
-            <button class="btn btn-danger" @click="confirmDelete" :disabled="!canDelete">
+            <!-- <button class="btn btn-danger" @click="confirmDelete" :disabled="!canDelete">
               <i class="bi bi-trash"></i> Delete User
-            </button>
+            </button> -->
+
+            <button class="btn btn-primary" @click="$emit('close')">
+            <i class="bi bi-x-circle"></i> Close
+          </button>
           </div>
         </div>
       </div>

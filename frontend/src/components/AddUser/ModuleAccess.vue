@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import ModuleAccess from "../AddUser/ModuleAccess.vue";
+
 const emit = defineEmits(["delete"]);
 
 const props = defineProps({

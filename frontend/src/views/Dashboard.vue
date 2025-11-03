@@ -176,9 +176,13 @@ export default {
 </script>
 <style scoped>
 .content-wrapper {
-  flex: 2 2 0%;         /* flex-2 */
-  overflow-y: auto;     /* overflow-y-auto */
-  padding: 2.5rem;      /* p-6 (24px) */
-  margin-top: 3.5rem;   /* mt-14 (56px) */
+  flex: 2 2 0%;
+  /* flex-2 */
+  overflow-y: auto;
+  /* overflow-y-auto */
+  padding: 2.5rem;
+  /* p-6 (24px) */
+  margin-top: 3.5rem;
+  /* mt-14 (56px) */
 }
 </style>

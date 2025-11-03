@@ -7,38 +7,23 @@
       <!-- Username -->
       <div class="mb-4">
         <label class="block text-sm font-medium mb-1" for="username">Username</label>
-        <input 
-          id="username"
-          v-model="form.username"
-          type="text"
-          placeholder="Enter your username"
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
+        <input id="username" v-model="form.username" type="text" placeholder="Enter your username" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none" />
       </div>
 
       <!-- Password -->
       <div class="mb-4">
         <label class="block text-sm font-medium mb-1" for="password">Password</label>
-        <input 
-          id="password"
-          v-model="form.password"
-          type="password"
-          placeholder="Enter your password"
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
+        <input id="password" v-model="form.password" type="password" placeholder="Enter your password" required
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none" />
       </div>
 
       <!-- Error Message -->
       <p v-if="error" class="text-red-500 mb-4 text-sm text-center">{{ error }}</p>
 
       <!-- Login Button -->
-      <button
-        type="submit"
-        :disabled="appStore.loading"
-        class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50"
-      >
+      <button type="submit" :disabled="appStore.loading"
+        class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50">
         <span v-if="!appStore.loading">Login</span>
         <span v-else>Logging in...</span>
       </button>
@@ -68,7 +53,7 @@ async function handleLogin() {
 
   try {
     const res = await api.post("/login", form.value);
-   
+
 
     const token = res?.data?.data?.access_token;
     const user = res?.data?.data?.user;

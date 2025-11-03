@@ -1,11 +1,11 @@
 <template>
   <div class="page-container">
     <div class="custom-headers">
-      <h1 class="mb-3">Stock Management</h1>
+      <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Stocks</h1>
 
       <div class="custom-actions">
         <input type="text" class="form-control" v-model="search" placeholder="Search Stocks..." />
-        <button class="btn btn-primary" :disabled="!canAddStocks" @click="AddStocks">
+        <button class="btn btn-primary" v-if="canAddStocks" @click="AddStocks">
           <i class="bi bi-plus-circle me-1"></i> Add Stocks
         </button>
       </div>
@@ -50,11 +50,10 @@
           <td>{{ stock.quantity_onhand }}</td>
           <td>{{ stock.quantity_in_stock }}</td>
           <td>
-            <button :disabled="!canEditStocks" @click="EditStocks(stock)" class="btn btn-warning" title="Edit">
+            <button v-if="canEditStocks" @click="EditStocks(stock)" class="btn btn-sm btn-warning me-2" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
-            |
-            <button :disabled="!canDeleteStocks" @click="deleteStocks(stock)" class="btn btn-danger" title="Delete">
+            <button v-if="canDeleteStocks" @click="deleteStocks(stock)" class="btn btn-sm btn-danger" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -83,7 +82,11 @@
     </div>
   </div>
   <AddStock v-if="showAddStocks" @close="closeAddStocks" />
-  <UpdateStock v-if="showUpdateStocks && selectedStock" :stock="selectedStock"  @close="closeUpdateStocks" @updated="fetchStocks" />
+  <UpdateStock v-if="showUpdateStocks && selectedStock" :stock="selectedStock" @close="closeUpdateStocks"
+    @updated="fetchStocks" />
+
+  <DeleteStocks v-if="showDeleteStocks && selectedStock" :stock="selectedStock" @close="closeDeleteStocks"
+    @deleted="onDeletedStocks" />
 </template>
 
 
@@ -94,6 +97,7 @@ import { useAppStore } from "../../stores/appStore";
 import { userStore } from "../../stores/userStore";
 import AddStock from "../../components/Stocks/AddStocks.vue";
 import UpdateStock from "../../components/Stocks/UpdateStocks.vue";
+import DeleteStocks from "../../components/Stocks/DeleteStocks.vue";
 
 const appStore = useAppStore();
 
@@ -104,6 +108,7 @@ const canAddStocks = computed(() => userStore.canAddStocks);
 const showAddStocks = ref(false);
 const showUpdateStocks = ref(false);
 const selectedStock = ref(null); // ✅ renamed for clarity
+const showDeleteStocks = ref(false);
 
 // ✅ Add Stocks
 async function AddStocks() {
@@ -132,6 +137,29 @@ async function EditStocks(stock) {
   }
 }
 
+ async function deleteStocks(stock) {
+  try{
+    appStore.showLoading();
+    const res = await api.get(`/stocks/getStocks/${stock.id}`);
+    if (res?.data.data) {
+      selectedStock.value = res.data.data;
+      await nextTick();
+      showDeleteStocks.value = true;
+    } else {
+      console.error("No stock data returned from API:", res.data);
+    }
+  } catch (err) {
+    console.error("Failed to fetch stock info:", err);
+  } finally {
+    appStore.hideLoading(); 
+  }
+ }
+function closeDeleteStocks() {
+  showDeleteStocks.value = false;
+  selectedStock.value = null;
+}
+
+
 // ✅ Close Add Modal
 async function closeAddStocks() {
   showAddStocks.value = false;
@@ -141,6 +169,11 @@ async function closeAddStocks() {
 // ✅ Close Update Modal
 async function closeUpdateStocks() {
   showUpdateStocks.value = false;
+  fetchStocks();
+}
+async function onDeletedStocks() {
+  showDeleteStocks.value = false;
+  selectedStock.value = null;
   fetchStocks();
 }
 
@@ -211,4 +244,3 @@ onMounted(() => {
   fetchStocks()
 })
 </script>
-

@@ -2,12 +2,12 @@
   <div class="main-container">
     <!-- Header -->
     <div class="custom-headers">
-      <h1 class="mb-3">Supplier Management</h1>
+      <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Supplier</h1>
 
       <div class="custom-actions" >
         <input v-model="searchQuery" @input="fetchSuppliers" type="text" class="form-control"
           placeholder="Search Supplier..."/>
-        <button :disabled="!canAddSupplier" @click="addSupply" class="btn btn-primary">
+        <button v-if="canAddSupplier" @click="addSupply" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Supplier
         </button>
       </div>
@@ -43,12 +43,12 @@
             <td>{{ supplier.tin }}</td>
             <td>{{ supplier.vat_no }}</td>
             <td>
-              <button :disabled="!canEditSupplier" @click="UpdateSupplierInfo(supplier)" class="btn btn-warning"
+              <button v-if="canEditSupplier" @click="UpdateSupplierInfo(supplier)" class="btn btn-warning"
                 title="Edit Supplier">
                 <i class="bi bi-pencil"></i>
               </button>
               |
-              <button :disabled="!canDeleteSupplier" @click="DeleteSupplierInfo(supplier)" class="btn btn-danger"
+              <button v-if="canDeleteSupplier" @click="DeleteSupplierInfo(supplier)" class="btn btn-danger"
                 title="Delete Supplier">
                 <i class="bi bi-trash"></i>
               </button>

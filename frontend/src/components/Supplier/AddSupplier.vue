@@ -69,10 +69,10 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" @click="closeModal">
+                    <button type="button" class="btn btn-danger" @click="closeModal">
                         <i class="bi bi-x-circle me-1"></i>Close
                     </button>
-                    <button type="button" class="btn btn-success" @click="createSupplier">
+                    <button type="button" class="btn btn-primary" @click="createSupplier">
                         <i class="bi bi-plus-circle me-1"></i>Save
                     </button>
                 </div>
@@ -90,7 +90,7 @@
                 <p>Are you sure you want to create this supplier?</p>
             </div>
             <div class="custom-footer">
-                <button class="btn btn-warning" @click="showConfirm = false">Cancel</button>
+                <button class="btn btn-danger" @click="showConfirm = false">Cancel</button>
                 <button class="btn btn-success" @click="confirmSave">Yes, Create</button>
             </div>
         </div>

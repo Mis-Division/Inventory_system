@@ -2,12 +2,12 @@
   <div class="main-container">
     <!-- Header -->
     <div class="custom-headers">
-      <h1 class="mb-3">ItemCode Management</h1>
+      <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Items</h1>
 
       <div class="custom-actions">
         <input v-model="searchQuery" @input="fetchItemCode" type="text" class="form-control"
           placeholder="Search ItemCode and Descriptions..." />
-        <button :disabled="!cadAddCategory" @click="AddItem" class="btn btn-primary">
+        <button v-if="cadAddCategory" @click="AddItem" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Item Code
         </button>
       </div>
@@ -43,11 +43,11 @@
             <td>{{ item.description }}</td>
             <td>{{ item.accounting_code }}</td>
             <td>
-              <button :disabled="!canEditCategory" @click="editCategory(item)" class="btn btn-warning" title="Edit">
+              <button v-if="canEditCategory" @click="editCategory(item)" class="btn btn-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
               </button>
               |
-              <button :disabled="!canDeleteCategory" @click="deleteCategories(item)" class="btn btn-danger"
+              <button v-if="canDeleteCategory" @click="deleteCategories(item)" class="btn btn-danger"
                 title="Delete">
                 <i class="bi bi-trash"></i>
               </button>
@@ -57,7 +57,7 @@
 
         <tbody v-else>
           <tr>
-            <td colspan="4" class="text-center py-3 text-muted">
+            <td colspan="6" class="text-center py-3 text-muted">
               No Item Code found.
             </td>
           </tr>

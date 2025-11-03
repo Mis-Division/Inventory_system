@@ -3,203 +3,165 @@
     <nav class="nav flex-column gap-1">
 
       <!-- Dashboard -->
-      <router-link to="/dashboard" class="nav-link d-flex align-items-center mb-2"
-        :class="{ 'disabled': !hasAccess('Dashboard') }">
-
+      <router-link 
+        v-if="hasAccess('Dashboard')" 
+        to="/dashboard" 
+        class="nav-link d-flex align-items-center mb-2">
         <span><i class="bi bi-house me-2"></i> Dashboard</span>
       </router-link>
 
       <!-- Inventory -->
-      <div class="mb-2">
+      <div v-if="hasAccess('Inventory')" class="mb-2">
         <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
-          @click="toggle('Inventory')" :class="{ 'disabled': !hasAccess('Inventory') }">
+          @click="toggle('Inventory')">
 
           <span> <i class="bi bi-list text-black me-2"></i> Inventory</span>
-          <i v-if="hasAccess('Inventory')" class="bi bi-chevron-right transition"
+          <i class="bi bi-chevron-right transition"
             :class="{ 'rotate-90': expanded.includes('Inventory') }"></i>
         </button>
 
         <!-- Inventory submenu -->
-        <ul v-show="expanded.includes('Inventory')" class="list-unstyled ms-3 mt-">
-          <li>
-            <router-link to="/dashboard/stocks" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Stocks') }">
-
+        <ul v-show="expanded.includes('Inventory')" class="list-unstyled ms-3 mt-1">
+          <li v-if="hasAccess('Stocks')">
+            <router-link to="/dashboard/stocks" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-box-seam me-2"></i> Stocks</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/mrv" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Material Requisition Voucher') }">
 
+          <li v-if="hasAccess('Material Requisition Voucher')">
+            <router-link to="/dashboard/mrv" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-ticket-perforated me-2"></i> Materials Requisition Voucher</span>
             </router-link>
           </li>
 
           <!-- MCT -->
-          <li class="mt-1">
+          <li v-if="hasAccess('Material Charge Ticket')" class="mt-1">
             <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between"
-              @click="toggle('MCT')" :class="{ 'disabled': !hasAccess('Material Charge Ticket') }">
-
-              <span> <i class="bi bi-ticket me-2"></i>Material Charge Ticket</span>
-              <i v-if="hasAccess('Material Charge Ticket')" class="bi bi-chevron-right transition"
+              @click="toggle('MCT')">
+              <span><i class="bi bi-ticket me-2"></i>Material Charge Ticket</span>
+              <i class="bi bi-chevron-right transition"
                 :class="{ 'rotate-90': expanded.includes('MCT') }"></i>
             </button>
 
             <!-- MCT submenu -->
             <ul v-show="expanded.includes('MCT')" class="list-unstyled ms-4 mt-1">
-              <li>
-                <router-link to="/dashboard/LineHardware" class="nav-link d-flex align-items-center"
-                  :class="{ 'disabled': !hasAccess('Line Hardware') }">
-
+              <li v-if="hasAccess('Line Hardware')">
+                <router-link to="/dashboard/LineHardware" class="nav-link d-flex align-items-center">
                   <span><i class="bi bi-tools me-2"></i>Line Hardware</span>
                 </router-link>
               </li>
-              <li>
-                <router-link to="/dashboard/specialhardware" class="nav-link d-flex align-items-center"
-                  :class="{ 'disabled': !hasAccess('Special Hardware') }">
-
-                  <span> <i class="bi bi-lightning me-2"></i> Special Hardware</span>
+              <li v-if="hasAccess('Special Hardware')">
+                <router-link to="/dashboard/specialhardware" class="nav-link d-flex align-items-center">
+                  <span><i class="bi bi-lightning me-2"></i>Special Hardware</span>
                 </router-link>
               </li>
-              <li>
-                <router-link to="/dashboard/others" class="nav-link d-flex align-items-center"
-                  :class="{ 'disabled': !hasAccess('Others') }">
-
-                  <span><i class="bi bi-question-circle me-2"></i> Others</span>
+              <li v-if="hasAccess('Others')">
+                <router-link to="/dashboard/others" class="nav-link d-flex align-items-center">
+                  <span><i class="bi bi-question-circle me-2"></i>Others</span>
                 </router-link>
               </li>
             </ul>
           </li>
 
-          <!-- MST -->
-          <li class="mt-1">
-            <router-link to="/dashboard/mst" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Material Salvage Ticket') }">
+          <li v-if="hasAccess('Material Salvage Ticket')" class="mt-1">
+            <router-link to="/dashboard/mst" class="nav-link d-flex align-items-center">
               <span><i class="bi-exclamation-triangle me-2"></i>Material Salvage Ticket</span>
             </router-link>
           </li>
 
-          <!-- MR -->
-          <li class="mt-1">
-            <router-link to="/dashboard/mr" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Memorandum Receipts') }">
-
-              <span><i class="bi bi-clipboard me-2"></i> Memorandum Receipt</span>
+          <li v-if="hasAccess('Memorandum Receipts')" class="mt-1">
+            <router-link to="/dashboard/mr" class="nav-link d-flex align-items-center">
+              <span><i class="bi bi-clipboard me-2"></i>Memorandum Receipt</span>
             </router-link>
           </li>
         </ul>
       </div>
 
-      <!--OrderItem-->
-      <router-link to="/dashboard/order" class="nav-link d-flex align-items-center mb-2"
-        :class="{ 'disabled': !hasAccess('Order') }">
-        <span> <i class="bi bi-cart me-2"></i>Purchase Order</span>
+      <!-- Purchase Order -->
+      <router-link v-if="hasAccess('Order')" to="/dashboard/order" class="nav-link d-flex align-items-center mb-2">
+        <span><i class="bi bi-cart me-2"></i>Purchase Order</span>
       </router-link>
-      <!-- Catergory-->
-      <router-link to="/dashboard/category" class="nav-link d-flex align-items-center mb-2"
-        :class="{ 'disabled': !hasAccess('Categories') }">
-       <span> <i class="bi bi-info-lg me-2"></i>Items</span>
-      </router-link>
-      <!-- Supplier -->
-      <router-link to="/dashboard/supplier" class="nav-link d-flex align-items-center mb-2"
-        :class="{ 'disabled': !hasAccess('Suppliers') }">
-        <span> <i class="bi bi-person-badge me-2"></i>Supplier</span>
-      </router-link>
-      <!--Adjusment-->
-      <router-link to="/dashboard/adjustment" class="nav-link d-flex align-items-center mb-2"
-        :class="{ 'disabled': !hasAccess('Adjustment') }">
-        <span> <i class="bi bi-arrow-repeat me-2"></i>Adjustments</span>
-      </router-link>
-      <!-- Reports -->
-      <div class="mb-2">
-        <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
-          @click="toggle('Reports')" :class="{ 'disabled': !hasAccess('Reports') }">
-          <span><i class="bi bi-clipboard-data me-2"></i>Reports</span>
 
-          <i v-if="hasAccess('Reports')" class="bi bi-chevron-right transition"
+      <!-- Category -->
+      <router-link v-if="hasAccess('Categories')" to="/dashboard/item" class="nav-link d-flex align-items-center mb-2">
+        <span><i class="bi bi-info-lg me-2"></i>Items</span>
+      </router-link>
+
+      <!-- Supplier -->
+      <router-link v-if="hasAccess('Suppliers')" to="/dashboard/supplier" class="nav-link d-flex align-items-center mb-2">
+        <span><i class="bi bi-person-badge me-2"></i>Supplier</span>
+      </router-link>
+
+      <!-- Adjustment -->
+      <router-link v-if="hasAccess('Adjustment')" to="/dashboard/adjustment" class="nav-link d-flex align-items-center mb-2">
+        <span><i class="bi bi-arrow-repeat me-2"></i>Adjustments</span>
+      </router-link>
+
+      <!-- Reports -->
+      <div v-if="hasAccess('Reports')" class="mb-2">
+        <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between" type="button"
+          @click="toggle('Reports')">
+          <span><i class="bi bi-clipboard-data me-2"></i>Reports</span>
+          <i class="bi bi-chevron-right transition"
             :class="{ 'rotate-90': expanded.includes('Reports') }"></i>
         </button>
 
         <ul v-show="expanded.includes('Reports')" class="list-unstyled ms-4 mt-2">
-          <li>
-            <router-link to="/dashboard/sample-reports" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('MRV Reports') }">
+          <li v-if="hasAccess('MRV Reports')">
+            <router-link to="/dashboard/sample-reports" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-file-earmark-text me-2"></i> MRV</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/reports_line" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Line Hardware Reports') }">
+          <li v-if="hasAccess('Line Hardware Reports')">
+            <router-link to="/dashboard/reports_line" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-tools me-2"></i> Line Hardware</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/reports_Special" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Special Hardware Reports') }">
+          <li v-if="hasAccess('Special Hardware Reports')">
+            <router-link to="/dashboard/reports_Special" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-lightning me-2"></i> Special Hardware</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/reports_Others" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Others Reports') }">
+          <li v-if="hasAccess('Others Reports')">
+            <router-link to="/dashboard/reports_Others" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-question-circle me-2"></i> Others</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/reports_salvage" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('MST Reports') }">
+          <li v-if="hasAccess('MST Reports')">
+            <router-link to="/dashboard/reports_salvage" class="nav-link d-flex align-items-center">
               <span><i class="bi-exclamation-triangle me-2"></i> Salvage Ticket</span>
             </router-link>
           </li>
-          <li>
-            <router-link to="/dashboard/reports_memo" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('MR Reports') }">
+          <li v-if="hasAccess('MR Reports')">
+            <router-link to="/dashboard/reports_memo" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-clipboard me-2"></i> Memorandum Receipt</span>
             </router-link>
           </li>
         </ul>
       </div>
 
-      <!-- Users -->
-      <div class="mb-2">
+      <!-- Administration -->
+      <div v-if="hasAccess('Users')" class="mb-2">
         <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between"
-          @click="toggle('Users')" :class="{ 'disabled': !hasAccess('Users') }">
-
-          <span> <i class="bi bi-people me-2"></i> ADMINISTRATION</span>
-          <i v-if="hasAccess('Users')" class="bi bi-chevron-right transition"
+          @click="toggle('Users')">
+          <span><i class="bi bi-people me-2"></i> ADMINISTRATION</span>
+          <i class="bi bi-chevron-right transition"
             :class="{ 'rotate-90': expanded.includes('Users') }"></i>
         </button>
 
         <ul v-show="expanded.includes('Users')" class="list-unstyled ms-4 mt-2">
-          <li>
-            <router-link to="/dashboard/user" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('Add Users') }">
+          <li v-if="hasAccess('Add Users')">
+            <router-link to="/dashboard/user" class="nav-link d-flex align-items-center">
               <span><i class="bi bi-person-plus me-2"></i> Add Users</span>
-
             </router-link>
           </li>
-          <!-- <li>
-            <router-link to="/dashboard/employees/" class="nav-link d-flex align-items-center"
-              :class="{ 'disabled': !hasAccess('List of Employee') }">
-              <span><i class="bi bi-person-badge me-2"></i>List of Employee</span>
-            </router-link>
-          </li> -->
-
         </ul>
-
       </div>
-      <!-- <div class="mb-2">
-        <button @click="userStore.logout" class="sidebar-item flex  rounded hover:bg-blue-100 text-gray-700">
-          <span> <i class="bi bi-power me-2"></i> Logout</span>
-        </button>
-      </div> -->
-      <!-- Logout -->
-
 
     </nav>
   </aside>
 </template>
+
 
 <style scoped>
 .sidebar-item {

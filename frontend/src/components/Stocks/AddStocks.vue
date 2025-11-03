@@ -2,7 +2,7 @@
     <div class="modal fade show" tabindex="1" style="display: block; background: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-l modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-warning text-white">
+                <div class="modal-header bg-primary text-white">
                     <h5>Add Stocks</h5>
                     <button type="button" class="btn btn-close btn-close-white" @click="closeModal"></button>
                 </div>
@@ -73,10 +73,10 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-warning" @click="closeModal">
+                        <button type="button" class="btn btn-danger" @click="closeModal">
                             <i class="bi bi-x-circle me-1"></i>Close
                         </button>
-                        <button type="button" class="btn btn-success" @click="createStocks">
+                        <button type="button" class="btn btn-primary" @click="createStocks">
                             <i class="bi bi-plus-circle me-1"></i>Create
                         </button>
                     </div>
