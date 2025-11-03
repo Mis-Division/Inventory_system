@@ -104,7 +104,7 @@ const showAddStocks = ref(false);
 
 async function AddStocks() {
   appStore.showLoading();
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  await new Promise((resolve) => setTimeout(resolve, 400));
   showAddStocks.value = true;
   appStore.hideLoading();
 }
