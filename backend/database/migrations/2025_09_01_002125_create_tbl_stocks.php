@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('product_name');
             $table->string('descriptions')->nullable();
             $table->integer('quantity_onhand')->default(0);
-            $able->integer('quantity_inStock')->default(0);
+            $table->integer('quantity_inStock')->default(0);
             $table->decimal('unitCost', 10,2);
             $table->string('product_Type')->nullable();
             $table->string('created_at');

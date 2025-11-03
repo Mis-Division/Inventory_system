@@ -166,7 +166,7 @@
         <button class="btn btn-toggle w-100 text-start d-flex align-items-center justify-content-between"
           @click="toggle('Users')" :class="{ 'disabled': !hasAccess('Users') }">
 
-          <span> <i class="bi bi-people me-2"></i> Users</span>
+          <span> <i class="bi bi-people me-2"></i> ADMINISTRATION</span>
           <i v-if="hasAccess('Users')" class="bi bi-chevron-right transition"
             :class="{ 'rotate-90': expanded.includes('Users') }"></i>
         </button>
@@ -179,12 +179,12 @@
 
             </router-link>
           </li>
-          <li>
+          <!-- <li>
             <router-link to="/dashboard/employees/" class="nav-link d-flex align-items-center"
               :class="{ 'disabled': !hasAccess('List of Employee') }">
               <span><i class="bi bi-person-badge me-2"></i>List of Employee</span>
             </router-link>
-          </li>
+          </li> -->
 
         </ul>
 

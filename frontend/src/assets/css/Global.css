@@ -339,3 +339,18 @@ button {
     justify-content: flex-start;
   }
 }
+.select2-container .select2-results__options {
+  max-height: 180px !important;
+  overflow-y: auto !important;
+}
+
+.select2-results__options::-webkit-scrollbar {
+  width: 6px;
+}
+.select2-results__options::-webkit-scrollbar-thumb {
+  background-color: #bbb;
+  border-radius: 3px;
+}
+.select2-results__options::-webkit-scrollbar-thumb:hover {
+  background-color: #888;
+}

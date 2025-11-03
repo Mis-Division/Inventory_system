@@ -50,12 +50,11 @@
           <td>{{ stock.quantity_onhand }}</td>
           <td>{{ stock.quantity_in_stock }}</td>
           <td>
-            <button :disabled="!canEditStocks" @click="editStocks(stock)" class="btn btn-warning" title="Edit">
+            <button :disabled="!canEditStocks" @click="EditStocks(stock)" class="btn btn-warning" title="Edit">
               <i class="bi bi-pencil"></i>
             </button>
             |
-            <button :disabled="!canDeleteStocks" @click="deleteStocks(stock)" class="btn btn-danger"
-              title="Delete">
+            <button :disabled="!canDeleteStocks" @click="deleteStocks(stock)" class="btn btn-danger" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -84,24 +83,29 @@
     </div>
   </div>
   <AddStock v-if="showAddStocks" @close="closeAddStocks" />
+  <UpdateStock v-if="showUpdateStocks && selectedStock" :stock="selectedStock"  @close="closeUpdateStocks" @updated="fetchStocks" />
 </template>
 
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, nextTick } from 'vue'
 import api from '../../services/api'
 import { useAppStore } from "../../stores/appStore";
 import { userStore } from "../../stores/userStore";
 import AddStock from "../../components/Stocks/AddStocks.vue";
+import UpdateStock from "../../components/Stocks/UpdateStocks.vue";
+
+const appStore = useAppStore();
 
 const canDeleteStocks = computed(() => userStore.canDeleteStocks);
 const canEditStocks = computed(() => userStore.canEditStocks);
 const canAddStocks = computed(() => userStore.canAddStocks);
-const appStore = useAppStore();
 
 const showAddStocks = ref(false);
+const showUpdateStocks = ref(false);
+const selectedStock = ref(null); // ✅ renamed for clarity
 
-
+// ✅ Add Stocks
 async function AddStocks() {
   appStore.showLoading();
   await new Promise((resolve) => setTimeout(resolve, 400));
@@ -109,11 +113,38 @@ async function AddStocks() {
   appStore.hideLoading();
 }
 
-async function closeAddStocks(){
+// ✅ Edit Stocks by ID
+async function EditStocks(stock) {
+  try {
+    appStore.showLoading();
+    const res = await api.get(`/stocks/getStocks/${stock.id}`);
+    if (res?.data.data) {
+      selectedStock.value = res.data.data;
+      await nextTick();
+      showUpdateStocks.value = true; // ✅ fixed
+    } else {
+      console.error("No stock data returned from API:", res.data);
+    }
+  } catch (err) {
+    console.error("Failed to fetch stock info:", err); // ✅ fixed
+  } finally {
+    appStore.hideLoading(); // ✅ fixed
+  }
+}
+
+// ✅ Close Add Modal
+async function closeAddStocks() {
   showAddStocks.value = false;
   fetchStocks();
 }
 
+// ✅ Close Update Modal
+async function closeUpdateStocks() {
+  showUpdateStocks.value = false;
+  fetchStocks();
+}
+
+// Tabs
 const tabs = ['Line_Hardware', 'Special_Hardware', 'Others']
 const activeTab = ref('Line_Hardware')
 const stocks = ref([])
@@ -127,14 +158,14 @@ const loading = ref(false)
 const search = ref('')
 let debounceTimeout = null
 
-// Change active tab
+// ✅ Change Active Tab
 const setActiveTab = (tab) => {
   activeTab.value = tab
   pagination.value.current_page = 1
   fetchStocks()
 }
 
-// Watch search input
+// ✅ Search Debounce
 watch(search, (newValue) => {
   clearTimeout(debounceTimeout)
   debounceTimeout = setTimeout(() => {
@@ -143,7 +174,7 @@ watch(search, (newValue) => {
   }, 500)
 })
 
-// Change page
+// ✅ Pagination
 const changePage = (page) => {
   if (page >= 1 && page <= pagination.value.last_page) {
     pagination.value.current_page = page
@@ -151,7 +182,7 @@ const changePage = (page) => {
   }
 }
 
-// Fetch stocks
+// ✅ Fetch Stocks
 async function fetchStocks() {
   try {
     loading.value = true
@@ -175,8 +206,9 @@ async function fetchStocks() {
   }
 }
 
-// Initial load
+// ✅ Initial load
 onMounted(() => {
   fetchStocks()
 })
 </script>
+
