@@ -12,10 +12,12 @@ import Mst from "../pages/inventory/Mst.vue";
 import Mr from "../pages/inventory/Mr.vue";
 import Supplier from "../pages/suppliers/Supplier.vue";
 import { useAppStore } from "../stores/appStore";
-import Stocks from "../pages/inventory/stocks.vue"
-import OrderItem from "../pages/order/OrderPage.vue"
-import CategoryItem from "../pages/categories/CategoryPages.vue"
-import Adjustment from "../pages/Adjustment/AdjustmentPage.vue"
+import Stocks from "../pages/inventory/stocks.vue";
+import OrderItem from "../pages/order/OrderPage.vue";
+import CategoryItem from "../pages/categories/CategoryPages.vue";
+import Adjustment from "../pages/Adjustment/AdjustmentPage.vue";
+import ReceivingPage from "../pages/receiving_order/Recevingpage.vue";
+import PrintRR from "../components/Receiving/PrintRR.vue";
 
 const routes = [
   {
@@ -23,6 +25,12 @@ const routes = [
     name: "Login",
     component: Login,
     meta: { guestOnly: true },
+  },
+  {
+    path: '/receiving/DisplayRR/:r_id',
+    name: 'PrintRR',
+    component: PrintRR,
+    props: true // para ma-access mo ang :id as prop
   },
 
   {
@@ -58,7 +66,9 @@ const routes = [
       {path: "/dashboard/item",
       component: CategoryItem,},
       {path: "/dashboard/adjustment",
-      component: Adjustment,}
+      component: Adjustment,},
+      {path: "/dashboard/receiving",
+      component: ReceivingPage,},
 
     ] // protect all children
   },

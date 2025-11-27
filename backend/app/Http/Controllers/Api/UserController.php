@@ -25,7 +25,7 @@ public function store(Request $request)
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
             'department' => 'nullable|string|max:255',
-            'role' => ['required', Rule::in(['Administrator', 'Warehouse_Staff', 'Manager', 'GM'])],
+            'role' => ['required', Rule::in(['Administrator', 'Staff', 'Manager', 'General Manager'])],
             'status' => ['required', Rule::in(['Active', 'Inactive'])],
             'modules' => 'nullable|array',
         ]);
@@ -442,6 +442,13 @@ public function getUserModules(Request $request)
                 'message' => 'User not found',
             ], 404);
         }
+           $deptHead = DB::table('tbl_depthead as d')
+        ->leftJoin('users as u', 'u.department', '=', 'd.department') 
+        ->select('d.depthead_name')
+        ->first();
+
+
+    $deptHeadName = $deptHead->depthead_name ?? null;
 
         // ✅ Format module data
         $modules = $user->accessModules->map(function ($m) {
@@ -463,6 +470,8 @@ public function getUserModules(Request $request)
                 'fullname'  => $user->fullname,
                 'email'     => $user->email,
                 'username'  => $user->username,
+                'department' =>$user->department,
+                'depthead_name' =>$deptHeadName,
                 'role'      => $user->role,
                 'modules'   => $modules,
             ],

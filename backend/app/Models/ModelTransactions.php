@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ModelTransactions extends Model
+{
+    use HasFactory;
+
+    protected $table = 'tbl_transactions'; // specify table name
+
+    protected $primaryKey = 'transaction_id'; // specify primary key if not "id"
+
+    protected $fillable = [
+        'ItemCode_id',
+        'movement_type',
+        'quantity',
+        'reference',
+        'reference_type',
+        'user_id',
+        'created_by',
+        'updated_by'
+    ];
+}

@@ -13,9 +13,9 @@
     </div>
 
     <!-- Table -->
-    <div class="table-wrapper shadow-sm rounded bg-white">
-      <table class="table table-hover table-bordered align-middle mb-1" style="font-size: 20px;">
-        <thead class="table-primary">
+    <div  class="table-responsive">
+      <table class="table table-hover  align-middle mb-2 text-center" style="font-size: 20px;">
+        <thead class="table-secondary">
           <tr>
             <th style="width: 5%;">ID</th>
             <th style="width: 20%;">Full Name</th>

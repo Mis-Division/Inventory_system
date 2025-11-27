@@ -61,7 +61,7 @@
               <select v-model="form.role" id="role" class="form-select" :class="{ 'is-invalid': errors.role }">
                 <option value="">Please Select Role</option>
                 <option value="Administrator">Administrator</option>
-                <option value="Warehouse Staff">Warehouse Staff</option>
+                <option value="Staff">Staff</option>
                 <option value="Manager">Manager</option>
                 <option value="General Manager">General Manager</option>
               </select>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\suppliers;
+use App\Models\Suppliers;
 use Illuminate\Support\Facades\DB;
 
 class SupplierController extends Controller
@@ -66,7 +66,7 @@ class SupplierController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Suppliers fetched successfully',
+            // 'message' => 'Suppliers fetched successfully',
             'data' => $suppliers->items(),
             'meta' => [
                 'current_page' => $suppliers->currentPage(),
@@ -85,18 +85,32 @@ class SupplierController extends Controller
     }
 }
 
-    public function GetSupplierById($id)
-    {
-       try{
-              $supplier = suppliers::find($id);
-              if (!$supplier) {
-                  return response()->json(['error' => 'Supplier not found'], 404);
-              }
-              return response()->json(['supplier' => $supplier], 200);
-         } catch (\Exception $e) {
-              return response()->json(['error' => 'Failed to fetch supplier', 'message' => $e->getMessage()], 500);
-       }
+ public function GetSupplierById($id)
+{
+    try {
+        $supplier = Suppliers::find($id);
+
+        if (!$supplier) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Supplier not found'
+            ], 404);
+        }
+
+        return response()->json([
+            // 'success' => true,
+            // 'message' => 'Supplier fetched successfully',
+            'data' => $supplier  // ✅ use "data" instead of "supplier"
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Failed to fetch supplier',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
     public function UpdateSupplier(Request $request, $id)
     {
         $request->validate([

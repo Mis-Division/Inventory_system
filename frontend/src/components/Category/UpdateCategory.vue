@@ -28,6 +28,15 @@
                                                         <label class="form-label">Acct. Code</label>
                                                         <input v-model="form.accounting_code" type="text" class="form-control"  />
                                                 </div>
+                                                <div class="mb-3">
+                                                        <label class="form-label">Item Category</label>
+                                                        <select class="form-select" v-model="form.item_category">
+                                                                <option value="">Select Category</option>
+                                                                <option value="Line Hardware">Line Hardware</option>
+                                                                <option value="Special Hardware">Special Hardware</option>
+                                                                <option value="Others">Others</option>  
+                                                        </select>
+                                                </div>
 
                                                 <div v-if="errorMessage" class="alert alert-danger py-2">
                                                         {{ errorMessage }}
@@ -116,6 +125,8 @@ const form = ref({
         ItemCode: "",
         product_name: "",
         description: "",
+        item_category: "",
+        accounting_code: "",
 });
 
 const loading = ref(false);
@@ -133,6 +144,7 @@ watch(
                         form.value.product_name = newItem.product_name || "";
                         form.value.description = newItem.description || "";
                         form.value.accounting_code = newItem.accounting_code || "";
+                        form.value.item_category = newItem.item_category || "";
                 }
         },
         { immediate: true }
@@ -159,6 +171,7 @@ async function updateItemCode() {
                         product_name: form.value.product_name,
                         description: form.value.description,
                         accounting_code: form.value.accounting_code,
+                        item_category: form.value.item_category,
                 };
                 await api.put(`/Items/updateItemCode/${props.item.ItemCode_id}`, payload);
                 showSuccess.value = true;

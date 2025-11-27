@@ -354,3 +354,139 @@ button {
 .select2-results__options::-webkit-scrollbar-thumb:hover {
   background-color: #888;
 }
+
+.table {
+    border-radius: 10px;           /* rounded corners */
+    overflow: hidden;              /* clip children for rounded corners */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* soft shadow */
+}
+
+.table thead {
+    background-color: #f5f5f5 !important; /* header color override */
+    font-weight: bold;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f1f1; /* subtle hover effect */
+}
+
+.table-bordered {
+    border: 1px solid #ddd; /* border color */
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #ddd;  /* border color */
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #fafafa; /* alternate row shading */
+}
+
+/* Optional: Rounded corners for table header/footer */
+.table thead tr:first-child th:first-child {
+    border-top-left-radius: 10px;
+}
+
+.table thead tr:first-child th:last-child {
+    border-top-right-radius: 10px;
+}
+
+.table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+
+.table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
+}
+
+/* PRINT MEDIA */
+@media print {
+    .table {
+        box-shadow: none;       /* remove shadows when printing */
+    }
+    .table tbody tr:nth-child(even) {
+        background-color: #fff !important; /* optional: remove row colors */
+    }
+}
+.page-link.page-circle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 36px;
+  margin: 0 1px;  /* mas maliit na spacing */
+  color: #495057;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.page-item.active .page-link.page-circle {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+.page-link:hover.page-circle {
+  background-color: #e2e6ea;
+  color: #495057;
+}
+
+.pagination .page-item {
+  margin: 0;  /* alisin ang extra margin para hindi dumoble */
+}
+.table-responsive {
+  max-height: 300px; /* adjust kung kailangan */
+  overflow-y: visible;
+  scroll-behavior: smooth; /* smooth scrolling effect */
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+
+
+.dropdown-menu-teleport a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #333;
+  text-decoration: none;
+}
+
+.dropdown-menu-teleport a:hover {
+  background-color: #f1f1f1;
+  cursor: pointer;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/*Date Modified 11/27/2025*/
+
+/* Fade + slide animation */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+    transition: all 0.15s ease-out;
+}
+
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+

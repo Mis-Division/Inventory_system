@@ -25,7 +25,7 @@
                             <input v-model="form.product_name" type="text" id="product_name" class="form-control"
                                 placeholder="Please input Product Name"
                                 :class="{ 'is-invalid': errors.product_name }" />
-                            <div v-if="errors.descriptproduct_nameion" class="invalid-feedback">
+                            <div v-if="errors.product_name" class="invalid-feedback">
                                 {{ errors.product_name  }}
                             </div>
                         </div>
@@ -47,6 +47,16 @@
                                 :class="{ 'is-invalid': errors.accounting_code }" />
                             <div v-if="errors.accounting_code" class="invalid-feedback">{{ errors.accounting_code }}
                             </div>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <label class="form-label" for="item_category">Item Category </label>
+                            <select class="form-select" id="item_category" v-model="form.item_category">
+                                <option value="">Select Category</option>
+                                <option valie="Line Hardware">Line Hardware</option>
+                                <option value="Special Hardware">Special Hardware</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <div v-if="errors.item_category" class="invalid-feedback">{{ errors.item_category }}</div>
                         </div>
                     </form>
                 </div>
@@ -129,6 +139,7 @@ const form = reactive({
     product_name: "",
     description: "",
     accounting_code: "",
+    item_category: "",
 });
 
 const errors = reactive({
@@ -136,6 +147,7 @@ const errors = reactive({
     product_name: "",
     description: "",
     // accounting_code: "",
+    item_category: "",
 });
 
 // ✅ Proper validation with return value
@@ -144,8 +156,9 @@ function validateForm() {
     errors.product_name = form.product_name ? "" : "Please input product name";
     errors.description = form.description ? "" : "Please input the Description";
     // errors.accounting_code = form.accounting_code ? "" : "please input Accounting Code";
+    errors.item_category = form.item_category ? "" : "Please select Item Category";
 
-    return !errors.ItemCode && !errors.description;
+    return !errors.ItemCode && !errors.description && !errors.product_name && !errors.item_category;
 }
 
 // ✅ Show confirmation only if valid

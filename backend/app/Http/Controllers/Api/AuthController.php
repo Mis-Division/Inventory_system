@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserAccess; // ✅ required for module access
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -58,6 +59,13 @@ class AuthController extends Controller
         ], 403);
     }
 
+   $deptHead = DB::table('tbl_depthead as d')
+        ->leftJoin('users as u', 'u.department', '=', 'd.department') 
+        ->select('d.depthead_name')
+        ->first();
+
+
+    $deptHeadName = $deptHead->depthead_name ?? null;
     // 4️⃣ Fetch all access modules for this user
     $allModules = UserAccess::where('user_id', $user->user_id)
         ->get(['module_name', 'parent_module', 'can_view', 'can_add', 'can_edit', 'can_delete'])
@@ -93,6 +101,7 @@ class AuthController extends Controller
                 'fullname' => $user->fullname,
                 'username' => $user->username,
                 'department' => $user->department,
+                'depthead_name' =>$deptHeadName,
                 'role' => $user->role,
                 'status' => $user->status,
                 'modules' => $modulesNested,

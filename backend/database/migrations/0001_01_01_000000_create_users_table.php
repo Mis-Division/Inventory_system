@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('password');
             $table->string('department')->nullable();
-            $table->enum('role', ['Administrator', 'Warehouse_Staff', 'Manager', 'GM'])->default('Warehouse_Staff');
+            $table->enum('role', ['Administrator', 'Staff', 'Manager', 'General Manager'])->default('Staff');
             $table->enum('status', ['Active', 'Inactive'])->default('Active');
             $table->rememberToken();
             $table->timestamps();

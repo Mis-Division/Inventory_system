@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\CategoriesController;
-use App\Http\Controllers\Api\StocksController;
 use App\Http\Controllers\Api\ItemsController;
+use App\Http\Controllers\Api\DepartmentHeadsController;
+use App\Http\Controllers\Api\ReceivingController;
+use App\Http\Controllers\Api\UnitController;
+use App\Http\Controllers\Api\MrvController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -16,7 +19,10 @@ Route::post('/login', [AuthController::class, 'login']);
 // Protected routes (require Sanctum token)
 //  Route::post('users/create_user', [UserController::class, 'store']);
 
+ Route::post('/create_user', [UserController::class, 'store']);
+
 Route::middleware('auth:sanctum')->group(function () {
+     Route::get('/dept-head', [DepartmentHeadsController::class, 'getDeptHead']);
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -65,13 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete_category/{id}', [CategoriesController::class, 'DeleteCategory']);
     });
     //stocks
-    Route::prefix('stocks')->group(function(){
-           Route::post('/createStock', [StocksController::class, 'CreateProductStocks']);
-           Route::get('/getStocks', [StocksController::class, 'getStocks']);
-           Route::get('/getStocks/{id}', [StocksController::class, 'getStockById']);
-           Route::put('/updateStocks/{id}',[StocksController::class, 'updateStockById']);
-           Route::delete('/deleteStocks/{id}', [StocksController::class, 'deleteStocksById']);
-    });
+
 
     //itemcode
     Route::prefix('Items')->group(function () {
@@ -81,4 +81,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('updateItemCode/{id}', [ItemsController::class, 'UpdateItemCode']);
     Route::delete('deleteItemCode/{id}', [ItemsController::class, 'DeleteItemCode']);
     });
+
+    // Receiving routes
+    Route::prefix('receiving')->group(function () {
+        Route::post('/receive_items', [ReceivingController::class, 'store']);
+        Route::get('/DisplayRR', [ReceivingController::class, 'DisplayRR']);
+        Route::get('/DisplayRR/{r_id}', [ReceivingController::class, 'getRRbyId']);
+        Route::put('/update_rr/{r_id}', [ReceivingController::class, 'updateRR']);
+        Route::delete('/delete_rr/{r_id}', [ReceivingController::class, 'softDeleteRR']);
+        Route::get('/getDeletedRR', [ReceivingController::class, 'getSoftDeletedRR']);
+        Route::get('/check_item/{po_number}/{ItemCode_id}', [ReceivingController::class, 'check_item']);
+        Route::get('/checkPOstatus/{po_number}', [ReceivingController::class, 'checkPOstatus']);
+        Route::get('/get_item_order/{po_number}/{ItemCode_id}', [ReceivingController::class, 'get_item_order']);
+        Route::get('/checkPOComplete/{po_number}', [ReceivingController::class, 'checkPOComplete']);
+    });
+    
+
+//Unit Controller
+    Route::prefix('Units')->group(function() {
+    Route::get('/display', [UnitController::class, 'displayUnit']);
+    });
+
+    //MRV Controller to APi
+    Route::prefix('Mrv')->group(function() {
+        Route::post('MrvCreate',[MrvController::class, 'CreateMrv']);
+        Route::get('MrvDisplay', [MrvController::class, 'displayMrv']);
+        Route::get('MrvDisplay/{mrv_id}', [MrvController::class, 'gerMrvDetails']);
+    });
+    
+
 });

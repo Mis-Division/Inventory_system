@@ -159,4 +159,9 @@ export const userStore = reactive({
   get canEditAdjustment() { return this.hasPermission("Adjustment", "can_edit"); },
   get canDeleteAdjustment() { return this.hasPermission("Adjustment", "can_delete"); },
   get canAddAdjustment() { return this.hasPermission("Adjustment", "can_add"); },
+
+  get canViewReceivingOrder() { return this.hasPermission("receiving_Order", "can_view"); },
+  get canEditReceivingOrder() { return this.hasPermission("receiving_Order", "can_edit"); },
+  get canDeleteReceivingOrder() { return this.hasPermission("receiving_Order", "can_delete"); }
+  ,get canAddReceivingOrder() { return this.hasPermission("receiving_Order", "can_add"); }
 });

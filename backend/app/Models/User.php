@@ -34,6 +34,9 @@ class User extends Authenticatable
         'status' => 'string',
     ];
 
+    /**
+     * Automatically hash password when setting it
+     */
     public function setPasswordAttribute($value)
     {
         if ($value) {
@@ -47,5 +50,13 @@ class User extends Authenticatable
     public function accessModules()
     {
         return $this->hasMany(UserAccess::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Link to department head by department name
+     */
+    public function deptHead()
+    {
+        return $this->hasOne(DeptHead::class, 'department', 'department');
     }
 }

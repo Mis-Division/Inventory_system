@@ -82,6 +82,11 @@
         <span><i class="bi bi-cart me-2"></i>Purchase Order</span>
       </router-link>
 
+      <!-- Receiving Order -->
+      <router-link v-if="hasAccess('receiving_Order')" to="/dashboard/receiving" class="nav-link d-flex align-items-center mb-2">
+        <span><i class="bi bi-receipt me-2"></i>Receiving Order</span>
+      </router-link>
+
       <!-- Category -->
       <router-link v-if="hasAccess('Categories')" to="/dashboard/item" class="nav-link d-flex align-items-center mb-2">
         <span><i class="bi bi-info-lg me-2"></i>Items</span>
@@ -156,6 +161,14 @@
             </router-link>
           </li>
         </ul>
+
+        <!-- <ul v-show="expanded.includes('Users')" class="list-unstyled ms-4 mt-2">
+          <li v-if="hasAccess('Add Users')">
+            <router-link to="/dashboard/user" class="nav-link d-flex align-items-center">
+              <span><i class="bi bi-person-plus me-2"></i> Employee</span>
+            </router-link>
+          </li>
+        </ul> -->
       </div>
 
     </nav>

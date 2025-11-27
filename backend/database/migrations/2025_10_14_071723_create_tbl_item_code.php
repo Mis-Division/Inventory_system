@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('product_name')->nullable();
             $table->string('description');
             $table->string('accounting_code')->unique();
+            $table->string('item_category')->nullable();
             $table->string('created_at')->nullable();
             $table->timestamp('updated_at');
         });

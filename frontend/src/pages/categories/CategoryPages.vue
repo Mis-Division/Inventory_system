@@ -2,11 +2,19 @@
   <div class="main-container">
     <!-- Header -->
     <div class="custom-headers">
-      <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Items</h1>
+      <div class="w-100">
+        <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Items</h1>
+      </div>
 
-      <div class="custom-actions">
-        <input v-model="searchQuery" @input="fetchItemCode" type="text" class="form-control"
-          placeholder="Search ItemCode and Descriptions..." />
+
+      <div class="d-flex justify-content-between align-items-center w-100">
+        <div class="d-flex gap-2">
+          <input v-model="searchQuery" @keyup.enter="handleSearchEnter" type="text" class="form-control"
+            style="width: 35%; min-width: 300px;" placeholder="Search ItemCode and Descriptions..." />
+          <button class="btn btn-primary" @click="handleSearchEnter">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+        </div>
         <button v-if="cadAddCategory" @click="AddItem" class="btn btn-primary">
           <i class="bi bi-plus-circle me-1"></i> Item Code
         </button>
@@ -23,41 +31,51 @@
 
     <!-- Item Code Table -->
     <div v-if="!loading" class="table-responsive">
-      <table class="table table-hover table-bordered align-middle mb-2 text-center">
+      <table class="table table-hover align-middle mb-2 text-center">
         <thead class="table-secondary">
           <tr>
-            <th style="width: 5%;">ID</th>
             <th style="width: 15%;">Item Code</th>
-            <th style="width: 20%;">Product Name</th>
+            <th style="width: 30%;">Product Name</th>
             <th style="width: 20%;">Descriptions</th>
             <th style="width: 20%;">Acct. Code</th>
-            <th style="width: 10%;">Action</th>
+            <th style="width: 10%;">Item Category</th>
+            <th style="width: 5%;">Action</th>
           </tr>
         </thead>
 
         <tbody v-if="Items.length > 0">
           <tr v-for="item in Items" :key="item.ItemCode_id">
-            <td>{{ item.ItemCode_id }}</td>
             <td>{{ item.ItemCode }}</td>
             <td>{{ item.product_name }}</td>
             <td>{{ item.description }}</td>
             <td>{{ item.accounting_code }}</td>
+            <td>{{ item.item_category }}</td>
             <td>
-              <button v-if="canEditCategory" @click="editCategory(item)" class="btn btn-warning" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              |
-              <button v-if="canDeleteCategory" @click="deleteCategories(item)" class="btn btn-danger"
-                title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
+              <!-- Dropdown toggle -->
+              <div @click="toggleDropdown(item.ItemCode_id, $event)" class="cursor-pointer">
+                <i class="bi bi-three-dots"></i>
+              </div>
+
+              <!-- Teleport + Transition -->
+              <teleport to="body">
+                <Transition name="fade">
+                  <div v-if="activeDropdown ===item.ItemCode_id" ref="el => (dropdownRefs.value ??= {})[item.ItemCode_id] = el"
+                    class="dropdown-menu-teleport" :style="getDropdownStyle(item.ItemCode_id)" @click.stop>
+                    <a href="#" @click.stop.prevent="editCategory(item)" v-if="canEditCategory"
+                      class="text-success"><i class="bi bi-pencil me-2"></i>Edit</a>
+                    <a href="#" @click.stop.prevent="deleteCategories(item)" class="text-danger" v-if="canDeleteCategory">
+                      <i class="bi bi-trash me-2"></i>
+                      Delete</a>
+                  </div>
+                </Transition>
+              </teleport>
             </td>
           </tr>
         </tbody>
 
         <tbody v-else>
           <tr>
-            <td colspan="6" class="text-center py-3 text-muted">
+            <td colspan="7" class="text-center py-3 text-muted">
               No Item Code found.
             </td>
           </tr>
@@ -67,19 +85,22 @@
 
     <!-- Pagination -->
     <nav v-if="meta && meta.last_page > 1" class="mt-3">
-      <ul class="pagination justify-content-center">
+      <ul class="pagination justify-content-end">
+        <!-- Previous Button -->
         <li class="page-item" :class="{ disabled: meta.current_page === 1 }" @click="changePage(meta.current_page - 1)">
-          <a class="page-link">Previous</a>
+          <a class="page-link rounded-pill px-3" href="#">Previous</a>
         </li>
 
+        <!-- Page Numbers -->
         <li v-for="page in meta.last_page" :key="page" class="page-item" :class="{ active: page === meta.current_page }"
           @click="changePage(page)">
-          <a class="page-link">{{ page }}</a>
+          <a class="page-link page-circle" href="#">{{ page }}</a>
         </li>
 
+        <!-- Next Button -->
         <li class="page-item" :class="{ disabled: meta.current_page === meta.last_page }"
           @click="changePage(meta.current_page + 1)">
-          <a class="page-link">Next</a>
+          <a class="page-link rounded-pill px-3" href="#">Next</a>
         </li>
       </ul>
     </nav>
@@ -89,8 +110,8 @@
   <addCategory v-if="showAddCategory" @close="closeAddCategory" />
 
   <!-- ✅ Update Modal -->
-  <updateCategory v-if="showUpdateCategory && selectedItemCode" :item="selectedItemCode"
-    @close="closeUpdateCategory" @updated="fetchItemCode" />
+  <updateCategory v-if="showUpdateCategory && selectedItemCode" :item="selectedItemCode" @close="closeUpdateCategory"
+    @updated="fetchItemCode" />
 
   <!-- Delete Modal -->
   <deleteCategory v-if="showDeleteCategory" :item="selectedItemCode" @close="closeDeleteCategory"
@@ -98,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick , watch, onBeforeUnmount} from "vue";
 import api from "../../services/api";
 import { userStore } from "../../stores/userStore";
 import { useAppStore } from "../../stores/appStore";
@@ -112,7 +133,7 @@ const error = ref(null);
 const searchQuery = ref("");
 const meta = ref({});
 const currentPage = ref(1);
-const perPage = 10;
+const perPage = 30;
 
 // Modals
 const showAddCategory = ref(false);
@@ -128,6 +149,66 @@ const appStore = useAppStore();
 const cadAddCategory = computed(() => userStore.canAddCategory);
 const canEditCategory = computed(() => userStore.canEditCategory);
 const canDeleteCategory = computed(() => userStore.canDeleteCategory);
+
+//dropdown menu settings dito
+const activeDropdown = ref(null);
+const dropdownPositions = ref({});
+const dropdownRefs = ref({});
+
+// Dropdown toggle
+function toggleDropdown(id, event) {
+    event.stopPropagation();
+    activeDropdown.value = activeDropdown.value === id ? null : id;
+    nextTick(() => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        dropdownPositions.value[id] = { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX };
+    });
+}
+
+// Click outside closes dropdown
+function handleClickOutside(event) {
+    if (!activeDropdown.value) return;
+    const dropdownEl = dropdownRefs.value?.[activeDropdown.value];
+    if (!dropdownEl || !dropdownEl.contains(event.target)) activeDropdown.value = null;
+}
+
+onMounted(() => {
+    document.addEventListener("click", handleClickOutside);
+    fetchItemCode();
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("click", handleClickOutside);
+});
+
+
+// Auto-close dropdown when modal opens
+watch([showUpdateCategory, showDeleteCategory], ([updateVal, deleteVal]) => {
+    if (updateVal || deleteVal) activeDropdown.value = null;
+});
+
+// Dropdown style
+function getDropdownStyle(id) {
+    const pos = dropdownPositions.value[id] || { top: 0, left: 0 };
+    const dropdownWidth = 180;
+    let left = pos.left;
+    if (pos.left + dropdownWidth > window.innerWidth) left = pos.left - dropdownWidth + 24;
+    return {
+        position: "absolute",
+        top: pos.top + "px",
+        left: left + "px",
+        zIndex: 3000,
+        backgroundColor: "white",
+        border: "1px solid #ddd",
+        borderRadius: "4px",
+        minWidth: dropdownWidth + "px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+    };
+}
+
+
+//end ng dropdown menu dito 
+
 
 // ✅ Add Item Modal
 async function AddItem() {
@@ -227,7 +308,22 @@ function changePage(page) {
   fetchItemCode();
 }
 
-onMounted(fetchItemCode);
+// Search handlers
+function handleSearchEnter() {
+  if (!searchQuery.value.trim()) {
+    showErrors("Please enter a search term!");
+    return; // Stop search
+  }
+
+  error.value = "";
+  currentPage.value = 1;
+  fetchItemCode();
+}
+
+function showErrors(message) {
+  error.value = message;
+  setTimeout(() => {
+    error.value = "";
+  }, 5000);
+}
 </script>
-
-

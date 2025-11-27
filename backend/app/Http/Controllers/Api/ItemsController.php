@@ -16,6 +16,7 @@ class ItemsController extends Controller
             'product_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code',
+            'item_category' => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
@@ -27,6 +28,7 @@ class ItemsController extends Controller
                 'product_name' =>$request->product_name,
                 'description' => $request->description,
                 'accounting_code' => $request->accounting_code,
+                'item_category' => $request->item_category,
             ]);
 
             DB::commit();
@@ -60,7 +62,8 @@ public function GetItemCode(Request $request)
                 $q->where('ItemCode', 'LIKE', "%{$search}%")
                   ->orWhere('product_name', 'LIKE', "%{$search}%")
                   ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('accounting_code', 'LIKE', "%{$search}%");
+                  ->orWhere('accounting_code', 'LIKE', "%{$search}%")
+                  ->orWhere('item_category', 'LIKE', "%{$search}%");
             });
         }
 
@@ -138,6 +141,7 @@ public function GetItemCode(Request $request)
                     'product_name' => 'required|string|max:255',
                     'description' => 'nullable|string|max:255',
                     'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code,' . $id . ',ItemCode_id',
+                    'item_category' => 'nullable|string|max:255',
                 ]);
 $accountingCode = $request->input('accounting_code');
 if ($accountingCode === '') {
@@ -148,6 +152,7 @@ if ($accountingCode === '') {
                     'product_name' =>$validated['product_name'] ?? $item->product_name,
                     'description' => $validated['description'] ?? $item->description,
                     'accounting_code' => $accountingCode,
+                    'item_category' => $validated['item_category'] ?? $item->item_category,
                 ]);
 
                 return response()->json([

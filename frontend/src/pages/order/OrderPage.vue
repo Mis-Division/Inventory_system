@@ -4,15 +4,15 @@
       <h1>Order Item</h1>
       <p>This is aOrder Items</p>
     </div>
-    <button :disabled="!canAddOrder" class="btn btn-primary">
+    <button v-if="canAddOrder" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i> Add
     </button>
     &nbsp;
-    <button :disabled="!canEditOrder" class="btn btn-warning">
+    <button  v-if="canEditOrder" class="btn btn-warning">
       <i class="bi bi-pencil me-1"></i> Edit
     </button>
     &nbsp;
-    <button class="btn btn-danger" :disabled="!canDeleteOrder">
+    <button class="btn btn-danger"  v-if="canDeleteOrder">
       <i class="bi bi-trash me-1"></i> Delete
     </button>
 

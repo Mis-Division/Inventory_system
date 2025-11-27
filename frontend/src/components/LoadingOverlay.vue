@@ -1,15 +1,9 @@
 <template>
-  <div 
-    v-if="show" 
+  <div v-if="show"
     class="fixed top-0 left-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50"
-    style="z-index: 9999;"
-  >
-    <img 
-      :src="logo" 
-      :alt="altText"
-      class="spinner"
-      :style="typeof size === 'number' ? { width: size + 'px', height: size + 'px' } : {}"
-    />
+    style="z-index: 9999;">
+    <img :src="logo" :alt="altText" class="spinner"
+      :style="typeof size === 'number' ? { width: size + 'px', height: size + 'px' } : {}" />
     <p v-if="message" class="mt-3 text-white fw-bold">{{ message }}</p>
   </div>
 </template>
@@ -31,7 +25,12 @@ const props = defineProps({
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
