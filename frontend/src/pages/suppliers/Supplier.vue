@@ -9,13 +9,13 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center w-100">
-        <div class="d-flex gap-2">
-          <input v-model="searchQuery" style="width: 35%; min-width: 300px;" @keyup.enter="handleSearchEnter" type="text"
-            class="form-control" placeholder="Search Supplier..." />
+        <div class="position-relative" style="width: 35%; min-width: 300px;">
+          <input type="text" v-model="searchQuery" @keyup.enter="handleSearchEnter" class="form-control pe-5"
+            placeholder="Search Supplier..." style="background-color: #FCF6D9;" />
 
-          <button class="btn btn-primary" @click="handleSearchEnter">
-            <i class="bi bi-search me-1"></i> Search
-          </button>
+          <!-- Clear Button (X) -->
+          <i v-if="searchQuery" class="bi bi-x-circle-fill text-muted" @click="clearSearch"
+            style="position: absolute;right: 10px;top: 50%; transform: translateY(-50%);cursor: pointer; font-size: 1.2rem;"></i>
         </div>
 
 
@@ -61,11 +61,13 @@
               <!-- Teleport + Transition -->
               <teleport to="body">
                 <Transition name="fade">
-                  <div v-if="activeDropdown === supplier.supplier_id" ref="el => (dropdownRefs.value ??= {})[supplier.supplier_id] = el"
-                    class="dropdown-menu-teleport" :style="getDropdownStyle(supplier.supplier_id)" @click.stop>
+                  <div v-if="activeDropdown === supplier.supplier_id"
+                    ref="el => (dropdownRefs.value ??= {})[supplier.supplier_id] = el" class="dropdown-menu-teleport"
+                    :style="getDropdownStyle(supplier.supplier_id)" @click.stop>
                     <a href="#" @click.stop.prevent="UpdateSupplierInfo(supplier)" v-if="canEditSupplier"
                       class="text-success"><i class="bi bi-pencil me-2"></i>Edit</a>
-                    <a href="#" @click.stop.prevent="DeleteSupplierInfo(supplier)" class="text-danger" v-if="canDeleteSupplier">
+                    <a href="#" @click.stop.prevent="DeleteSupplierInfo(supplier)" class="text-danger"
+                      v-if="canDeleteSupplier">
                       <i class="bi bi-trash me-2"></i>
                       Delete</a>
                   </div>
@@ -115,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted,watch, nextTick, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount } from "vue";
 import api from "../../services/api";
 import { userStore } from "../../stores/userStore";
 import { useAppStore } from "../../stores/appStore";
@@ -150,53 +152,53 @@ const dropdownRefs = ref({});
 
 // Dropdown toggle
 function toggleDropdown(id, event) {
-    event.stopPropagation();
-    activeDropdown.value = activeDropdown.value === id ? null : id;
-    nextTick(() => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        dropdownPositions.value[id] = { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX };
-    });
+  event.stopPropagation();
+  activeDropdown.value = activeDropdown.value === id ? null : id;
+  nextTick(() => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    dropdownPositions.value[id] = { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX };
+  });
 }
 
 // Click outside closes dropdown
 function handleClickOutside(event) {
-    if (!activeDropdown.value) return;
-    const dropdownEl = dropdownRefs.value?.[activeDropdown.value];
-    if (!dropdownEl || !dropdownEl.contains(event.target)) activeDropdown.value = null;
+  if (!activeDropdown.value) return;
+  const dropdownEl = dropdownRefs.value?.[activeDropdown.value];
+  if (!dropdownEl || !dropdownEl.contains(event.target)) activeDropdown.value = null;
 }
 
 onMounted(() => {
-    document.addEventListener("click", handleClickOutside);
-    fetchSuppliers();
+  document.addEventListener("click", handleClickOutside);
+  fetchSuppliers();
 });
 
 onBeforeUnmount(() => {
-    document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
 });
 
 
 // Auto-close dropdown when modal opens
 watch([showSupplierInfo, showDeleteSupplier], ([updateVal, deleteVal]) => {
-    if (updateVal || deleteVal) activeDropdown.value = null;
+  if (updateVal || deleteVal) activeDropdown.value = null;
 });
 
 // Dropdown style
 function getDropdownStyle(id) {
-    const pos = dropdownPositions.value[id] || { top: 0, left: 0 };
-    const dropdownWidth = 180;
-    let left = pos.left;
-    if (pos.left + dropdownWidth > window.innerWidth) left = pos.left - dropdownWidth + 24;
-    return {
-        position: "absolute",
-        top: pos.top + "px",
-        left: left + "px",
-        zIndex: 3000,
-        backgroundColor: "white",
-        border: "1px solid #ddd",
-        borderRadius: "4px",
-        minWidth: dropdownWidth + "px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
-    };
+  const pos = dropdownPositions.value[id] || { top: 0, left: 0 };
+  const dropdownWidth = 180;
+  let left = pos.left;
+  if (pos.left + dropdownWidth > window.innerWidth) left = pos.left - dropdownWidth + 24;
+  return {
+    position: "absolute",
+    top: pos.top + "px",
+    left: left + "px",
+    zIndex: 3000,
+    backgroundColor: "white",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
+    minWidth: dropdownWidth + "px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+  };
 }
 
 // end ng drop down settings
@@ -306,6 +308,10 @@ function showErrors(message) {
   setTimeout(() => {
     error.value = "";
   }, 5000);
+}
+function clearSearch(){
+  searchQuery.value = "";
+   fetchSuppliers();
 }
 </script>
 

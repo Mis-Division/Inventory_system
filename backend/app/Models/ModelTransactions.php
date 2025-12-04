@@ -15,11 +15,17 @@ class ModelTransactions extends Model
     protected $fillable = [
         'ItemCode_id',
         'movement_type',
+        'transaction_type',
         'quantity',
         'reference',
         'reference_type',
         'user_id',
         'created_by',
-        'updated_by'
+        'status',
+        'updated_by',
+    ];
+
+      protected $attributes = [
+        'status' => 'ACTIVE', // automatic default kapag nag-create
     ];
 }

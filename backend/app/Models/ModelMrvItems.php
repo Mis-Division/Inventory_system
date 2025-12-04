@@ -11,6 +11,7 @@ class ModelMrvItems extends Model
 
     protected $table = 'tbl_mrv_items';
     protected $primarykey = 'mrv_item_id';
+    
 
     protected $fillable = [
         'mrv_id',

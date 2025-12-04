@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\DepartmentHeadsController;
 use App\Http\Controllers\Api\ReceivingController;
 use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\MrvController;
+use App\Http\Controllers\Api\StockCOntroller;
+use App\Http\Controllers\Api\McrtController;
+use App\Http\Controllers\ItemImportController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -80,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('getItemCode/{id}', [ItemsController::class, 'GetItemCodeId']);
     Route::put('updateItemCode/{id}', [ItemsController::class, 'UpdateItemCode']);
     Route::delete('deleteItemCode/{id}', [ItemsController::class, 'DeleteItemCode']);
+    Route::get('displayStocks', [ItemsController::class, 'displayItemsAndStocks']);
     });
 
     // Receiving routes
@@ -108,6 +112,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('MrvDisplay', [MrvController::class, 'displayMrv']);
         Route::get('MrvDisplay/{mrv_id}', [MrvController::class, 'gerMrvDetails']);
     });
-    
+
+    Route::prefix('Products')->group(function(){
+    Route::get('/list', [StockController::class, 'ledger']); // list all / paginated
+    Route::get('/grouped', [StockController::class, 'ledgerGroupedPaginated']); // grouped stocks
+    Route::get('/list/{itemCodeId}', [StockController::class, 'ledgerById']); // single item ledger
+    });
+
+    //MCRT Controller to API
+    Route::prefix('Mcrt')->group(function() {
+        Route::post('/McrtCreate',[McrtController::class, 'store']);
+        Route::get('/displayMcrt', [McrtController::class, 'showMcrt']);
+        Route::get('/displayMcrt/{mcrt_id}', [McrtController::class, 'showMcrtById']);
+        Route::put('/updateMcrt/{mcrt_id}', [McrtController::class, 'updateMcrt']);
+        Route::delete('/McrtDelete/{mcrt_id}', [McrtController::class, 'deleteMcrt']);
+    });
+        Route::post('/items/import', [ItemImportController::class, 'import']);
 
 });

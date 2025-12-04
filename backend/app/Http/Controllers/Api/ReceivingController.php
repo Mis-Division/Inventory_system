@@ -113,23 +113,27 @@ class ReceivingController extends Controller
 
             $itemsData[] = $receivedItem;
 
-            // Update stock
-            $stock = ModelStocks::firstOrCreate(
-                ['ItemCode_id' => $item['ItemCode_id']],
-                ['quantity_onhand' => 0]
-            );
-            $stock->quantity_onhand += $quantityReceived;
-            $stock->save();
+                        // Stock update safer
+                $stock = ModelStocks::firstOrCreate(
+                    ['ItemCode_id' => $item['ItemCode_id']],
+                    ['quantity_onhand' => 0]
+                );
+                $stock->increment('quantity_onhand', $quantityReceived); // atomic
 
-            ModelTransactions::create([
-                'ItemCode_id' => $item['ItemCode_id'],
-                'movement_type' => 'IN',
-                'quantity' =>$quantityReceived,
-                'reference' =>$received->r_id,
-                'reference_type' => 'RR id',
-                'user_id' =>auth()->id() ?? null,
-                'created_by' =>auth()->user()->fullname ,
-            ]);
+                // created_by safe fallback
+                $createdBy = auth()->user()?->fullname ?? 'System';
+
+                ModelTransactions::create([
+                    'ItemCode_id' => $item['ItemCode_id'],
+                    'movement_type' => 'IN',
+                    'transaction_type' => 'RECEIVED',
+                    'quantity' => $quantityReceived,
+                    'reference' => $received->rr_number,
+                    'reference_type' => 'RR #',
+                    'user_id' => auth()->id() ?? null,
+                    'created_by' => $createdBy,
+                    'status' => 'ACTIVE',
+                ]);
 
             $grandTotal += $totalCost;
 
@@ -360,12 +364,14 @@ public function updateRR(Request $request, $r_id)
     DB::beginTransaction();
 
     try {
-       $rr = ModelReceived::with('receivedItems')->findOrFail($r_id);
+        $rr = ModelReceived::with('receivedItems')->findOrFail($r_id);
 
+        // Save old data for audit
+        $oldData = [
+            'rr' => $rr->toArray(),
+            'items' => $rr->receivedItems()->get()->toArray()
+        ];
 
-       
-
-        // Existing items keyed by ID
         $existingItems = ModelReceivedItem::where('r_id', $r_id)->get()->keyBy('id');
         $processedIds = [];
         $grandTotal = 0;
@@ -393,22 +399,27 @@ public function updateRR(Request $request, $r_id)
             }
 
             if ($item) {
-                // Stock adjustment
+                // STEP 2: Reverse old transaction
+                ModelTransactions::where('reference', $r_id)
+                    ->where('ItemCode_id', $item->ItemCode_id)
+                    ->where('status', 'ACTIVE')
+                    ->update(['status' => 'REVERSED_CHANGE', 'updated_at' => now()]);
+
+                // STEP 3: Adjust stock
                 $oldItemCode = intval($item->ItemCode_id);
                 $oldQty = floatval($item->quantity_received);
 
                 if ($oldItemCode !== $itemCode) {
-                    // subtract old quantity from old stock
+                    // old item
                     $oldStock = ModelStocks::firstOrCreate(['ItemCode_id' => $oldItemCode]);
                     $oldStock->quantity_onhand = max(0, $oldStock->quantity_onhand - $oldQty);
                     $oldStock->save();
 
-                    // add new quantity to new stock
+                    // new item
                     $newStock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
                     $newStock->quantity_onhand += $qtyReceived;
                     $newStock->save();
                 } else {
-                    // same ItemCode → adjust by difference
                     $diffQty = $qtyReceived - $oldQty;
                     if ($diffQty != 0) {
                         $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
@@ -417,7 +428,7 @@ public function updateRR(Request $request, $r_id)
                     }
                 }
 
-                // Update existing item
+                // STEP 4: Update item
                 $item->update([
                     'ItemCode_id' => $itemCode,
                     'quantity_order' => $qtyOrder,
@@ -428,11 +439,9 @@ public function updateRR(Request $request, $r_id)
                     'units' => $row['units'] ?? '',
                 ]);
 
-                $processedIds[] = $item->id;
-
             } else {
                 // New item
-                $newItem = ModelReceivedItem::create([
+                $item = ModelReceivedItem::create([
                     'r_id' => $r_id,
                     'ItemCode_id' => $itemCode,
                     'quantity_order' => $qtyOrder,
@@ -443,26 +452,47 @@ public function updateRR(Request $request, $r_id)
                     'units' => $row['units'] ?? '',
                 ]);
 
+                // Add stock
                 $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
                 $stock->quantity_onhand += $qtyReceived;
                 $stock->save();
-
-                $processedIds[] = $newItem->id;
             }
+
+            // STEP 5: Insert new ACTIVE transaction
+            ModelTransactions::create([
+                'ItemCode_id' => $itemCode,
+                'movement_type' => 'IN',
+                'transaction_type' => 'RECEIVED',
+                'quantity' => $qtyReceived,
+                'reference' => $r_id,
+                'reference_type' => 'RR id',
+                'status' => 'ACTIVE',
+                'user_id' => auth()->id() ?? null,
+                'created_by' => auth()->user()?->fullname ?? 'System',
+            ]);
+
+            $processedIds[] = $item->id;
         }
 
-        // DELETE removed items and adjust stock
+        // STEP 6: Handle removed items
         foreach ($existingItems as $existingItem) {
             if (!in_array($existingItem->id, $processedIds)) {
                 $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $existingItem->ItemCode_id]);
                 $stock->quantity_onhand = max(0, $stock->quantity_onhand - $existingItem->quantity_received);
                 $stock->save();
 
+                // Reverse transaction
+                ModelTransactions::where('reference', $r_id)
+                    ->where('ItemCode_id', $existingItem->ItemCode_id)
+                    ->where('status', 'ACTIVE')
+                    ->update(['status' => 'REVERSED', 'updated_at' => now()]);
+
+                // Soft delete item
                 $existingItem->delete();
             }
         }
 
-        // Update RR totals and status/remarks
+        // STEP 7: Update RR totals and status
         $allComplete = ModelReceivedItem::where('r_id', $r_id)
             ->where('status', '!=', 'Complete')
             ->whereNull('deleted_at')
@@ -470,25 +500,16 @@ public function updateRR(Request $request, $r_id)
 
         $rr->update([
             'grand_total' => $grandTotal,
-             'remarks' => $allComplete ? 'Complete' : 'Partial',
-             'status' => $allComplete ? 'Complete' : 'Partial'
+            'remarks' => $allComplete ? 'Complete' : 'Partial',
+            'status' => $allComplete ? 'Complete' : 'Partial',
         ]);
 
-        // Save old data BEFORE update
-        $oldData = [
-            'rr' => $rr->toArray(),
-            'items' => $rr->receivedItems()->get()->toArray()
-        ];
-
-        // --- Your RR update logic dito (update items, stocks, etc.) ---
-
-        // Refresh RR and items after update
+        // STEP 8: Log history
         $newData = [
             'rr' => $rr->fresh()->toArray(),
             'items' => $rr->receivedItems()->get()->toArray()
         ];
 
-        // Log history
         RRHistory::create([
             'r_id' => $rr->r_id,
             'user_id' => auth()->id() ?? 0,
@@ -496,7 +517,6 @@ public function updateRR(Request $request, $r_id)
             'new_data' => $newData,
             'action' => 'update',
         ]);
-
 
         DB::commit();
 
@@ -519,6 +539,7 @@ public function updateRR(Request $request, $r_id)
 }
 
 
+
     // -------------------------
     // SOFT DELETE RR
     // -------------------------
@@ -528,8 +549,8 @@ public function softDeleteRR($r_id)
     DB::beginTransaction();
 
     try {
-        // Get RR
-        $rr = ModelReceived::find($r_id);
+        // 1️⃣ Get RR
+        $rr = ModelReceived::with('receivedItems')->find($r_id);
         if (!$rr) {
             return response()->json([
                 'success' => false,
@@ -537,25 +558,41 @@ public function softDeleteRR($r_id)
             ], 404);
         }
 
-        // Save old data BEFORE delete
+        // 2️⃣ Save old data for audit
         $oldData = [
             'rr' => $rr->toArray(),
-            'items' => $rr->receivedItems()->get()->toArray()
+            'items' => $rr->receivedItems->toArray()
         ];
 
-        // Soft delete parent RR
+        // 3️⃣ Reverse stock and mark transactions REVERSED
+        foreach ($rr->receivedItems as $item) {
+            // Reverse stock
+            $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $item->ItemCode_id]);
+            $stock->quantity_onhand = max(0, $stock->quantity_onhand - $item->quantity_received);
+            $stock->save();
+
+            // Reverse transactions
+            ModelTransactions::where('reference', $r_id)
+                ->where('ItemCode_id', $item->ItemCode_id)
+                ->where('status', 'ACTIVE')
+                ->update([
+                    'status' => 'REVERSED_DELETE',
+                    'updated_at' => now()
+                ]);
+        }
+
+        // 4️⃣ Soft delete parent RR
         $rr->delete();
 
-        // Soft delete child items
+        // 5️⃣ Soft delete child items
         ModelReceivedItem::where('r_id', $r_id)->delete();
 
-        // Fetch new (soft-deleted) data using withTrashed()
+        // 6️⃣ Log history
         $newData = [
             'rr' => ModelReceived::withTrashed()->find($r_id),
             'items' => ModelReceivedItem::withTrashed()->where('r_id', $r_id)->get()
         ];
 
-        // Log history
         RRHistory::create([
             'r_id' => $r_id,
             'user_id' => auth()->id() ?? 0,
@@ -573,6 +610,7 @@ public function softDeleteRR($r_id)
 
     } catch (\Exception $e) {
         DB::rollBack();
+        \Log::error('softDeleteRR ERROR: ' . $e->getMessage() . ' -- ' . $e->getTraceAsString());
         return response()->json([
             'success' => false,
             'message' => 'Failed to soft delete Receiving Report.',
@@ -580,6 +618,7 @@ public function softDeleteRR($r_id)
         ], 500);
     }
 }
+
 
     // -------------------------
     // GET SOFT DELETED RR

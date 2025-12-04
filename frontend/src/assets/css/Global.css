@@ -1,13 +1,26 @@
 .main-container {
-    padding-left: 50px;
+    padding-left: 25px;
     padding-right: 20px;
     padding-top: 20px;
     padding-bottom: 20px;
     width: 100%;
+    left: 1.2%;
+    position: relative;
     overflow-y: hidden;
     box-sizing: border-box;
     transition: padding-left 0.3s;
+    background-color: rgb(255, 255, 255);
+    border-bottom-left-radius: 45px;   /* left top */
+    border-top-right-radius: 45px; /* right bottom */
 }
+
+.breadcrumb {
+  background: none;
+  margin-bottom: 1rem;
+  font-size: 17px;
+  color: rgb(146, 149, 149);
+}
+
 .btn.btn-primary:disabled,
 .btn.btn-warning:disabled,
 .btn.btn-danger:disabled {
@@ -489,4 +502,5 @@ button {
 .fade-leave-active {
   transition: opacity 0.2s ease;
 }
+
 

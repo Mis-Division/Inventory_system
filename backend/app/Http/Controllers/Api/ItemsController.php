@@ -9,52 +9,66 @@ use Illuminate\Support\Facades\DB;
 
 class ItemsController extends Controller
 {
-    public function CreateItemCode(Request $request){
-        $request->validate([
+    public function CreateItemCode(Request $request)
+{
+    $request->validate([
+        // ❌ REMOVE ItemCode validation
+        // 'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode',
 
-            'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode',
-            'product_name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code',
-            'item_category' => 'nullable|string|max:255',
+        'product_name'     => 'required|string|max:255',
+        'description'      => 'required|string',
+        'accounting_code'  => 'nullable|string|max:255',
+        'item_category'    => 'required|string|max:255',
+        'units'            => 'required|string|max:255',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        // Only send fields you actually input
+        $item = Items::create([
+            // ❌ REMOVE THIS
+            // 'ItemCode' => $request->ItemCode,
+
+            'product_name'    => $request->product_name,
+            'description'     => $request->description,
+            'accounting_code' => $request->accounting_code,
+            'item_category'   => $request->item_category,
+            'units'           => $request->units,
         ]);
 
-        DB::beginTransaction();
+        // ItemCode is auto-generated in Items model
+        DB::commit();
 
-        try {
-            // ✅ Create record
-            $item = Items::create([
-                'ItemCode' => $request->ItemCode,
-                'product_name' =>$request->product_name,
-                'description' => $request->description,
-                'accounting_code' => $request->accounting_code,
-                'item_category' => $request->item_category,
-            ]);
+        return response()->json([
+            'message' => 'Item code created successfully',
+            'data' => $item
+        ], 201);
 
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Item code created successfully',
-                'data' => $item
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Failed to create item code',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Failed to create item code',
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
 public function GetItemCode(Request $request)
 {
     try {
-        // Get search keyword and pagination parameters
-        $search = $request->query('search');
-        $perPage = $request->query('per_page', 10); // Default 10 per page
+        // Get search keyword, category filter and pagination parameters
+        $search   = $request->query('search');
+        $category = $request->query('category'); // <-- NEW
+        $perPage  = $request->query('per_page', 10);
 
-        // Build query
+        // Build base query
         $query = Items::query();
+
+        // Apply category filter if requested
+        if (!empty($category)) {
+            $query->where('item_category', $category);
+        }
 
         // Apply search if keyword provided
         if (!empty($search)) {
@@ -73,28 +87,27 @@ public function GetItemCode(Request $request)
         // Return Vue-friendly JSON
         return response()->json([
             'success' => true,
-            'message' => $search 
-                ? "Item codes matching '{$search}' fetched successfully"
-                : 'All item codes fetched successfully',
-            'data' => $items->items(), // current page data
-            'meta' => [
+            'message' => 'Item codes fetched successfully.',
+            'data'    => $items->items(),
+            'meta'    => [
                 'current_page' => $items->currentPage(),
-                'per_page' => $items->perPage(),
-                'total' => $items->total(),
-                'last_page' => $items->lastPage(),
-                'from' => $items->firstItem(),
-                'to' => $items->lastItem()
-            ]
+                'per_page'     => $items->perPage(),
+                'total'        => $items->total(),
+                'last_page'    => $items->lastPage(),
+                'from'         => $items->firstItem(),
+                'to'           => $items->lastItem(),
+            ],
         ], 200);
 
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'error' => 'Failed to fetch item codes',
-            'message' => $e->getMessage()
+            'error'   => 'Failed to fetch item codes.',
+            'message' => $e->getMessage(),
         ], 500);
     }
 }
+
 
 
     public function GetItemCodeId($id)
@@ -124,51 +137,59 @@ public function GetItemCode(Request $request)
             }
         }
 
-        public function UpdateItemCode(Request $request, $id)
-        {
-            try {
-                $item = Items::find($id);
+       public function UpdateItemCode(Request $request, $id)
+{
+    try {
+        $item = Items::find($id);
 
-                if (!$item) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Item code not found',
-                    ], 404);
-                }
-
-                $validated = $request->validate([
-                    'ItemCode' => 'required|string|max:255|unique:tbl_item_code,ItemCode,' . $id . ',ItemCode_id',
-                    'product_name' => 'required|string|max:255',
-                    'description' => 'nullable|string|max:255',
-                    'accounting_code' => 'nullable|string|max:255|unique:tbl_item_code,accounting_code,' . $id . ',ItemCode_id',
-                    'item_category' => 'nullable|string|max:255',
-                ]);
-$accountingCode = $request->input('accounting_code');
-if ($accountingCode === '') {
-    $accountingCode = null;
-}
-                $item->update([
-                    'ItemCode' => $validated['ItemCode'],
-                    'product_name' =>$validated['product_name'] ?? $item->product_name,
-                    'description' => $validated['description'] ?? $item->description,
-                    'accounting_code' => $accountingCode,
-                    'item_category' => $validated['item_category'] ?? $item->item_category,
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Item code updated successfully',
-                    'data' => $item
-                ], 200);
-
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Failed to update item code',
-                    'message' => $e->getMessage()
-                ], 500);
-            }
+        if (!$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item code not found',
+            ], 404);
         }
+
+        $validated = $request->validate([
+            'product_name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'accounting_code' => 'nullable|string|max:255',
+            'item_category' => 'required|string|max:255',
+            'units' => 'required|string|max:255',
+        ]);
+
+        // Fix accounting code empty string
+        $accountingCode = $request->input('accounting_code');
+        if ($accountingCode === '') {
+            $accountingCode = null;
+        }
+
+        // AUTO-REGENERATE ITEMCODE BASED ON UPDATED PRODUCT NAME
+        $newItemCode = Items::generateItemCode($validated['product_name']);
+
+        $item->update([
+            'ItemCode' => $newItemCode,
+            'product_name' => $validated['product_name'],
+            'description' => $validated['description'] ?? $item->description,
+            'accounting_code' => $accountingCode,
+            'item_category' => $validated['item_category'],
+            'units' => $validated['units'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item code updated successfully',
+            'data' => $item
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Failed to update item code',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
 
 
             public function DeleteItemCode($id)
@@ -200,5 +221,45 @@ if ($accountingCode === '') {
                 }
 
 
+
+
+public function displayItemsAndStocks(Request $request)
+{
+    try {
+
+       $query = DB::table('tbl_stocks as s')
+    ->join('tbl_item_code as i', 's.ItemCode_id', '=', 'i.ItemCode_id')
+    ->leftJoin('tbl_receive_items as ri', 'ri.ItemCode_id', '=', 's.ItemCode_id')
+    ->select(
+        'i.ItemCode_id as id',
+        'i.ItemCode as Material_Code',
+        'i.product_name',
+        'i.units',
+        DB::raw('MAX(ri.units) as product_type'), // just pick one or aggregate
+        's.quantity_onhand as Qty'
+    )
+    ->where('s.quantity_onhand', '>', 0)
+    ->groupBy('i.ItemCode_id', 'i.ItemCode','i.units', 'i.product_name', 's.quantity_onhand')
+    ->orderBy('i.ItemCode_id', 'asc');
+
+
+        // Optional: Add pagination
+        $perPage = $request->input('per_page', 10);
+        $data = $query->paginate($perPage);
+
+        return response()->json([
+            'message' => 'Items and Stocks retrieved successfully.',
+            'data' => $data
+        ], 200);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'message' => 'Error retrieving data.',
+            'error' => $e->getMessage()
+        ], 500);
+
+    }
+}
 
 }

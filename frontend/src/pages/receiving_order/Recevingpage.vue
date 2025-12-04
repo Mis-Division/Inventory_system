@@ -1,5 +1,5 @@
 <template>
-    <div class="page-container">
+    <div class="main-container">
         <div class="custom-headers">
             <!-- Title -->
             <div class="w-100">
@@ -9,15 +9,16 @@
             </div>
             <!-- Search + Add Button -->
             <div class="d-flex justify-content-between align-items-center w-100">
-                <div class="d-flex gap-2">
-                    <input type="text" class="form-control" style="width: 35%; min-width: 300px;" v-model="searchQuery"
-                        placeholder="Search Receiving Order..." @keyup.enter="handleSearchEnter" />
-                    <button class="btn btn-primary" @click="handleSearchEnter">
-                        <i class="bi bi-search me-1"></i> Search
-                    </button>
+                <div class="position-relative" style="width: 35%; min-width: 300px;">
+                    <input type="text" v-model="searchQuery" @keyup.enter="handleSearchEnter" class="form-control pe-5"
+                        placeholder="Search Order..."  style="background-color: #FCF6D9;"/>
+
+                    <!-- Clear Button (X) -->
+                    <i v-if="searchQuery" class="bi bi-x-circle-fill text-muted" @click="clearSearch"
+                        style="position: absolute;right: 10px;top: 50%; transform: translateY(-50%);cursor: pointer; font-size: 1.2rem;"></i>
                 </div>
-                <button class="btn btn-primary ms-2" v-if="canAddReceivingOrder" @click="addRR">
-                    <i class="bi bi-plus-circle me-1"></i> Add Receiving Order
+                <button class="btn btn-success ms-2" v-if="canAddReceivingOrder" @click="addRR">
+                    <i class="bi bi-plus-circle me-1"></i> Receiving Order
                 </button>
             </div>
         </div>
@@ -37,12 +38,15 @@
                         <th style="width: 10%;">DR#</th>
                         <th style="width: 30%;">Supplier</th>
                         <th style="width: 10%;">Remarks</th>
-                        <th style="width: 10%;">Received Date</th>
+                        <th style="width: 15%;">Received Date</th>
                         <th style="width: 20%;">Action</th>
                     </tr>
                 </thead>
                 <tbody v-if="receives.length > 0">
-                    <tr v-for="rr in receives" :key="rr.r_id">
+                    <tr v-for="rr in receives" :key="rr.r_id"
+                     :class="{
+            'table-success': rr.remarks?.toLowerCase() === 'complete',
+            'table-danger': rr.remarks?.toLowerCase() === 'partial'}">
                         <td>{{ rr.rr_number }}</td>
                         <td>{{ rr.po_number }}</td>
                         <td>{{ rr.invoice_number }}</td>
@@ -68,8 +72,7 @@
                                             v-if="canDeleteReceivingOrder">
                                             <i class="bi bi-trash me-2"></i>
                                             Delete</a>
-                                        <a href="#" @click.stop.prevent="printingRR(rr)" class="text-warning"><i
-                                                class="bi bi-printer me-2"></i>Print</a>
+                                       
                                     </div>
                                 </Transition>
                             </teleport>
@@ -285,12 +288,7 @@ async function confirmDeelteRR() {
     }
 }
 
-function printingRR(rr) {
-    activeDropdown.value = null;
-    nextTick(() => {
-        window.open(`/receiving/DisplayRR/${rr.r_id}`, "_blank");
-    });
-}
+
 
 
 // Pagination
@@ -336,6 +334,11 @@ function showErrors(message) {
     setTimeout(() => {
         error.value = "";
     }, 5000);
+}
+
+function clearSearch() {
+    searchQuery.value = "";
+    fetchReceivingOrders();
 }
 </script>
 

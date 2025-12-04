@@ -10,34 +10,44 @@
                                 <!-- Body -->
                                 <div class="modal-body">
                                         <form @submit.prevent="showConfirm = true">
-                                                <div class="mb-3">
-                                                        <label class="form-label">Item Code</label>
-                                                        <input v-model="form.ItemCode" type="text" class="form-control"
-                                                                 />
-                                                </div>
+                                               
                                                 <div class="mb-3">
                                                         <label class="form-label">Product Name</label>
-                                                        <input v-model="form.product_name" type="text" class="form-control"/>
+                                                        <input v-model="form.product_name" type="text"
+                                                                class="form-control" />
                                                 </div>
                                                 <div class="mb-3">
                                                         <label class="form-label">Description</label>
                                                         <textarea v-model="form.description" class="form-control"
-                                                                rows="3" ></textarea>
+                                                                rows="3"></textarea>
                                                 </div>
                                                 <div class="mb-3">
                                                         <label class="form-label">Acct. Code</label>
-                                                        <input v-model="form.accounting_code" type="text" class="form-control"  />
+                                                        <input v-model="form.accounting_code" type="text"
+                                                                class="form-control" />
                                                 </div>
                                                 <div class="mb-3">
                                                         <label class="form-label">Item Category</label>
                                                         <select class="form-select" v-model="form.item_category">
                                                                 <option value="">Select Category</option>
                                                                 <option value="Line Hardware">Line Hardware</option>
-                                                                <option value="Special Hardware">Special Hardware</option>
-                                                                <option value="Others">Others</option>  
+                                                                <option value="Special Hardware">Special Hardware
+                                                                </option>
+                                                                <option value="Others">Others</option>
                                                         </select>
                                                 </div>
+                                                <div class="mb-3">
+                                                        <label class=" form-label" for="units">Units</label>
+                                                        <select class="form-select" id="unitsName" v-model="form.units"
+                                                                style="width: 100%;">
+                                                                <option value="">Select Unit</option>
+                                                                <option v-for="unit in units" :key="unit.id"
+                                                                        :value="unit.unit_name">
+                                                                        {{ unit.unit_name }}
+                                                                </option>
+                                                        </select>
 
+                                                </div>
                                                 <div v-if="errorMessage" class="alert alert-danger py-2">
                                                         {{ errorMessage }}
                                                 </div>
@@ -105,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { watch, reactive, ref, onMounted, nextTick, computed } from "vue";
 import api from "../../services/api";
 import { useAppStore } from "../../stores/appStore";
 
@@ -122,11 +132,11 @@ const emit = defineEmits(["close", "updated"]);
 
 const appStore = useAppStore();
 const form = ref({
-        ItemCode: "",
         product_name: "",
         description: "",
         item_category: "",
         accounting_code: "",
+        units: "",
 });
 
 const loading = ref(false);
@@ -134,17 +144,20 @@ const errorMessage = ref("");
 const showConfirm = ref(false);
 const showSuccess = ref(false);
 const showError = ref(false);
+const units = ref([]);
+const selectUnits = ref("");
 
 // Watch for prop changes
 watch(
         () => props.item,
         (newItem) => {
                 if (newItem) {
-                        form.value.ItemCode = newItem.ItemCode || "";
+                        
                         form.value.product_name = newItem.product_name || "";
                         form.value.description = newItem.description || "";
                         form.value.accounting_code = newItem.accounting_code || "";
                         form.value.item_category = newItem.item_category || "";
+                        form.value.units = newItem.units || "";
                 }
         },
         { immediate: true }
@@ -154,6 +167,36 @@ watch(
 async function confirmSave() {
         showConfirm.value = false;
         await updateItemCode();
+}
+
+
+async function fetchUnits() {
+        try {
+                const res = await api.get("Units/display");
+                units.value = res.data.data || [];
+                await nextTick(initUnitSelect)
+        } catch (err) {
+                console.error("Failed to fetch units", err);
+        }
+}
+// ---------------- UNIT SELECT2 (PER ROW) ----------------
+function initUnitSelect() {
+        // Destroy previous select2 instance
+        if ($("#unitsName").data("select2")) {
+                $("#unitsName").select2("destroy");
+        }
+
+        // Initialize Select2 properly
+        $("#unitsName").select2({
+                theme: "bootstrap-5",
+                placeholder: "Select Unit",
+                allowClear: true,
+                dropdownParent: $(".modal.show"), // spelling fix: dropdownParent
+        }).on("change", function () {
+                const val = $(this).val();
+                selectUnits.value = val;
+                form.value.units = val; // <-- THIS IS IMPORTANT
+        });
 }
 
 // ✅ Update Function
@@ -167,11 +210,12 @@ async function updateItemCode() {
                 loading.value = true;
                 appStore.showLoading();
                 const payload = {
-                        ItemCode: form.value.ItemCode,
+                        
                         product_name: form.value.product_name,
                         description: form.value.description,
                         accounting_code: form.value.accounting_code,
                         item_category: form.value.item_category,
+                        units: form.value.units,
                 };
                 await api.put(`/Items/updateItemCode/${props.item.ItemCode_id}`, payload);
                 showSuccess.value = true;
@@ -194,4 +238,7 @@ function closeSuccess() {
         showSuccess.value = false;
         closeModal();
 }
+onMounted(() => {
+        fetchUnits().then(() => nextTick(initUnitSelect));
+});
 </script>

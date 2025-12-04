@@ -18,6 +18,8 @@ import CategoryItem from "../pages/categories/CategoryPages.vue";
 import Adjustment from "../pages/Adjustment/AdjustmentPage.vue";
 import ReceivingPage from "../pages/receiving_order/Recevingpage.vue";
 import PrintRR from "../components/Receiving/PrintRR.vue";
+import ReceivingReports from "../pages/reports/Receiving_reports.vue";
+import Mcrt from "../pages/inventory/Mcrt.vue";
 
 const routes = [
   {
@@ -69,6 +71,10 @@ const routes = [
       component: Adjustment,},
       {path: "/dashboard/receiving",
       component: ReceivingPage,},
+      {path: "/dashboard/rr_reports",
+      component: ReceivingReports,},
+       {path: "/dashboard/mcrt",
+      component: Mcrt,},
 
     ] // protect all children
   },

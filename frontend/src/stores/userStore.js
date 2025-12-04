@@ -118,6 +118,12 @@ export const userStore = reactive({
   get canDeleteOthers() { return this.hasPermission("Others", "can_delete"); },
   get canAddOthers() { return this.hasPermission("Others", "can_add"); },
 
+  // ♻️ Material Credit Ticket
+  get canViewCreditTicket() { return this.hasPermission("Material Credit Ticket", "can_view"); },
+  get canEditCreditTicket() { return this.hasPermission("Material Credit Ticket", "can_edit"); },
+  get canDeleteCreditTicket() { return this.hasPermission("Material Credit Ticket", "can_delete"); },
+  get canAddCreditTicket() { return this.hasPermission("Material Credit Ticket", "can_add"); }, 
+  
   // ♻️ Material Salvage Ticket
   get canViewSalvageTicket() { return this.hasPermission("Material Salvage Ticket", "can_view"); },
   get canEditSalvageTicket() { return this.hasPermission("Material Salvage Ticket", "can_edit"); },
@@ -162,6 +168,14 @@ export const userStore = reactive({
 
   get canViewReceivingOrder() { return this.hasPermission("receiving_Order", "can_view"); },
   get canEditReceivingOrder() { return this.hasPermission("receiving_Order", "can_edit"); },
-  get canDeleteReceivingOrder() { return this.hasPermission("receiving_Order", "can_delete"); }
-  ,get canAddReceivingOrder() { return this.hasPermission("receiving_Order", "can_add"); }
+  get canDeleteReceivingOrder() { return this.hasPermission("receiving_Order", "can_delete"); },
+  get canAddReceivingOrder() { return this.hasPermission("receiving_Order", "can_add"); },
+
+
+  //Receiving Reports
+  get canViewReceivingReports() { return this.hasPermission("Receiving Reports", "can_view"); },
+  get canEditReceivingReports() { return this.hasPermission("Receiving Reports", "can_edit"); },
+
+
+
 });

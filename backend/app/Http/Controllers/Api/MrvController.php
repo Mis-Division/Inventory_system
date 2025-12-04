@@ -15,93 +15,83 @@ use App\Models\ModelTransactions;
 
 class MrvController extends Controller
 {
-   public function CreateMrv(Request $request)
+  public function CreateMrv(Request $request)
 {
     // VALIDATION
-    $validate = $request->validate([
+    $validated = $request->validate([
         'requested_by' => 'required|string|max:255',
         'department'   => 'required|string|max:255',
         'approved_by'  => 'required|string|max:255',
-        'created_by'   => 'required|string|max:255',
-
-        'items' => 'required|array|min:1',
+        'status'       => 'nullable|string|max:255',
+        'items'        => 'required|array|min:1',
         'items.*.itemcode_id'   => 'required|exists:tbl_item_code,ItemCode_id',
         'items.*.requested_qty' => 'required|integer|min:1',
         'items.*.product_type'  => 'required|string|max:255',
     ]);
 
+    // WRAP EVERYTHING IN A DATABASE TRANSACTION
     DB::beginTransaction();
 
     try {
 
         // CREATE MRV HEADER
         $createMrv = ModelMrv::create([
-            'requested_by' => $request->requested_by,
-            'department'   => $request->department,
-            'approved_by'  => $request->approved_by,
-            'created_by'   => $request->created_by,
+            'requested_by' => $validated['requested_by'],
+            'department'   => $validated['department'],
+            'approved_by'  => $validated['approved_by'],
+            'created_by'   => auth()->user()?->fullname ?? 'system',
+            'status'       => 'Approved',
         ]);
 
+        // FETCH ALL STOCKS INVOLVED FOR LOCKING
+        $itemIds = collect($validated['items'])->pluck('itemcode_id');
+        $stocks = DB::table('tbl_stocks as s')
+            ->join('tbl_item_code as i', 'i.ItemCode_id', '=', 's.ItemCode_id')
+            ->whereIn('s.ItemCode_id', $itemIds)
+            ->select('s.ItemCode_id', 'i.product_name', 's.quantity_onhand')
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('ItemCode_id'); // index by item code for easy lookup
+
         // LOOP ITEMS
-        foreach ($request->items as $item) {
-
-            // GET STOCK (LOCK FOR UPDATE)
-            // $stock = ModelStocks::where('ItemCode_id', $item['itemcode_id'])
-            //                     ->lockForUpdate()
-            //                     ->first();
-
-
-            $stock = DB::table('tbl_stocks as s')
-                    ->join('tbl_item_code as i', 'i.ItemCode_id', '=', 's.ItemCode_id')
-                    ->select(
-                        's.ItemCode_id',
-                        'i.product_name',
-                        's.quantity_onhand'
-                    )
-                    ->where('s.ItemCode_id', $item['itemcode_id'])
-                    ->lockForUpdate()
-                    ->first();
-
-            if (!$stock) {
-                throw new \Exception("Item Not Found!");
-            }
-
-            // TYPECAST VALUES FOR SAFE COMPARISON
-            $onhand   = (int)$stock->quantity_onhand;
+        foreach ($validated['items'] as $item) {
+            $itemId = $item['itemcode_id'];
             $requested = (int)$item['requested_qty'];
 
-            // CHECK STOCK SUFFICIENCY
-            if ($onhand < $requested) {
-                throw new \Exception("Insufficient Stock Items: {$stock->product_name}");
+            // GET STOCK
+            $stock = $stocks[$itemId] ?? null;
+            if (!$stock) {
+                throw new \Exception("Item not found: {$itemId}");
             }
 
-            // DEDUCT STOCK
-            // $stock->quantity_onhand = $onhand - $requested;
-            // $stock->save();
+            // CHECK STOCK SUFFICIENCY & ATOMIC DECREMENT
+            $affected = DB::table('tbl_stocks')
+                ->where('ItemCode_id', $itemId)
+                ->where('quantity_onhand', '>=', $requested)
+                ->decrement('quantity_onhand', $requested);
 
-            DB::table('tbl_stocks')
-                ->where('ItemCode_id', $item['itemcode_id'])
-                ->update([
-                    'quantity_onhand' => $onhand - $requested
-                ]);
+            if (!$affected) {
+                throw new \Exception("Insufficient stock for item: {$stock->product_name}");
+            }
 
             // CREATE MRV ITEM
             ModelMrvItems::create([
                 'mrv_id'        => $createMrv->mrv_id,
-                'itemcode_id'   => $item['itemcode_id'],
-                'requested_qty' => $item['requested_qty'],
+                'itemcode_id'   => $itemId,
+                'requested_qty' => $requested,
                 'product_type'  => $item['product_type'],
             ]);
 
             // CREATE TRANSACTION
             ModelTransactions::create([
-                'ItemCode_id'    => $item['itemcode_id'],
-                'movement_type'  => 'OUT',
-                'quantity'       => $requested,
-                'reference'      => $createMrv->mrv_id,     
-                'reference_type' => 'MRV ID',
-                'user_id'        => auth()->id() ?? null,
-                'created_by'     => auth()->user()->fullname ?? 'system',
+                'ItemCode_id'     => $itemId,
+                'movement_type'   => 'OUT',
+                'transaction_type'=> 'REQUEST',
+                'quantity'        => $requested,
+                'reference'       => $createMrv->mrv_number,
+                'reference_type'  => 'MRV #',
+                'user_id'         => auth()->id() ?? null,
+                'created_by'      => auth()->user()?->fullname ?? 'system',
             ]);
         }
 
@@ -109,14 +99,12 @@ class MrvController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'MRV Successfully Created with Deduction of Stocks!',
-            'mrv_id'  => $createMrv->mrv_id
+            'message' => 'MRV successfully created with stock deduction!',
+            'mrv_id'  => $createMrv->mrv_id,
         ], 201);
 
     } catch (\Exception $e) {
-
-        DB::rollback();
-
+        DB::rollBack();
         return response()->json([
             'success' => false,
             'message' => 'Failed to create MRV!',

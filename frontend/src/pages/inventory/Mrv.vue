@@ -10,17 +10,16 @@
 
       <div class="d-flex justify-content-between align-items-center w-100">
         <!-- Search -->
-        <div class="d-flex gap-2">
-          <input type="text" v-model="searchQuery" @keyup.enter="handleSearchEnter"
-            style="width: 35%; min-width: 300px;" class="form-control" placeholder="Search Request..." />
+        <div class="position-relative" style="width: 35%; min-width: 300px;">
+          <input type="text" v-model="searchQuery" @keyup.enter="handleSearchEnter" class="form-control pe-5"
+            placeholder="Search Request..." style="background-color: #FCF6D9;" />
 
-          <button class="btn btn-primary" @click="handleSearchEnter">
-            <i class="bi bi-search me-1"></i> Search
-          </button>
+          <!-- Clear Button (X) -->
+          <i v-if="searchQuery" class="bi bi-x-circle-fill text-muted" @click="clearSearch"
+            style="position: absolute;right: 10px;top: 50%; transform: translateY(-50%);cursor: pointer; font-size: 1.2rem;"></i>
         </div>
-
         <!-- Add MRV button -->
-        <button v-if="canAddMVR" @click="addMrv" class="btn btn-primary">
+        <button v-if="canAddMVR" @click="addMrv" class="btn btn-success">
           <i class="bi bi-plus-circle me-1"></i> MRV
         </button>
       </div>
@@ -46,19 +45,19 @@
           </tr>
         </thead>
         <tbody v-if="request.length > 0">
-          <tr v-for="mrv in request" :key="mrv.mrv_id">
+          <tr v-for="mrv in request" :key="mrv.mrv_id" :class="{
+            'table-success': mrv.status?.toLowerCase() === 'approved',
+            'table-danger': mrv.status?.toLowerCase() === 'pending'}">
             <td>{{ mrv.mrv_number }}</td>
             <td>{{ mrv.requested_by }}</td>
             <td>{{ mrv.department }}</td>
             <td>{{ mrv.approved_by }}</td>
             <td>{{ mrv.status }}</td>
             <td>
-              <!-- Dropdown toggle -->
               <div @click="toggleDropdown(mrv.mrv_id, $event)" class="cursor-pointer">
                 <i class="bi bi-three-dots"></i>
               </div>
 
-              <!-- Dropdown menu -->
               <teleport to="body">
                 <transition name="fade">
                   <div v-if="activeDropdown === mrv.mrv_id" ref="el => (dropdownRefs.value ??= {})[mrv.mrv_id] = el"
@@ -74,7 +73,10 @@
               </teleport>
             </td>
           </tr>
-          <tr v-if="request.length === 0">
+
+        </tbody>
+        <tbody v-else>
+          <tr>
             <td colspan="6">No MRV found.</td>
           </tr>
         </tbody>
@@ -249,6 +251,14 @@ function closeEditMrvModal() {
 }
 function closeDeleteMrvModal() {
   showDeleteMrvModal.value = false;
+}
+
+
+
+function clearSearch() {
+  searchQuery.value = "";
+  fetchMrv(); // reload table / reset results
+
 }
 
 </script>

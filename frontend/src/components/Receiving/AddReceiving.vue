@@ -5,7 +5,7 @@
 
         <!-- Header -->
         <div class="modal-header bg-success text-white">
-          <h5>Add Receiving Order</h5>
+          <h5> <i class="bi bi-info-circle "></i> Add Receiving Order</h5>
           <button type="button" class="btn btn-close btn-close-white" @click="closeModal"></button>
         </div>
 
@@ -50,8 +50,7 @@
           <hr class="my-4" />
 
           <!-- Receiving Items -->
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="mb-0">Receiving Items</h6>
+          <div class="d-flex justify-content-end align-items-center mb-2">
             <button class="btn btn-success btn-sm" @click="addItem" type="button">
               <i class="bi bi-plus-lg"></i> Add Item
             </button>
@@ -83,15 +82,10 @@
                     </select>
                   </td>
                   <td>
-                    <input type="text" class="form-control" v-model="item.product_name" :disabled="item.existing" />
+                    <input type="text" class="form-control" v-model="item.product_name" :disabled="item.existing" readonly />
                   </td>
                   <td>
-                    <select :id="'unitSelect' + index" class="form-select" v-model="item.units" style="width: 100%;">
-                      <option value="">Select Unit</option>
-                      <option v-for="unit in units" :key="unit.id" :value="unit.unit_name">
-                        {{ unit.unit_name }}
-                      </option>
-                    </select>
+                    <input type="text" class="form-control" v-model="item.units" :disabled="item.existing" readonly />
                   </td>
                   <td>
                     <input type="number" class="form-control" v-model.number="item.quantity_order" min="0"
@@ -172,7 +166,7 @@ const suppliers = ref([]);
 const supplierDetails = ref({ address: "" });
 const errorMessage = ref("");
 
-const units = ref([]);
+
 const itemsList = ref([]);
 
 const form = ref({
@@ -182,13 +176,13 @@ const form = ref({
 });
 
 const rrItems = ref([
-  { 
-    ItemCode_id: "", 
-    product_name: "", 
-    units: "", 
-    quantity_order: 0, 
-    quantity_received: 0, 
-    unit_cost: 0, 
+  {
+    ItemCode_id: "",
+    product_name: "",
+    units: "",
+    quantity_order: 0,
+    quantity_received: 0,
+    unit_cost: 0,
     existing: false,
     disable_quantity_order: false
   },
@@ -206,22 +200,13 @@ const formatCurrency = (value) => {
 // ---------------- MOUNTED ----------------
 onMounted(() => {
   fetchSuppliers();
-  fetchItems();
-  fetchUnits().then(() => nextTick(() => {
+  fetchItems().then(() => nextTick(() => {
     initItemSelect();
-    initUnitSelect();
+
   }));
 });
 
-// ---------------- FETCH UNITS ----------------
-async function fetchUnits() {
-  try {
-    const res = await api.get("Units/display");
-    units.value = res.data.data || [];
-  } catch (err) {
-    console.error("Failed to fetch units", err);
-  }
-}
+
 
 // ---------------- FETCH SUPPLIERS ----------------
 async function fetchSuppliers() {
@@ -279,7 +264,7 @@ function initItemSelect() {
 
     $(selector).select2({
       theme: "bootstrap-5",
-      placeholder: "Search or Select Item Code",
+      placeholder: "Select Item Code",
       allowClear: true,
       dropdownParent: $(".modal.show"),
       width: "100%",
@@ -292,6 +277,7 @@ function initItemSelect() {
       item.ItemCode_id = selectedId;
       item.product_name = selected.product_name || "";
       item.product_type = selected.item_category || "";
+      item.units = selected.units || "";
 
       // Check backend status
       const itemStatus = await checkItemStatus(form.value.po_number, selectedId);
@@ -312,8 +298,8 @@ function initItemSelect() {
           };
 
           await nextTick(initItemSelect);
-          await nextTick(initUnitSelect);
-        } 
+         
+        }
         else if (itemStatus.status === "Partial") {
           const originalOrder = await fetchOriginalQuantityOrder(form.value.po_number, selectedId);
 
@@ -332,24 +318,7 @@ function initItemSelect() {
 }
 
 // ---------------- UNIT SELECT2 (PER ROW) ----------------
-function initUnitSelect() {
-  rrItems.value.forEach((item, index) => {
-    const selector = "#unitSelect" + index;
 
-    if ($(selector).data("select2")) $(selector).select2("destroy");
-
-    $(selector).select2({
-      theme: "bootstrap-5",
-      placeholder: "Select Unit",
-      allowClear: true,
-      dropdownParent: $(".modal.show"),
-      width: "100%",
-      minimumResultsForSearch: 0
-    }).on("change", function () {
-      item.units = $(this).val();
-    });
-  });
-}
 
 // ---------------- ADD ITEM ----------------
 async function addItem() {
@@ -366,8 +335,8 @@ async function addItem() {
 
   await nextTick(() => {
     initItemSelect();
-    initUnitSelect();
-      if (rrItems.length > 5 && tableWrapper.value) {
+
+    if (rrItems.length > 5 && tableWrapper.value) {
       const container = tableWrapper.value;
       container.scrollTop = container.scrollHeight; // scroll sa bottom
     }
@@ -378,7 +347,7 @@ function removeItem(index) {
   rrItems.value.splice(index, 1);
   nextTick(() => {
     initItemSelect();
-    initUnitSelect();
+
   });
 }
 
@@ -409,7 +378,7 @@ async function onPOChange() {
 
   await nextTick(() => {
     initItemSelect();
-    initUnitSelect();
+
   });
 }
 
@@ -502,7 +471,7 @@ function closeModal() { emit("close"); }
 
 <style scoped>
 .modal-auto-fit {
-  max-width: 80vw;
+  max-width: 60vw;
   width: auto;
 }
 

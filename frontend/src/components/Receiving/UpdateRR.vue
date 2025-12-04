@@ -76,12 +76,7 @@
                     <input type="text" class="form-control" v-model="item.product_name" disabled />
                   </td>
                   <td>
-                    <select :id="'unitSelect' + index" class="form-select" style="width: 100%;">
-                      <option value="">Select Unit</option>
-                      <option v-for="unit in units" :key="unit.id" :value="unit.unit_name">
-                        {{ unit.unit_name }}
-                      </option>
-                    </select>
+                    <input type="text"  class="form-control" v-model="item.units" disabled />
                   </td>
                   <td>
                     <input type="number" class="form-control" v-model.number="item.quantity_order" min="0" />
@@ -180,7 +175,7 @@ const errorMessage = ref("");
 const showSuccess = ref(false);
 const showConfirm = ref(false);
 let pendingItemChange = null;
-const units = ref([]);
+
 
 const appStore = useAppStore();
 
@@ -212,14 +207,7 @@ function closeSuccess() {
 // =========================
 // FETCHING DATA
 // =========================
-async function fetchUnits() {
-  try {
-    const res = await api.get("Units/display");
-    units.value = res.data.data || [];
-  } catch (err) {
-    console.error("Failed to fetch units", err);
-  }
-}
+
 
 
 async function fetchSuppliers() {
@@ -305,12 +293,7 @@ function initItemSelects() {
     $(selector).off("change").on("change", function () {
       const selectedId = $(this).val();
       const selected = itemsList.value.find(i => i.ItemCode_id.toString() === selectedId);
-
-      // Always reset unit first
-      item.units = "";
-      if ($(unitSelector).data("select2")) {
-        $(unitSelector).val(null).trigger("change.select2");
-      }
+  
 
       if (selected) {
         pendingItemChange = { item, selected, selector };
@@ -324,6 +307,7 @@ function initItemSelects() {
         item.ItemCode_id = "";
         item.ItemCode = "";
         item.product_name = "";
+        item.units = "";
         item.unit_cost = 0;
         item.quantity_order = 0;
         item.quantity_received = 0;
@@ -331,45 +315,6 @@ function initItemSelects() {
     });
   });
 }
-
-
-
-
-
-function initUnitSelect() {
-  rrData.items.forEach((item, index) => {
-    const selector = "#unitSelect" + index;
-
-    // destroy existing select2 instance
-    if ($(selector).data("select2")) $(selector).select2("destroy");
-
-    // initialize select2
-    $(selector).select2({
-      theme: "bootstrap-5",
-      placeholder: "Select Unit",
-      allowClear: true,
-      dropdownParent: $(".modal.show"),
-      width: "100%",
-      minimumResultsForSearch: 5
-    });
-
-    // set initial value
-    if (item.units) {
-      $(selector).val(item.units).trigger("change.select2");
-    }
-
-    // update reactive property on change
-    $(selector).off("change.unit").on("change.unit", function () {
-      const selectedValue = $(this).val();
-      item.units = selectedValue;  // this is reactive
-    //  console.log(`Row ${index} selected unit:`, selectedValue);
-    });
-  });
-}
-
-
-
-
 
 // CONFIRM ITEM CHANGE
 function confirmSave() {
@@ -475,7 +420,7 @@ function checkReceived(index) {
 onMounted(async () => {
   await fetchSuppliers();
   await fetchItems();
-fetchUnits().then(() => nextTick(initUnitSelect));
+
  // initItemSelects(); // if you have this separate for items
 });
 

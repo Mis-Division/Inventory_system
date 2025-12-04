@@ -16,8 +16,9 @@ return new class extends Migration
             $table->string('ItemCode')->unique();
             $table->string('product_name')->nullable();
             $table->string('description');
-            $table->string('accounting_code')->unique();
+            $table->string('accounting_code')->nullable();
             $table->string('item_category')->nullable();
+            $table->enum('units', ['pcs', 'set', 'sets', 'liters', 'box', 'feet', 'unit', 'units','gallons','bottles','kg']);
             $table->string('created_at')->nullable();
             $table->timestamp('updated_at');
         });
