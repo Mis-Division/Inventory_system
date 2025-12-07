@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="modal fade show"
-    tabindex="-1"
-    style="display:block; background:rgba(0,0,0,0.5);"
-  >
+  <div class="modal fade show" tabindex="-1" style="display:block; background:rgba(0,0,0,0.5);">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-auto-fit">
       <div class="modal-content">
         <!-- HEADER -->
@@ -12,11 +8,7 @@
             <i class="bi bi-pencil-square me-1"></i>
             Update Material Credit Ticket
           </h5>
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            @click="closeModal"
-          ></button>
+          <button type="button" class="btn-close btn-close-white" @click="closeModal"></button>
         </div>
 
         <!-- BODY -->
@@ -33,12 +25,8 @@
                 <label class="form-label fw-semibold">
                   Returned By <span class="text-danger">*</span>
                 </label>
-                <input
-                  type="text"
-                  class="form-control"
-                  v-model="form.returned_by"
-                  :class="{ 'is-invalid': fieldErrors.returned_by }"
-                />
+                <input type="text" class="form-control" v-model="form.returned_by"
+                  :class="{ 'is-invalid': fieldErrors.returned_by }" />
                 <div v-if="fieldErrors.returned_by" class="error-text">
                   {{ fieldErrors.returned_by }}
                 </div>
@@ -46,12 +34,8 @@
 
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Work Order</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  v-model="form.work_order"
-                  :class="{ 'is-invalid': fieldErrors.work_order }"
-                />
+                <input type="text" class="form-control" v-model="form.work_order"
+                  :class="{ 'is-invalid': fieldErrors.work_order }" />
                 <div v-if="fieldErrors.work_order" class="error-text">
                   {{ fieldErrors.work_order }}
                 </div>
@@ -59,12 +43,8 @@
 
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Job Order</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  v-model="form.job_order"
-                  :class="{ 'is-invalid': fieldErrors.job_order }"
-                />
+                <input type="text" class="form-control" v-model="form.job_order"
+                  :class="{ 'is-invalid': fieldErrors.job_order }" />
                 <div v-if="fieldErrors.job_order" class="error-text">
                   {{ fieldErrors.job_order }}
                 </div>
@@ -74,25 +54,15 @@
             <hr class="my-3" />
 
             <!-- ITEMS HEADER -->
-            <div
-              class="d-flex justify-content-between align-items-center mb-2"
-            >
+            <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="mb-0 fw-semibold">Returned Items</h6>
-              <button
-                class="btn btn-warning btn-sm"
-                type="button"
-                @click="addItem"
-              >
+              <button class="btn btn-warning btn-sm" type="button" @click="addItem">
                 <i class="bi bi-plus-lg"></i> Add Item
               </button>
             </div>
 
             <!-- ITEMS TABLE -->
-            <div
-              class="table-responsive"
-              ref="tableWrapper"
-              style="max-height:300px; overflow-y:auto;"
-            >
+            <div class="table-responsive" ref="tableWrapper" style="max-height:300px; overflow-y:auto;">
               <table class="table align-middle text-center">
                 <thead class="table-light">
                   <tr>
@@ -107,34 +77,21 @@
                 </thead>
 
                 <tbody>
-                  <tr
-                    v-for="(item, index) in mcrtItems"
-                    :key="item._rowKey"
-                    :class="{
-                      'row-error':
-                        itemErrors[index] &&
-                        Object.keys(itemErrors[index]).length > 0
-                    }"
-                  >
+                  <tr v-for="(item, index) in mcrtItems" :key="item._rowKey" :class="{
+                    'row-error':
+                      itemErrors[index] &&
+                      Object.keys(itemErrors[index]).length > 0
+                  }">
                     <!-- ITEM CODE -->
                     <td>
-                      <select
-                        class="form-select text-center"
-                        :id="'itemSelectUpdate' + index"
-                        v-model="item.itemcode_id"
-                        :disabled="item.isExisting"
-                        :class="{
+                      <select class="form-select text-center" :id="'itemSelectUpdate' + index"
+                        v-model="item.itemcode_id" :disabled="item.isExisting" :class="{
                           'is-invalid':
                             itemErrors[index]?.itemcode ||
                             itemErrors[index]?.duplicate
-                        }"
-                      >
+                        }">
                         <option value="">Select Item</option>
-                        <option
-                          v-for="i in itemsList"
-                          :key="i.ItemCode_id"
-                          :value="i.ItemCode_id"
-                        >
+                        <option v-for="i in itemsList" :key="i.ItemCode_id" :value="i.ItemCode_id">
                           {{ i.ItemCode }}
                         </option>
                       </select>
@@ -142,43 +99,25 @@
                       <div v-if="itemErrors[index]?.itemcode" class="error-text">
                         {{ itemErrors[index].itemcode }}
                       </div>
-                      <div
-                        v-if="itemErrors[index]?.duplicate"
-                        class="error-text"
-                      >
+                      <div v-if="itemErrors[index]?.duplicate" class="error-text">
                         Duplicate ItemCode.
                       </div>
                     </td>
 
                     <!-- DESCRIPTION -->
                     <td>
-                      <input
-                        type="text"
-                        class="form-control"
-                        v-model="item.description"
-                        disabled
-                      />
+                      <input type="text" class="form-control" v-model="item.description" disabled />
                     </td>
 
                     <!-- UNITS -->
                     <td>
-                      <input
-                        type="text"
-                        class="form-control"
-                        v-model="item.units"
-                        disabled
-                      />
+                      <input type="text" class="form-control" v-model="item.units" disabled />
                     </td>
 
                     <!-- QTY RETURN -->
                     <td>
-                      <input
-                        type="number"
-                        min="1"
-                        class="form-control text-center"
-                        v-model.number="item.qty_return"
-                        :class="{ 'is-invalid': itemErrors[index]?.qty_return }"
-                      />
+                      <input type="number" min="1" class="form-control text-center" v-model.number="item.qty_return"
+                        :class="{ 'is-invalid': itemErrors[index]?.qty_return }" />
                       <div v-if="itemErrors[index]?.qty_return" class="error-text">
                         {{ itemErrors[index].qty_return }}
                       </div>
@@ -186,14 +125,11 @@
 
                     <!-- CONDITION -->
                     <td>
-                      <select
-                        class="form-select"
-                        v-model="item.condition"
-                        :class="{ 'is-invalid': itemErrors[index]?.condition }"
-                      >
+                      <select class="form-select" v-model="item.condition"
+                        :class="{ 'is-invalid': itemErrors[index]?.condition }">
                         <option value="">Select condition</option>
-                        <option value="Good as new">Good as new</option>
-                        <option value="For Repair">For Repair</option>
+                        <option value="G">New</option>
+                        <option value="U">Ussable</option>
                       </select>
                       <div v-if="itemErrors[index]?.condition" class="error-text">
                         {{ itemErrors[index].condition }}
@@ -202,14 +138,8 @@
 
                     <!-- COST -->
                     <td>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="form-control text-center"
-                        v-model.number="item.cost"
-                        :class="{ 'is-invalid': itemErrors[index]?.cost }"
-                      />
+                      <input type="number" min="0" step="0.01" class="form-control text-center"
+                        v-model.number="item.cost" :class="{ 'is-invalid': itemErrors[index]?.cost }" />
                       <div v-if="itemErrors[index]?.cost" class="error-text">
                         {{ itemErrors[index].cost }}
                       </div>
@@ -217,12 +147,8 @@
 
                     <!-- ACTION -->
                     <td>
-                      <button
-                        type="button"
-                        class="btn btn-danger btn-sm"
-                        @click="removeItem(index)"
-                        :disabled="item.isExisting && mcrtItems.length === 1"
-                      >
+                      <button type="button" class="btn btn-danger btn-sm" @click="removeItem(index)"
+                        :disabled="item.isExisting && mcrtItems.length === 1">
                         <i class="bi bi-trash"></i>
                       </button>
                     </td>
@@ -232,10 +158,7 @@
             </div>
 
             <!-- GLOBAL ERROR -->
-            <div
-              v-if="errorMessage"
-              class="alert alert-danger py-2 mt-2"
-            >
+            <div v-if="errorMessage" class="alert alert-danger py-2 mt-2">
               {{ errorMessage }}
             </div>
           </div>
@@ -493,7 +416,7 @@ function validateForm() {
     if (!item.condition) {
       itemErrors.value[idx].condition = "Condition is required.";
       valid = false;
-    } else if (!["Good as new", "For Repair"].includes(item.condition)) {
+    } else if (!["G", "U"].includes(item.condition)) {
       itemErrors.value[idx].condition = "Invalid condition value.";
       valid = false;
     }

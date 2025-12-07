@@ -16,6 +16,7 @@ class ModelStocks extends Model
     protected $fillable = [
         'ItemCode_id',
         'quantity_onhand',
+        'usable_stock',
     ];
 
     /**

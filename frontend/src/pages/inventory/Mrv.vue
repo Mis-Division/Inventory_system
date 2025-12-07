@@ -32,7 +32,7 @@
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
     <!-- Table -->
-    <div v-if="!loading" class="table-responsive">
+    <div v-if="!loading">
       <table class="table table-hover align-middle mb-2 text-center">
         <thead class="table-secondary">
           <tr>
@@ -62,10 +62,10 @@
                 <transition name="fade">
                   <div v-if="activeDropdown === mrv.mrv_id" ref="el => (dropdownRefs.value ??= {})[mrv.mrv_id] = el"
                     class="dropdown-menu-teleport" :style="getDropdownStyle(mrv.mrv_id)" @click.stop>
-                    <a href="#" v-if="canEditMVR" class="text-success" @click.stop.prevent>
+                    <a href="#" v-if="canEditMVR" class="text-success" @click.stop.prevent="editMrv(mrv)">
                       <i class="bi bi-pencil me-2"></i>Edit
                     </a>
-                    <a href="#" v-if="canDeleteMVR" class="text-danger" @click.stop.prevent>
+                    <a href="#" v-if="canDeleteMVR" class="text-danger" @click.stop.prevent="deleteMrv(mrv)">
                       <i class="bi bi-trash me-2"></i>Delete
                     </a>
                   </div>
@@ -230,7 +230,9 @@ function showError(message) {
     error.value = "";
   }, 5000);
 }
-
+async function editMrv(mrv) {
+  showEditMrvModal.value = true;
+}
 
 // Pagination
 function changePage(page) {
@@ -261,24 +263,171 @@ function clearSearch() {
 
 }
 
+
+
 </script>
 
 <style>
-.cursor-pointer {
+/* ============================================================
+   🌟 HEADER – Executive Clean Look
+============================================================ */
+.custom-headers {
+  background: #ffffff;
+  border: 1px solid #e3e7ee;
+  padding: 20px 25px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.custom-headers h1 {
+  font-weight: 700;
+  font-size: 1.7rem;
+  color: #2e3b54;
+}
+
+/* ============================================================
+   🔍 SEARCH BAR – Sleek pill style
+============================================================ */
+.custom-headers input {
+  border-radius: 50px !important;
+  padding: 12px 18px;
+  padding-right: 45px !important;
+  background: #f7f9fc !important;
+  border: 1px solid #cdd6e4;
+  transition: 0.25s ease;
+}
+
+.custom-headers input:focus {
+  background: white !important;
+  border-color: #6f9bff;
+  box-shadow: 0 0 0 3px rgba(111,155,255,0.25);
+}
+
+/* Clear icon */
+.custom-headers i.bi-x-circle-fill {
+  color: #8b96af !important;
   cursor: pointer;
 }
 
+/* Add MRV Button */
+.custom-headers .btn-success {
+  background: #4caf50;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.custom-headers .btn-success:hover {
+  background: #43a047;
+}
+
+/* ============================================================
+   📋 TABLE – Premium corporate style
+============================================================ */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 10px !important;
+}
+
+.table thead tr td {
+  background: #e9edf5;
+  padding: 15px;
+  font-weight: 700;
+  color: #435067;
+  border: none;
+}
+
+.table tbody tr {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  transition: 0.15s ease;
+}
+
+.table tbody tr:hover {
+  transform: scale(1.01);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.10);
+}
+
+.table td {
+  padding: 14px 10px !important;
+  color: #435067;
+  font-weight: 500;
+}
+
+/* Status Highlighting */
+.table-success {
+  background-color: #e8f5e9 !important;
+}
+
+.table-danger {
+  background-color: #fdecea !important;
+}
+
+/* ============================================================
+   ⋮ DROPDOWN – Soft elegant floating menu
+============================================================ */
+.cursor-pointer {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.cursor-pointer:hover {
+  background: #eef1ff;
+  transition: 0.2s;
+}
+
 .dropdown-menu-teleport {
-  transition: opacity 0.2s;
+  position: absolute;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  min-width: 170px;
+  padding: 8px 0;
+  border: 1px solid #d5dbea;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+  backdrop-filter: blur(10px);
+  animation: fadeDropdown 0.15s ease-out;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
+@keyframes fadeDropdown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.dropdown-menu-teleport a {
+  display: block;
+  padding: 10px 15px;
+  font-weight: 600;
+  color: #3b4a6b;
 }
+
+.dropdown-menu-teleport a:hover {
+  background: #f1f4ff;
+  border-radius: 8px;
+}
+
+/* ============================================================
+   🔢 PAGINATION – minimal rounded
+============================================================ */
+.pagination .page-link {
+  border-radius: 10px !important;
+  padding: 7px 14px;
+  border: 1px solid #cbd4e4;
+  color: #576281;
+  font-weight: 600;
+}
+
+.pagination .active .page-link {
+  background: #6f9bff !important;
+  border: none;
+  color: white !important;
+  box-shadow: 0 2px 6px rgba(111,155,255,0.3);
+}
+
+.page-circle {
+  border-radius: 50% !important;
+}
+
 </style>

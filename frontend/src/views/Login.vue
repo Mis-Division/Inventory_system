@@ -1,49 +1,53 @@
 <template>
-  <div class="login-wrapper">
-    <div class="login-card">
-      <!-- Logo + Title -->
-      <div class="login-header">
-        <img src="../assets/ISELCO1LOGO.png" alt="App Logo" class="login-logo" />
-        <h2 class="login-title">Warehouse Inventory System</h2>
-        
-      </div>
+  <div class="luxe-wrapper">
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <!-- Username -->
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input id="username" v-model="form.username" type="text" placeholder="Enter your username" required />
+    <!-- BACKGROUND ORBS -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="luxe-card">
+
+      <!-- LOGO -->
+      <img src="../assets/ISELCO1LOGO.png" class="luxe-logo" />
+
+      <h2 class="luxe-title">Warehouse Inventory System</h2>
+
+      <form @submit.prevent="handleLogin">
+
+        <div class="luxe-input">
+          <label>Username</label>
+          <input type="text" v-model="form.username" required />
         </div>
 
-        <!-- Password -->
-        <div class="form-group">
-          <label for="password">Password</label>
-          <div class="password-box">
-            <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'"
-              placeholder="Enter your password" required />
-            <button type="button" class="toggle-password" @click="togglePassword"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'">
+        <div class="luxe-input">
+          <label>Password</label>
+          <div class="luxe-password-box">
+            <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required />
+            <button type="button" class="toggle-pass" @click="togglePassword">
               <i v-if="showPassword" class="bi bi-eye-slash"></i>
               <i v-else class="bi bi-eye"></i>
             </button>
           </div>
         </div>
 
-        <!-- Error -->
-        <div v-if="error" class="error-msg">{{ error }}</div>
+        <div v-if="error" class="luxe-error">{{ error }}</div>
 
-        <!-- Button -->
-        <button type="submit" :disabled="appStore.loading" class="login-btn">
+        <button class="luxe-btn" :disabled="appStore.loading">
           <span v-if="!appStore.loading">Login</span>
-          <span v-else>Logging in...</span>
+          <span v-else>Loading...</span>
         </button>
+
       </form>
     </div>
 
-    <!-- Footer -->
-    <p class="login-footer">&copy; 2025 ISELCO MIS-Division</p>
   </div>
 </template>
+
+
+
+
+
 
 <script setup>
 import { ref } from "vue";
@@ -59,6 +63,7 @@ const form = ref({
   username: "",
   password: "",
 });
+
 const error = ref("");
 const showPassword = ref(false);
 
@@ -76,7 +81,7 @@ async function handleLogin() {
     const user = res?.data?.data?.user;
 
     if (!token || !user) {
-      error.value = "Invalid login response from server.";
+      error.value = "Invalid login credentials.";
       return;
     }
 
@@ -87,6 +92,7 @@ async function handleLogin() {
 
     await userStore.initUser();
     router.push("/dashboard");
+
   } catch (err) {
     error.value = err.response?.data?.message || "Login failed";
   } finally {
@@ -95,175 +101,181 @@ async function handleLogin() {
 }
 </script>
 
+
 <style scoped>
-/* ===== Layout ===== */
-.login-wrapper {
+/* ANIMATED MINIMAL BACKGROUND */
+.luxe-wrapper {
   height: 100vh;
-  background: linear-gradient(135deg, #c7d2fe, #dbeafe, #f1f5f9);
+  background: linear-gradient(140deg, #ffffff, #eef4f1, #dff7e3);
+  background-size: 300% 300%;
+  animation: bgShift 12s ease infinite;
+
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-family: "Poppins", sans-serif;
   padding: 1rem;
+
+  font-family: "Inter", "Poppins", sans-serif;
+  position: relative;
   overflow: hidden;
 }
 
-/* ===== Card ===== */
-.login-card {
-  background: #ffffff;
-  padding: 2.8rem 2.2rem;
-  border-radius: 20px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+/* BACKGROUND FLOATING ORBS (APPLE STYLE) */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
+}
+
+.orb-1 {
+  width: 260px;
+  height: 260px;
+  background: #4ade80;
+  top: -40px;
+  left: -40px;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: #22c55e;
+  bottom: -60px;
+  right: -60px;
+}
+
+.orb-3 {
+  width: 200px;
+  height: 200px;
+  background: #86efac;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* BACKGROUND ANIMATION */
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* CARD */
+.luxe-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 410px;
+  padding: 2.4rem;
+  border-radius: 22px;
+  background: #ffffffd9;
+  backdrop-filter: blur(20px);
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.06),
+    0 6px 18px rgba(0,0,0,0.04),
+    inset 0 0 0 1px rgba(255,255,255,0.55);
+
   text-align: center;
-  animation: fadeIn 0.6s ease-in-out;
-  position: relative;
   z-index: 10;
 }
 
-/* ===== Logo + Header ===== */
-.login-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 1.5rem;
+/* LOGO */
+.luxe-logo {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1rem auto;
+  display: block;
 }
 
-.login-logo {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-  border-radius: 50%;
-  background-color: #f1f5f9;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.login-title {
-  font-size: 1.6rem;
+/* TITLE */
+.luxe-title {
+  font-size: 1.48rem;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 0.25rem;
+  margin-bottom: 1.9rem;
 }
 
-.login-subtitle {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-/* ===== Form ===== */
-.login-form {
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.form-group {
+/* INPUT GROUP */
+.luxe-input {
   text-align: left;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.45rem;
 }
 
-.form-group label {
+.luxe-input label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.4rem;
   display: block;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.35rem;
-  font-size: 0.9rem;
 }
 
-.form-group input {
+/* INPUT STYLING */
+.luxe-input input {
   width: 100%;
-  padding: 0.65rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #d7dde4;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  background: #fdfdfd;
+  transition: 0.2s ease;
+}
+
+.luxe-input input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.16);
   outline: none;
 }
 
-.form-group input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
-}
-
-/* ===== Password Toggle ===== */
-.password-box {
+/* PASSWORD ICON */
+.luxe-password-box {
   position: relative;
 }
 
-.password-box input {
-  padding-right: 2.5rem;
-}
-
-.toggle-password {
+.toggle-pass {
   position: absolute;
-  right: 0.75rem;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  background: none;
   border: none;
-  background: transparent;
-  color: #6b7280;
+  font-size: 1.15rem;
+  color: #64748b;
   cursor: pointer;
-  font-size: 1.2rem;
-  transition: color 0.2s;
 }
 
-.toggle-password:hover {
-  color: #2563eb;
-}
-
-/* ===== Error ===== */
-.error-msg {
-  color: #dc2626;
-  font-size: 0.85rem;
-  text-align: center;
+/* ERROR BOX */
+.luxe-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
   margin-bottom: 1rem;
+  font-size: 0.9rem;
 }
 
-/* ===== Button ===== */
-.login-btn {
+/* PREMIUM BUTTON */
+.luxe-btn {
   width: 100%;
-  background-color: #2563eb;
+  padding: 0.95rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #22c55e, #15803d);
   color: white;
   font-weight: 600;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  border: none;
   font-size: 1rem;
+  border: none;
   cursor: pointer;
-  transition: all 0.25s ease;
+
+  box-shadow:
+    0 6px 20px rgba(34,197,94,0.30),
+    inset 0 0 0 rgba(255,255,255,0.2);
+
+  transition: 0.25s ease;
 }
 
-.login-btn:hover {
-  background-color: #1d4ed8;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
+.luxe-btn:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 28px rgba(34,197,94,0.45);
 }
 
-.login-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ===== Footer ===== */
-.login-footer {
-  margin-top: 1.5rem;
-  color: #64748b;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-/* ===== Animation ===== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 </style>

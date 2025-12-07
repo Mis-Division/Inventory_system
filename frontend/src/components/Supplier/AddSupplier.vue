@@ -13,9 +13,16 @@
                             <label class="form-label" for="supplier_no">Supplier No <span
                                     class="text-danger">*</span></label>
                             <input v-model="form.supplier_no" type="text" id="supplier_name" class="form-control"
-                                placeholder="Please input Supplier No" :class="{ 'is-invalid': errors.supplier_no }"
-                                @input="form.supplier_no = form.supplier_no.replace(/[^0-9]/g, '')" max="11" />
+                                placeholder="Please input Supplier No" :class="{ 'is-invalid': errors.supplier_no }" />
                             <div v-if="errors.supplier_no" class="invalid-feedback">{{ errors.supplier_no }}</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label" for="AccountCode">Account Code <span
+                                    class="text-danger">*</span></label>
+                            <input v-model="form.AccountCode" type="text" id="AccountCode"
+                                class="form-control" placeholder="Please input Account Code"
+                                :class="{ 'is-invalid': errors.AccountCode }"/>
+                            <div v-if="errors.AccountCode" class="invalid-feedback">{{ errors.AccountCode }}</div>
                         </div>
 
                         <div class="col-md-12">
@@ -26,14 +33,13 @@
                                 :class="{ 'is-invalid': errors.supplier_name }" />
                             <div v-if="errors.supplier_name" class="invalid-feedback">{{ errors.supplier_name }}</div>
                         </div>
-
                         <div class="col-md-12">
-                            <label class="form-label" for="email">Email Address</label>
-                            <input v-model="form.email" type="email" id="email" class="form-control"
-                                placeholder="Please enter a valid email address"
-                                :class="{ 'is-invalid': errors.email }" />
-                            <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
+                            <label class="form-label" for="address">Address</label>
+                            <input v-model="form.address" type="text" id="address" class="form-control"
+                                placeholder="Please enter complete address" :class="{ 'is-invalid': errors.address }" />
+                            <div v-if="errors.address" class="invalid-feedback">{{ errors.address }}</div>
                         </div>
+
 
                         <div class="col-md-12">
                             <label class="form-label" for="contact_no">Contact Number</label>
@@ -45,11 +51,12 @@
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label" for="address">Address</label>
-                            <input v-model="form.address" type="text" id="address" class="form-control"
-                                placeholder="Please enter complete address" :class="{ 'is-invalid': errors.address }" />
-                            <div v-if="errors.address" class="invalid-feedback">{{ errors.address }}</div>
+                            <label class="form-label" for="contact_person">Contact Person</label>
+                            <input v-model="form.contact_person" type="text" id="contact_person" class="form-control" />
+                            <div v-if="errors.contact_person" class="invalid-feedback">{{ errors.contact_person }}</div>
                         </div>
+
+
                         <div class="col-md-12">
                             <label class="form-label" for="tin">Tin#</label>
                             <input v-model="form.tin" type="text" id="tin" class="form-control"
@@ -59,11 +66,10 @@
                             <div v-if="errors.tin" class="invalid-feedback">{{ errors.tin }}</div>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label" for="vat_no">VAT / NVAT REGISTER</label>
-                            <input v-model="form.vat_no" type="text" id="vat_no" class="form-control"
-                                placeholder="Please enter VAT / NVAT REGISTER" :class="{ 'is-invalid': errors.vat_no }"
-                                @input="form.tin = form.tin.replace(/[^0-9]/g, '')" maxlength="20" />
-                            <div v-if="errors.vat_no" class="invalid-feedback">{{ errors.vat_no }}</div>
+                            <label class="form-label" for="vat_type">VAT / NVAT REGISTER</label>
+                            <input v-model="form.vat_type" type="text" id="vat_type" class="form-control"
+                                placeholder="Please enter VAT / Non-VAT" :class="{ 'is-invalid': errors.vat_type }" />
+                            <div v-if="errors.vat_type" class="invalid-feedback">{{ errors.vat_type }}</div>
                         </div>
                     </form>
                 </div>
@@ -144,21 +150,23 @@ const isMobile = ref(window.innerWidth < 768);
 const form = reactive({
     supplier_no: "",
     supplier_name: "",
-    email: "",
+    AccountCode: "",
     contact_no: "",
+    contact_person: "",
     address: "",
     tin: "",
-    vat_no: "",
+    vat_type: "",
 });
 
 const errors = reactive({
-    supplier_no: "",
+     supplier_no: "",
     supplier_name: "",
-    email: "",
+    AccountCode: "",
     contact_no: "",
+    contact_person: "",
     address: "",
     tin: "",
-    vat_no: "",
+    vat_type: "",
 });
 
 function createSupplier() {
@@ -169,13 +177,14 @@ function createSupplier() {
 function validateForm() {
     errors.supplier_name = form.supplier_name ? "" : "Supplier name is required";
     errors.supplier_no = form.supplier_no ? "" : "Supplier# is required";
-    errors.email = form.email ? "" : "Email address is required";
+    errors.AccountCode = form.AccountCode ? "" : "Account Code is required";
     errors.contact_no = form.contact_no ? "" : "Phone number is required";
     errors.address = form.address ? "" : "Complete address is required";
     errors.tin = form.tin ? "" : "Tin Number is Required";
-    errors.vat_no =  form.vat_no ? "" : "VAT / NVAT is Required"
+    errors.contact_person = form.contact_person ? "" : "Contact Person is Required";
+    errors.vat_type = form.vat_type ? "" : "VAT / NVAT is Required"
     return Object.values(errors).every((e) => !e);
-    
+
 }
 
 async function confirmSave() {

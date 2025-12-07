@@ -14,12 +14,13 @@ class Suppliers extends Model
 
     protected $fillable = [
         'supplier_no',
+        'AccountCode',
         'supplier_name',
-        'email',
-        'contact_no',
         'address',
+        'contact_no',
+        'contact_person',
         'tin',
-        'vat_no',
+        'vat_type',
     ];
 
     public function received()

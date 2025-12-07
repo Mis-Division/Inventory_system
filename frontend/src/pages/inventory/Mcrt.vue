@@ -56,7 +56,7 @@
     </div>
 
     <!-- ===== TABLE ===== -->
-    <div v-else class="table-responsive">
+    <div v-else >
       <table class="table table-hover table-striped align-middle text-center">
         <thead class="table-secondary">
           <tr>
@@ -129,7 +129,7 @@
     <!-- MODALS -->
     <UpdateMcrt v-if="showUpdateModal" :item="selectedItem" @close="closeUpdate" @updated="reload" />
     <DeleteMcrt v-if="showDeleteModal" :item="selectedItem" @close="closeDelete" @confirm="confirmDelete" />
-    <AddMcrt v-if="showAddModal" @close="showAddModal = false" />
+    <AddMcrt v-if="showAddModal" @close="showAddModal = false"   @saved="handleAddSuccess" />
 
   </div>
 </template>
@@ -317,58 +317,207 @@ function clearSearch() {
 function reload() {
   loadData(pagination.value.current_page);
 }
+
+function handleAddSuccess() {
+  showAddModal.value = false;
+  loadData(pagination.value.current_page);
+}
 </script>
 
 <style scoped>
+/* ============================================================
+   🌟 PAGE HEADER – Bold Engineering Style
+============================================================ */
+.main-container h2 {
+  font-weight: 800;
+  color: #2f3b52;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Search bar */
+.main-container input.form-control {
+  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1px solid #c8d0db;
+  background: #f7f9fb;
+  transition: 0.25s ease;
+}
+
+.main-container input.form-control:focus {
+  border-color: #4c82ff;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(76,130,255,0.25);
+}
+
+.clear-icon {
+  color: #9aa4b7;
+  transition: 0.2s ease;
+}
+
+.clear-icon:hover {
+  color: #4c82ff;
+}
+
+/* ADD BUTTON */
+.btn-primary {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4c82ff, #3a6be0);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3a6be0, #335dcc);
+}
+
+/* ============================================================
+   📊 TOP 2 CARDS – INDUSTRIAL GRADIENT LOOK
+============================================================ */
 .status-card {
-  padding: 20px;
-  border-radius: 12px;
-  color: white;
+  padding: 22px;
+  border-radius: 16px;
+  height: 140px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 120px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  transition: 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient backgrounds – UNIQUE to MCRT */
+.status-card.bg-success {
+  background: linear-gradient(135deg, #46c878 0%, #2f9e54 100%);
+}
+
+.status-card.bg-warning {
+  background: linear-gradient(135deg, #ffb648 0%, #ff8c00 100%);
+}
+
+.status-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
 }
 
 .label-text {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
 .value-text {
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 2.1rem;
+  font-weight: 800;
 }
 
 .status-icon {
-  font-size: 3rem;
-  opacity: 0.3;
+  font-size: 3.2rem;
+  opacity: 0.25;
 }
 
+/* ============================================================
+   📋 TABLE – Lifted rows + clean engineering style
+============================================================ */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 8px !important;
+}
+
+.table thead th {
+  background: #e6e9f2 !important;
+  padding: 14px;
+  font-size: 0.9rem;
+  color: #3b4660;
+  font-weight: 700;
+  border: none;
+}
+
+.table tbody tr {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  transition: 0.18s ease;
+}
+
+.table tbody tr:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.14);
+}
+
+.table td {
+  padding: 12px 10px !important;
+  font-weight: 500;
+  color: #394155;
+}
+
+/* ============================================================
+   ⋮ DROPDOWN – Floating neon-blue shadow
+============================================================ */
 .cursor-pointer {
-  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: 0.2s ease;
+}
+
+.cursor-pointer:hover {
+  background: #eef2ff;
+}
+
+.dropdown-menu-teleport {
+  position: absolute;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  min-width: 160px;
+  padding: 8px 0;
+  border: 1px solid #d2d7e2;
+  box-shadow: 0 10px 30px rgba(60,90,255,0.25);
+  animation: dropdownPop 0.15s ease-out;
+}
+
+@keyframes dropdownPop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-menu-teleport a {
   display: block;
-  padding: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: #3d4a66;
+  transition: 0.2s;
 }
 
 .dropdown-menu-teleport a:hover {
-  background: #f5f5f5;
+  background: #edf1ff;
+  border-radius: 10px;
 }
 
-.clear-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.1rem;
-  cursor: pointer;
+/* ============================================================
+   🔢 PAGINATION – Circle Navigation
+============================================================ */
+.btn-outline-primary {
+  border-radius: 10px;
 }
 
-.clear-icon:hover {
-  color: #000;
+.rounded-circle {
+  border-radius: 50% !important;
 }
+
+.btn-primary.rounded-circle {
+  background: #4c82ff;
+  border: none;
+  box-shadow: 0 3px 6px rgba(76,130,255,0.35);
+}
+
+.btn-outline-primary.rounded-circle:hover {
+  background: rgba(76,130,255,0.1);
+  color: #355dcc;
+}
+
 </style>

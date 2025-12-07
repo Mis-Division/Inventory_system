@@ -89,67 +89,67 @@ class StockController extends Controller
 
 public function ledgerById($itemCodeId)
 {
-    $itemExists = DB::table('tbl_item_code')->where('ItemCode_id', $itemCodeId)->exists();
+    // Validate item exists
+    $itemExists = DB::table('tbl_item_code')
+        ->where('ItemCode_id', $itemCodeId)
+        ->exists();
 
     if (!$itemExists) {
         return response()->json([
             'success' => false,
-            'message' => 'No data found for the given ItemCode_id.'
+            'message' => 'No data found.'
         ], 404);
     }
 
     $ledger = DB::table('tbl_item_code as i')
-        ->leftJoin('tbl_transactions as t', function($join) {
+
+        // TRANSACTIONS
+        ->leftJoin('tbl_transactions as t', function ($join) {
             $join->on('i.ItemCode_id', '=', 't.ItemCode_id')
                  ->where('t.status', 'ACTIVE');
         })
+
+        // STOCKS
         ->leftJoin('tbl_stocks as s', 's.ItemCode_id', '=', 'i.ItemCode_id')
 
-        ->leftJoin('tbl_mcrt_items as mci', function($join){
+        // MCRT ITEMS → JOIN USING REGEXP TO EXTRACT NUMBER FROM REFERENCE
+        ->leftJoin('tbl_mcrt_items as mci', function ($join) {
             $join->on('mci.itemcode_id', '=', 't.ItemCode_id')
-                 ->where('t.reference_type', 'MCRT');
-        })
-
-        ->leftJoin('tbl_mcrt as m', 'm.mcrt_id', '=', 'mci.mcrt_id')
-
-        ->where('i.ItemCode_id', $itemCodeId)
-
-        /** 🔥 KEY FIX (HIDE DELETED MCRT RETURN TRANSACTIONS) */
-        ->where(function ($q) {
-            $q->where('t.transaction_type', '!=', 'RETURN')
-              ->orWhereNull('mci.deleted_at');
+                 ->on('mci.mcrt_id', '=', DB::raw("
+                    CAST(REGEXP_REPLACE(t.reference, '[^0-9]', '') AS UNSIGNED)
+                 "));
         })
 
         ->selectRaw("
             i.ItemCode_id,
             i.ItemCode,
             i.product_name,
-            i.item_category AS product_type,
-            i.accounting_code,
 
             t.transaction_id,
             t.created_at,
             t.movement_type,
             t.transaction_type,
             t.reference,
-            t.reference_type,
-            t.user_id,
-            t.created_by,
+            t.remarks,
 
-            COALESCE(t.status, 'ACTIVE') AS transaction_status,
+            /* FINAL REMARKS LOGIC */
+            CASE
+                WHEN t.transaction_type = 'RETURN'
+                    THEN COALESCE(mci.condition, '-')
+                WHEN t.transaction_type = 'REQUEST'
+                    THEN COALESCE(t.remarks, '-')
+                ELSE '-'
+            END AS remarks,
 
-            COALESCE(
-                CASE WHEN t.transaction_type = 'RETURN' THEN mci.`condition` ELSE '' END,
-                ''
-            ) AS mcrt_condition,
-
-            CASE WHEN t.movement_type = 'IN' THEN t.quantity ELSE 0 END AS Debit,
+            /* DEBIT / CREDIT */
+            CASE WHEN t.movement_type = 'IN'  THEN t.quantity ELSE 0 END AS Debit,
             CASE WHEN t.movement_type = 'OUT' THEN t.quantity ELSE 0 END AS Credit,
 
+            /* RUNNING BALANCE */
             COALESCE(
                 SUM(
-                    CASE 
-                        WHEN t.movement_type = 'IN' THEN t.quantity
+                    CASE
+                        WHEN t.movement_type = 'IN'  THEN t.quantity
                         WHEN t.movement_type = 'OUT' THEN -t.quantity
                         ELSE 0
                     END
@@ -158,14 +158,17 @@ public function ledgerById($itemCodeId)
                     ORDER BY t.created_at, t.transaction_id
                     ROWS UNBOUNDED PRECEDING
                 ),
-                0
-            ) AS Running_Balance,
+            0) AS Running_Balance,
 
-            COALESCE(s.quantity_onhand, 0) AS Current_Stock
+            /* STOCKS */
+            COALESCE(s.quantity_onhand, 0) AS main_stock,
+            COALESCE(s.usable_stock, 0) AS usable_stock,
+            (COALESCE(s.quantity_onhand,0) + COALESCE(s.usable_stock,0)) AS Current_Stock
         ")
 
-        ->orderBy('t.created_at')
-        ->orderBy('t.transaction_id')
+        ->where('i.ItemCode_id', $itemCodeId)
+        ->orderBy('t.created_at', 'asc')
+        ->orderBy('t.transaction_id', 'asc')
         ->get();
 
     return response()->json([
@@ -179,34 +182,35 @@ public function ledgerById($itemCodeId)
 
 
 
+
+
+
 public function ledgerGroupedPaginated(Request $request)
 {
-    $perPage = $request->input('perPage', 10);
-    $search  = $request->input('search', '');
+    $perPage     = $request->input('perPage', 1000000);
+    $search      = $request->input('search', '');
     $productType = $request->input('product_type', null);
 
     $query = DB::table('tbl_item_code as i')
         ->leftJoin('tbl_stocks as s', 's.ItemCode_id', '=', 'i.ItemCode_id')
+
+        // Filters
         ->when($productType, fn($q) => $q->where('i.item_category', $productType))
         ->when($search, fn($q) => $q->where('i.product_name', 'like', "%{$search}%"))
-        ->select(
-            'i.ItemCode_id',
-            'i.ItemCode',
-            'i.product_name',
-            'i.description',
-            'i.item_category as product_type',
-            'i.accounting_code',
-            DB::raw('COALESCE(s.quantity_onhand,0) as Current_Stock')
-        )
-        ->groupBy(
-            'i.ItemCode_id',
-            'i.ItemCode',
-            'i.product_name',
-             'i.description',
-            'i.item_category',
-            'i.accounting_code',
-            's.quantity_onhand'
-        )
+
+        ->selectRaw("
+            i.ItemCode_id,
+            i.ItemCode,
+            i.product_name,
+            i.description,
+            i.item_category AS product_type,
+            i.accounting_code,
+
+            COALESCE(s.quantity_onhand, 0) AS Current_Stock,
+            COALESCE(s.usable_stock, 0) AS Usable_Stock,
+            (COALESCE(s.quantity_onhand, 0) + COALESCE(s.usable_stock, 0)) AS Total_Stock
+        ")
+
         ->orderBy('i.product_name');
 
     $paginated = $query->paginate($perPage);
@@ -217,9 +221,9 @@ public function ledgerGroupedPaginated(Request $request)
             'stocks' => $paginated->items(),
             'pagination' => [
                 'current_page' => $paginated->currentPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-                'last_page' => $paginated->lastPage(),
+                'per_page'     => $paginated->perPage(),
+                'total'        => $paginated->total(),
+                'last_page'    => $paginated->lastPage(),
             ]
         ]
     ]);

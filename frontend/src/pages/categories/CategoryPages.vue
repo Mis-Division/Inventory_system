@@ -4,6 +4,8 @@
     <div class="custom-headers">
       <div class="w-100">
         <h1 class="mb-3"><i class="bi bi-info-circle text-primary"></i> Items</h1>
+        <!-- upload excel file -->
+                <!-- <input type="file" @change="uploadFile" class="form-control"> -->
       </div>
 
       <div class="d-flex justify-content-between align-items-center w-100">
@@ -147,7 +149,7 @@ const perPage = 50;
 const categories = [
   { label: "Line Hardware", value: "Line Hardware" },
   { label: "Special Hardware", value: "Special Hardware" },
-  { label: "Motor Pool", value: "Motor Pool" },
+  { label: "MotorPool", value: "MotorPool" },
   { label: "Tools", value: "Tools" },
   { label: "PPE", value: "PPE" },
   { label: "Gen Plant", value: "Gen Plant" }
@@ -326,10 +328,219 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
 });
+
+//upload excel file
+// async function uploadFile(e) {
+//   const file = e.target.files[0];
+//   let form = new FormData();
+//   form.append("file", file);
+
+//   try {
+//     const res = await api.post("/items/import", form, {
+//       headers: { "Content-Type": "multipart/form-data" }
+//     });
+
+//     alert("Import Success!");
+//   } catch (err) {
+//     alert("Import Failed: " + err.response.data.message);
+//   }
+// }
 </script>
 <style scoped>
 .category-tabs {
   margin-top: 8px;      /* Distance from header */
   margin-bottom: 12px;  /* Distance to the table (Ito ang importante) */
 }
+/* ============================================================
+   🌟 HEADER AREA – Sleek & Modern (DIFFERENT STYLE)
+============================================================ */
+.custom-headers {
+  background: linear-gradient(135deg, #ffffff 0%, #f4f7ff 100%);
+  padding: 18px 25px;
+  border-radius: 14px;
+  border: 1px solid #e5e9f2;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.custom-headers h1 {
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: #344767;
+}
+
+/* ============================================================
+   🔍 SEARCH BAR – Different design (Material-lite)
+============================================================ */
+.custom-headers input {
+  border-radius: 50px !important;
+  padding: 12px 18px;
+  padding-right: 45px !important;
+  border: 1.5px solid #cdd5ea;
+  background: #ffffff;
+  transition: 0.25s;
+}
+
+.custom-headers input:focus {
+  border-color: #5c8dff;
+  box-shadow: 0 0 0 3px rgba(92,141,255,0.15);
+  background: #f9fbff;
+}
+
+.custom-headers i.bi-x-circle-fill {
+  color: #97a0b9 !important;
+}
+
+/* ADD ITEM BUTTON */
+.custom-headers .btn-success {
+  background: #4caf50;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.custom-headers .btn-success:hover {
+  background: #43a047;
+}
+
+/* ============================================================
+   🗂 CATEGORY TABS – Clean & smooth pill design
+============================================================ */
+.category-tabs {
+  border-bottom: none !important;
+  margin-bottom: 15px;
+  display: flex;
+  gap: 6px;
+}
+
+.category-tabs .nav-link {
+  border: none !important;
+  background: #eef1f7;
+  padding: 8px 18px;
+  border-radius: 50px !important;
+  font-weight: 600;
+  color: #50618e;
+  transition: 0.25s ease;
+}
+
+.category-tabs .nav-link.active {
+  background: #5c8dff;
+  color: white !important;
+  box-shadow: 0 3px 6px rgba(92, 141, 255, 0.3);
+}
+
+.category-tabs .nav-link:hover {
+  background: #dce3f9;
+}
+
+/* ============================================================
+   📦 TABLE DESIGN – Different from receiving order
+============================================================ */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 8px !important;
+}
+
+.table thead th {
+  background: #f0f3fa;
+  font-weight: 700;
+  padding: 14px;
+  color: #44516e;
+  border-bottom: none;
+}
+
+.table tbody tr {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  transition: 0.2s ease;
+}
+
+.table tbody tr:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.table td {
+  padding: 14px 10px !important;
+  font-size: 0.95rem;
+  color: #3f4b66;
+}
+
+/* ============================================================
+   ⋮ ACTION DROPDOWN – frosted floating menu 
+============================================================ */
+.cursor-pointer {
+  padding: 6px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.cursor-pointer:hover {
+  background: #eef2ff;
+}
+
+.dropdown-menu-teleport {
+  position: absolute;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid #dde3f3;
+  padding: 8px 0;
+  min-width: 150px;
+  animation: fadeIn 0.15s ease-out;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.dropdown-menu-teleport a {
+  display: block;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: #40507a;
+  transition: 0.2s;
+}
+
+.dropdown-menu-teleport a:hover {
+  background: #f0f3ff;
+  border-radius: 8px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   🔢 PAGINATION – Minimal rounded style
+============================================================ */
+.pagination .page-link {
+  border-radius: 10px !important;
+  padding: 7px 14px;
+  margin: 0 3px;
+  font-weight: 600;
+  color: #5c6b8a;
+  border: 1px solid #ccd3e2;
+  transition: 0.2s;
+}
+
+.pagination .page-item.active .page-link {
+  background: #5c8dff;
+  color: white;
+  border: none;
+  box-shadow: 0 3px 6px rgba(92, 141, 255, 0.3);
+}
+
+.pagination .page-link:hover {
+  background: #eef2ff;
+  color: #3e4d7b;
+}
+
+/* Circle numbers */
+.page-circle {
+  border-radius: 50% !important;
+}
+
 </style>

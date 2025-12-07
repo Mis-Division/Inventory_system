@@ -9,7 +9,7 @@
                     <h5 class="modal-title">
                         <i class="bi bi-info-circle "></i> Material Requisition Voucher
                     </h5>
-                    <button type="button" class="btn-close" aria-label="Close" @click="closeModal"></button>
+                    <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
                 </div>
 
                 <!-- Body -->
@@ -17,27 +17,19 @@
 
                     <!-- Form -->
                     <form class="row g-3">
+                        <!-- REQUEST BY (SEARCHABLE DROPDOWN from apiRemote/employees) -->
                         <div class="col-md-4">
                             <label class="form-label">Request By</label>
-                            <input type="text" class="form-control" v-model="form.requested_by" />
+                            <select id="employeeSelect" class="form-select"></select>
                         </div>
 
+                        <!-- AUTO-FILLED DEPARTMENT -->
                         <div class="col-md-4">
                             <label class="form-label">Department</label>
-                            <select class="form-select" v-model="form.department" required>
-                                <option value="">Please Select Department</option>
-                                <option value="Internal Service Department">Internal Service Department</option>
-                                <option value="Technical Support Department">Technical Support Department</option>
-                                <option value="Area Office Management Department">Area Office Management Department
-                                </option>
-                                <option value="Finance Service Department">Finance Service Department</option>
-                                <option value="Audit Service Department">Audit Service Department</option>
-                                <option value="Energy Trading Service Department">Energy Trading Service Department
-                                </option>
-                                <option value="General Manager">Office of General Manager</option>
-                            </select>
+                            <input type="text" class="form-control" v-model="form.department" disabled />
                         </div>
 
+                        <!-- DEPARTMENT HEAD (UNCHANGED) -->
                         <div class="col-md-4">
                             <label class="form-label">Department Head</label>
                             <select class="form-select" v-model="form.approved_by" required>
@@ -51,12 +43,25 @@
                                 <option value="GLEN MARK F. AQUINO, CPA">GLEN MARK F. AQUINO, CPA</option>
                             </select>
                         </div>
+
                     </form>
 
                     <hr class="my-4" />
 
-                    <!-- Receiving Items -->
-                    <div class="d-flex justify-content-end align-items-center mb-2">
+                    <!-- Add Row Button -->
+                    <!-- Add Row Button + Usable Filter -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <!-- Checkbox LEFT SIDE -->
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" v-model="usableOnly" id="usableOnlyCheck">
+                            <label class="form-check-label" for="usableOnlyCheck">
+                                Show Usable Items Only
+                            </label>
+                        </div>
+
+
+                        <!-- Add button RIGHT SIDE -->
                         <button class="btn btn-success btn-sm" @click="addItem" type="button">
                             <i class="bi bi-plus-lg"></i> Add Item
                         </button>
@@ -78,14 +83,16 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(item, index) in stockItems" :key="index">
-                                    <!-- Material Code (searchable) -->
+
+                                    <!-- Material Code -->
                                     <td>
                                         <select class="form-select text-center" v-model="item.id"
                                             :id="'itemSelect' + index" :disabled="item.existing" style="width: 100%;">
                                             <option value="">Select Material Code</option>
-                                            <option v-for="s in stockList" :key="s.id" :value="s.id">
+                                            <option v-for="s in filteredStockList" :key="s.id" :value="s.id">
                                                 {{ s.Material_Code }}
                                             </option>
+
                                         </select>
                                     </td>
 
@@ -93,32 +100,43 @@
                                     <td>
                                         <input type="text" class="form-control" v-model="item.product_name" disabled />
                                     </td>
+
+                                    <!-- Units -->
                                     <td>
                                         <input type="text" class="form-control" v-model="item.units" disabled />
                                     </td>
-                                    <!-- Qty -->
+
+                                    <!-- Stock Qty -->
                                     <td>
-                                        <input type="text" class="form-control" v-model="item.Qty" disabled />
+                                        <input type="text" class="form-control" :value="getDisplayedQty(item)"
+                                            disabled />
+
                                     </td>
 
                                     <!-- Request Qty -->
                                     <td>
                                         <input type="number" class="form-control" v-model="item.requested_qty"
-                                            min="0" />
+                                            min="1" />
+
+
+                                        <div v-if="isQtyInvalid(item)" class="text-danger small">
+                                            * Requested qty exceeds usable stock
+                                        </div>
                                     </td>
 
-                                    <!-- Delete -->
+                                    <!-- Delete Row -->
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm" @click="removeStock(index)">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
+
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Error -->
+                    <!-- Error Message -->
                     <div v-if="errorMessage" class="alert alert-danger py-2 mt-2">
                         {{ errorMessage }}
                     </div>
@@ -134,6 +152,7 @@
             </div>
         </div>
     </div>
+
     <!-- Success Modal -->
     <div v-if="showSuccess" class="custom-modal-backdrop">
         <div class="custom-modal">
@@ -141,7 +160,7 @@
                 <h5 class="mb-0">Success</h5>
             </div>
             <div class="custom-body text-center">
-                ✅ Material Requisition Vouchers Successfully created!
+                ✅ Material Requisition Voucher Successfully created!
             </div>
             <div class="custom-footer text-center">
                 <button class="btn btn-success" @click="closeSuccess">OK</button>
@@ -149,47 +168,156 @@
         </div>
     </div>
 </template>
+
+
 <script setup>
-import { ref, nextTick, onMounted } from "vue";
+import { ref, nextTick, onMounted, computed, watch } from "vue";
 import api from "../../services/api";
+import { apiRemote } from "../../services/api";
 import { useAppStore } from "../../stores/appStore";
 
 const emit = defineEmits(["close"]);
-
-const units = ref([]);
-const showSuccess = ref(false);
-const errorMessage = ref("");
-const stockList = ref([]);
 const appStore = useAppStore();
-const stockItems = ref([
-    { id: "", product_name: "", units: "", Qty: "", requested_qty: "", existing: false }
-]);
 
+/* ============================================================
+   CHECKBOX (show usable items only)
+============================================================ */
+const usableOnly = ref(false);
+
+/* ============================================================
+   FORM STATE
+============================================================ */
 const form = ref({
     requested_by: "",
     department: "",
     approved_by: ""
 });
 
-// =============================================================
-// FETCH STOCKS (Material Code)
-// =============================================================
-async function fetchStock() {
+const showSuccess = ref(false);
+const errorMessage = ref("");
+
+/* ============================================================
+   EMPLOYEES
+============================================================ */
+const employees = ref([]);
+
+/* ============================================================
+   STOCK LIST
+============================================================ */
+const stockList = ref([]);
+
+const stockItems = ref([
+    { id: "", product_name: "", units: "", Qty_main: 0, Qty_usable: 0, requested_qty: 1 }
+]);
+
+/* ============================================================
+   FILTER STOCK LIST → usableOnly mode
+============================================================ */
+const filteredStockList = computed(() => {
+    if (usableOnly.value) {
+        // ⭐ FIXED: Filter by Qty_usable (correct field)
+        return stockList.value.filter(i => Number(i.Qty_usable) > 0);
+    }
+    return stockList.value;
+});
+
+/* ============================================================
+   DISPLAYED QTY (main or usable)
+============================================================ */
+function getDisplayedQty(item) {
+    return usableOnly.value ? (item.Qty_usable ?? 0) : (item.Qty_main ?? 0);
+}
+
+/* ============================================================
+   Watch usableOnly → refresh dropdowns
+============================================================ */
+watch(usableOnly, () => {
+    nextTick(() => {
+        stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
+    });
+});
+
+/* ============================================================
+   FETCH EMPLOYEES
+============================================================ */
+async function fetchEmployees() {
     try {
-        const res = await api.get("/Items/displayStocks");
-        stockList.value = res.data.data.data || [];
+        const res = await apiRemote.get("/employees", {
+            params: { page: 1, per_page: 500 }
+        });
+
+        employees.value = res.data.data.data.filter(
+            emp => emp.DEPTNAME.trim().toUpperCase() !== "RETIRED"
+        );
 
         await nextTick();
-        initMaterialSelect(); // init Select2 for material code
+        initEmployeeSelect();
+
     } catch (err) {
-        console.error(err);
+        console.error("❌ Employee load failed:", err);
     }
 }
 
+/* ============================================================
+   INIT SELECT2 EMPLOYEE DROPDOWN
+============================================================ */
+function initEmployeeSelect() {
+    const selector = "#employeeSelect";
 
-// =============================================================
-// MATERIAL CODE SELECT2 (itemSelect)
-// =============================================================
+    if ($(selector).data("select2")) $(selector).select2("destroy");
+
+    $(selector)
+        .select2({
+            theme: "bootstrap-5",
+            placeholder: "Search employee...",
+            allowClear: true,
+            dropdownParent: $(".modal.show"),
+            width: "100%",
+            minimumResultsForSearch: 0,
+            data: employees.value.map(emp => ({
+                id: emp.NAME,
+                text: emp.NAME,
+                dept: emp.DEPTNAME.trim()
+            }))
+        })
+        .on("change", function () {
+            const selected = $(this).select2("data")[0];
+            form.value.requested_by = selected?.id || "";
+            form.value.department = selected?.dept || "";
+        });
+
+    $(selector).val(null).trigger("change");
+}
+
+/* ============================================================
+   FETCH STOCK
+============================================================ */
+async function fetchStock() {
+    try {
+        const res = await api.get("/Items/displayStocks");
+
+        stockList.value = (res.data.data || []).map(item => ({
+            id: item.id,
+            Material_Code: item.Material_Code,
+            product_name: item.product_name,
+            units: item.units,
+
+            // ⭐ Correct data mapping
+            Qty_main: item.quantity_onhand ?? 0,
+            Qty_usable: item.Usable ?? 0,
+        }));
+
+        await nextTick();
+        initMaterialSelect();
+
+    } catch (err) {
+        console.error("❌ Stock load failed:", err);
+    }
+}
+
+/* ============================================================
+   INIT MATERIAL SELECT2 DROPDOWNS
+============================================================ */
 function initMaterialSelectRow(index) {
     const selector = "#itemSelect" + index;
 
@@ -199,10 +327,8 @@ function initMaterialSelectRow(index) {
         .select2({
             theme: "bootstrap-5",
             placeholder: "Material Code",
-            allowClear: true,
             dropdownParent: $(".modal.show"),
-            width: "100%",
-            minimumResultsForSearch: 0
+            width: "100%"
         })
         .on("change", function () {
             const selectedId = $(this).val();
@@ -210,35 +336,35 @@ function initMaterialSelectRow(index) {
             updateStockInfo(index, selectedId);
         });
 
-    // sync Select2 with v-model
     $(selector).val(stockItems.value[index].id).trigger("change");
 }
 
 function initMaterialSelect() {
-    stockItems.value.forEach((_, index) => initMaterialSelectRow(index));
+    stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
 }
 
+/* ============================================================
+   UPDATE STOCK INFO WHEN ITEM SELECTED
+============================================================ */
+function updateStockInfo(index, id) {
+    const s = stockList.value.find(x => x.id == id);
 
-// =============================================================
-// UPDATE MATERIAL INFO WHEN SELECTED
-// =============================================================
-function updateStockInfo(index, selectedId) {
-    const selected = stockList.value.find((s) => s.id == selectedId);
-
-    if (selected) {
-        stockItems.value[index].product_name = selected.product_name;
-        stockItems.value[index].Qty = selected.Qty;
-        stockItems.value[index].units = selected.units;
+    if (s) {
+        stockItems.value[index].product_name = s.product_name;
+        stockItems.value[index].units = s.units;
+        stockItems.value[index].Qty_main = s.Qty_main;
+        stockItems.value[index].Qty_usable = s.Qty_usable;
     } else {
         stockItems.value[index].product_name = "";
-        stockItems.value[index].Qty = "";
         stockItems.value[index].units = "";
+        stockItems.value[index].Qty_main = 0;
+        stockItems.value[index].Qty_usable = 0;
     }
 }
 
-// =============================================================
-// ADD NEW ROW
-// =============================================================
+/* ============================================================
+   ADD ITEM ROW
+============================================================ */
 function addItem() {
     const newIndex = stockItems.value.length;
 
@@ -246,120 +372,109 @@ function addItem() {
         id: "",
         product_name: "",
         units: "",
-        Qty: "",
-        requested_qty: "",
-        existing: false
+        Qty_main: 0,
+        Qty_usable: 0,
+        requested_qty: 1
     });
 
-    nextTick(() => {
-        initMaterialSelectRow(newIndex);
-       
-    });
+    nextTick(() => initMaterialSelectRow(newIndex));
 }
 
-// =============================================================
-// REMOVE ROW
-// =============================================================
+/* ============================================================
+   REMOVE ITEM ROW
+============================================================ */
 function removeStock(index) {
     stockItems.value.splice(index, 1);
 
     nextTick(() => {
-        stockItems.value.forEach((_, i) => {
-            initMaterialSelectRow(i);
-         
-        });
+        stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
     });
 }
 
-// =============================================================
-// MOUNT EVENT (Load & Initialize Everything)
-// =============================================================
-onMounted(async () => {
- 
-
-    await fetchStock(); // then load material codes
-    await nextTick();
-    initMaterialSelect();
-});
-
-
-// =============================================================
-// Save ng MRV 
-// =============================================================
-
+/* ============================================================
+   SAVE MRV
+============================================================ */
 async function saveMrv() {
-    showError(""); // clear error
+    showError("");
 
     try {
-        appStore.showLoading();
-        // Basic form validation
         if (!form.value.requested_by || !form.value.department || !form.value.approved_by)
-            return showError("Requested By, Department and Department Head are required!");
+            return showError("Requested By, Department, and Department Head are required!");
 
-        // Must have at least 1 item
         if (!stockItems.value.length)
             return showError("Add at least 1 item!");
 
+        // ⭐ NEW VALIDATION ONLY WHEN USABLE MODE IS ON
+        if (usableOnly.value) {
+            for (const item of stockItems.value) {
+                if (Number(item.requested_qty) > Number(item.Qty_usable)) {
+                    return showError(
+                        `Requested quantity (${item.requested_qty}) is greater than usable stock (${item.Qty_usable}).`
+                    );
+                }
+            }
+        }
 
-        // Check requested_qty > 0
-        if (stockItems.value.some(i => !i.requested_qty || i.requested_qty <= 0))
-            return showError("Requested Quantity must be greater than 0!");
-
-        // Check requested_qty <= stock qty
-        if (stockItems.value.some(i => Number(i.requested_qty) > Number(i.Qty)))
-            return showError("Requested Quantity cannot exceed Stock Quantity!");
-
-        // Build payload
         const payload = {
             ...form.value,
-            items: stockItems.value.map((i) => ({
+            usable_only: usableOnly.value,
+            items: stockItems.value.map(i => ({
                 itemcode_id: i.id,
                 requested_qty: i.requested_qty,
                 product_type: i.units
             }))
         };
 
-        // Send request
         const res = await api.post("/Mrv/MrvCreate", payload);
 
         if (res.data?.success) {
             showSuccess.value = true;
         } else {
-            const apiMessage =
-                res.data?.message ||
-                res.data?.error ||
-                "Failed to save Material Requisition Voucher!";
-            showError(apiMessage);
+            showError(res.data?.message || "Failed to create MRV!");
         }
+
     } catch (err) {
-        const apiMessage =
-            err.response?.data?.error ||
-            err.response?.data?.message ||
-            err.message;
-        showError(`Failed to Save: ${apiMessage}`);
-    }finally{
-        appStore.hideLoading();
+        showError(err.response?.data?.message || err.message);
     }
 }
 
 
-
-// ---------------- ERROR HANDLER ----------------
-function showError(message) {
-    errorMessage.value = message;
-    setTimeout(() => (errorMessage.value = ""), 5000);
+/* ============================================================
+   ERROR HANDLER
+============================================================ */
+function showError(msg) {
+    errorMessage.value = msg;
+    setTimeout(() => (errorMessage.value = ""), 4000);
 }
 
-
-// ---------------- MODAL ----------------
+/* ============================================================
+   SUCCESS MODAL CLOSE
+============================================================ */
 function closeSuccess() {
     showSuccess.value = false;
-    closeModal();
-
+    emit("close");
 }
 
-function closeModal() { emit("close"); }
+/* ============================================================
+   ON PAGE LOAD
+============================================================ */
+onMounted(async () => {
+    await fetchStock();
+    await fetchEmployees();
+});
+
+function isQtyInvalid(item) {
+    if (!usableOnly.value) return false;            // off = no validation
+    if (!item.id) return false;                     // no item selected
+    if (!item.requested_qty) return false;          // must input first
+    if (item.Qty_usable == null) return false;      // avoid undefined
+
+    return Number(item.requested_qty) > Number(item.Qty_usable);
+}
+
 </script>
+
+
 
 
 <style scoped>
@@ -368,7 +483,6 @@ function closeModal() { emit("close"); }
     width: auto;
 }
 
-/* Optional: limit dropdown height */
 .select2-results__options {
     max-height: 200px;
     overflow-y: auto;

@@ -6,7 +6,7 @@
       <router-link v-if="hasAccess('Dashboard')" 
         to="/dashboard" 
         class="nav-item-link">
-        <i class="bi bi-house me-1 icon"></i>
+        <i class="bi bi-house-door me-1 icon"></i>
         <span>Dashboard</span>
       </router-link>
 
@@ -65,7 +65,25 @@
 
               <li v-if="hasAccess('Others')">
                 <router-link to="/dashboard/others" class="nav-item-link">
-                  <i class="bi bi-question-circle me-1 icon"></i> Others
+                  <i class="bi bi-car-front me-1 icon"></i> Motor Pool
+                </router-link>
+              </li>
+
+              <li v-if="hasAccess('Others')">
+                <router-link to="/dashboard/others" class="nav-item-link">
+                  <i class="bi bi-wrench me-1 icon"></i> Tools
+                </router-link>
+              </li>
+
+              <li v-if="hasAccess('Others')">
+                <router-link to="/dashboard/others" class="nav-item-link">
+                  <i class="bi bi-person me-1 icon"></i> PPE
+                </router-link>
+              </li>
+
+              <li v-if="hasAccess('Others')">
+                <router-link to="/dashboard/others" class="nav-item-link">
+                  <i class="bi bi-leaf me-1 icon"></i> Gen. Plant
                 </router-link>
               </li>
 

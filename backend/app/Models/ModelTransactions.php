@@ -17,6 +17,7 @@ class ModelTransactions extends Model
         'movement_type',
         'transaction_type',
         'quantity',
+        'remarks',
         'reference',
         'reference_type',
         'user_id',

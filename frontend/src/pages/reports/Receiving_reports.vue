@@ -255,8 +255,158 @@ function clearSearch() {
 
 
 /* Table adjustments */
+/* ============================================================
+   🌟 HEADER – Premium Navy + Gold Theme
+============================================================ */
+.custom-headers {
+  background: linear-gradient(135deg, #ffffff 0%, #f7f8fb 100%);
+  border: 1px solid #e2e5ec;
+  padding: 22px 26px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+}
+
+.custom-headers h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #2c3a57;
+}
+
+/* Search bar */
+.custom-headers input {
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: #fcf6d9 !important;
+  border: 1px solid #d9cfa1;
+  transition: 0.25s ease;
+  font-weight: 500;
+}
+
+.custom-headers input:focus {
+  background: #fff8d1 !important;
+  border-color: #d6b54a;
+  box-shadow: 0 0 0 3px rgba(223, 185, 71, 0.35);
+}
+
+.custom-headers i.bi-x-circle-fill:hover {
+  color: #b39533 !important;
+}
+
+/* ============================================================
+   📋 TABLE – Raised minimalist cards
+============================================================ */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 12px !important;
+}
+
+.table thead th {
+  background: #eceef3 !important;
+  color: #3e475d !important;
+  padding: 16px;
+  border: none;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.table tbody tr {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  transition: 0.18s ease;
+}
+
+.table tbody tr:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+}
+
+.table td {
+  padding: 14px 12px !important;
+  color: #374155;
+  font-weight: 500;
+}
+
+/* Status colors (optional) */
+.table-success {
+  background: #eaf7ea !important;
+}
+
+.table-danger {
+  background: #fdeaea !important;
+}
+
+/* ============================================================
+   ⋮ DROPDOWN – Smooth frosted floating menu
+============================================================ */
+.cursor-pointer {
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.cursor-pointer:hover {
+  background: #eef0ff;
+}
+
+.dropdown-menu-teleport {
+  position: absolute;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  min-width: 160px;
+  padding: 10px 0;
+  border: 1px solid #d5dae3;
+  box-shadow: 0 12px 30px rgba(50,60,120,0.18);
+  animation: dropdownFade 0.18s ease-out;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-menu-teleport a {
+  display: block;
+  padding: 10px 16px;
+  font-weight: 600;
+  color: #3b4565;
+}
+
+.dropdown-menu-teleport a:hover {
+  background: #f0f2ff;
+  border-radius: 8px;
+}
+
+/* ============================================================
+   🔢 PAGINATION – Circle modern nav
+============================================================ */
+.pagination .page-link {
+  border-radius: 12px !important;
+  padding: 7px 14px;
+  border: 1px solid #cdd4e1;
+  color: #4a5572;
+  font-weight: 600;
+}
+
+.pagination .active .page-link {
+  background: #5b6dff;
+  border: none;
+  color: white;
+  box-shadow: 0 3px 10px rgba(90,110,255,0.35);
+}
+
+.page-circle {
+  border-radius: 50% !important;
+}
+
+/* ============================================================
+   GENERAL TABLE ALIGNMENT
+============================================================ */
 .table th,
 .table td {
-    vertical-align: middle;
+  vertical-align: middle;
 }
+
 </style>

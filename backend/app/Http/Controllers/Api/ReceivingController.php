@@ -19,22 +19,22 @@ class ReceivingController extends Controller
     // -------------------------
     // STORE RECEIVING REPORT
     // -------------------------
-  public function store(Request $request)
+ public function store(Request $request)
 {
     $validated = $request->validate([
-        'po_number' => 'nullable|string|max:255',
-        'invoice_number' => 'required|string|max:255',
-        'supplier_id' => 'nullable|exists:tbl_suppliers,supplier_id',
-        'dr_number' => 'required|string|max:255',
-        'received_by' => 'required|string|max:255',
-        'receive_date' => 'required|date',
-        'remarks' => 'nullable|string|max:255',
-        'items' => 'required|array|min:1',
-        'items.*.ItemCode_id' => 'required|exists:tbl_item_code,ItemCode_id',
-        'items.*.quantity_received' => 'required|integer|min:1',
-        'items.*.unit_cost' => 'required|numeric|min:0',
-        'items.*.quantity_order' => 'nullable|integer|min:0',
-        'items.*.units' => 'required|string|max:255',
+        'po_number'          => 'nullable|string|max:255',
+        'invoice_number'     => 'required|string|max:255',
+        'supplier_id'        => 'nullable|exists:tbl_suppliers,supplier_id',
+        'dr_number'          => 'required|string|max:255',
+        'received_by'        => 'required|string|max:255',
+        'receive_date'       => 'required|date',
+        'remarks'            => 'nullable|string|max:255',
+        'items'              => 'required|array|min:1',
+        'items.*.ItemCode_id'        => 'required|exists:tbl_item_code,ItemCode_id',
+        'items.*.quantity_received'  => 'required|integer|min:1',
+        'items.*.unit_cost'          => 'required|numeric|min:0',
+        'items.*.quantity_order'     => 'nullable|integer|min:0',
+        'items.*.units'              => 'required|string|max:255',
     ]);
 
     DB::beginTransaction();
@@ -50,23 +50,23 @@ class ReceivingController extends Controller
 
         // Create Receiving record
         $received = ModelReceived::create([
-            'po_number' => $request->po_number,
+            'po_number'      => $request->po_number,
             'invoice_number' => $request->invoice_number,
-            'supplier_id' => $request->supplier_id,
-            'dr_number' => $request->dr_number,
-            'received_by' => $request->received_by,
-            'receive_date' => $request->receive_date,
-            'remarks' => 'Pending',
-            'grand_total' => 0,
+            'supplier_id'    => $request->supplier_id,
+            'dr_number'      => $request->dr_number,
+            'received_by'    => $request->received_by,
+            'receive_date'   => $request->receive_date,
+            'remarks'        => 'Pending',
+            'grand_total'    => 0,
         ]);
 
         $grandTotal = 0;
-        $itemsData = [];
+        $itemsData  = [];
 
         foreach ($request->items as $item) {
             $quantityReceived = (int)($item['quantity_received'] ?? 0);
-            $unitCost = (float)($item['unit_cost'] ?? 0);
-            $totalCost = $quantityReceived * $unitCost;
+            $unitCost         = (float)($item['unit_cost'] ?? 0);
+            $totalCost        = $quantityReceived * $unitCost;
 
             // Get original order
             $originalOrder = isset($item['quantity_order'])
@@ -101,39 +101,55 @@ class ReceivingController extends Controller
 
             // Create received item
             $receivedItem = ModelReceivedItem::create([
-                'r_id' => $received->r_id,
-                'ItemCode_id' => $item['ItemCode_id'],
-                'quantity_order' => $originalOrder,
+                'r_id'              => $received->r_id,
+                'ItemCode_id'       => $item['ItemCode_id'],
+                'quantity_order'    => $originalOrder,
                 'quantity_received' => $quantityReceived,
-                'unit_cost' => $unitCost,
-                'total_cost' => $totalCost,
-                'units' => $item['units'] ?? null,
-                'status' => $status,
+                'unit_cost'         => $unitCost,
+                'total_cost'        => $totalCost,
+                'units'             => $item['units'] ?? null,
+                'status'            => $status,
             ]);
 
             $itemsData[] = $receivedItem;
 
-                        // Stock update safer
-                $stock = ModelStocks::firstOrCreate(
+            // ==============================
+            // STOCK UPDATE (AUTO-OFFSET NEGATIVE)
+            // ==============================
+            $stockRow = DB::table('tbl_stocks')
+                ->where('ItemCode_id', $item['ItemCode_id'])
+                ->lockForUpdate()
+                ->first();
+
+            $currentStock = $stockRow ? $stockRow->quantity_onhand : 0;
+            $newStock     = $currentStock + $quantityReceived;
+
+            DB::table('tbl_stocks')
+                ->updateOrInsert(
                     ['ItemCode_id' => $item['ItemCode_id']],
-                    ['quantity_onhand' => 0]
+                    [
+                        'quantity_onhand' => $newStock,
+                        'updated_at'      => now(),
+                    ]
                 );
-                $stock->increment('quantity_onhand', $quantityReceived); // atomic
 
-                // created_by safe fallback
-                $createdBy = auth()->user()?->fullname ?? 'System';
+            // created_by safe fallback
+            $createdBy = auth()->user()?->fullname ?? 'System';
 
-                ModelTransactions::create([
-                    'ItemCode_id' => $item['ItemCode_id'],
-                    'movement_type' => 'IN',
-                    'transaction_type' => 'RECEIVED',
-                    'quantity' => $quantityReceived,
-                    'reference' => $received->rr_number,
-                    'reference_type' => 'RR #',
-                    'user_id' => auth()->id() ?? null,
-                    'created_by' => $createdBy,
-                    'status' => 'ACTIVE',
-                ]);
+            // ==============================
+            // TRANSACTION LOG (RR IN)
+            // ==============================
+            ModelTransactions::create([
+                'ItemCode_id'      => $item['ItemCode_id'],
+                'movement_type'    => 'IN',
+                'transaction_type' => 'Received',  // must match ENUM exactly
+                'quantity'         => $quantityReceived,
+                'reference'        => $received->rr_number,
+                'reference_type'   => 'RR #',
+                'user_id'          => auth()->id() ?? null,
+                'created_by'       => $createdBy,
+                'status'           => 'ACTIVE',    // must match ENUM exactly
+            ]);
 
             $grandTotal += $totalCost;
 
@@ -150,16 +166,16 @@ class ReceivingController extends Controller
 
         $received->update([
             'grand_total' => $grandTotal,
-            'remarks' => $finalStatus,
+            'remarks'     => $finalStatus,
         ]);
 
         // Log history
         RRHistory::create([
-            'r_id' => $received->r_id,
-            'user_id' => auth()->id() ?? 0,
+            'r_id'     => $received->r_id,
+            'user_id'  => auth()->id() ?? 0,
             'old_data' => null,
             'new_data' => [
-                'rr' => $received->fresh(),
+                'rr'    => $received->fresh(),
                 'items' => $itemsData
             ],
             'action' => 'create',
@@ -170,9 +186,9 @@ class ReceivingController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Receiving record saved successfully.',
-            'data' => [
+            'data'    => [
                 'receive' => $received,
-                'items' => $itemsData,
+                'items'   => $itemsData,
             ]
         ], 201);
 
@@ -180,11 +196,12 @@ class ReceivingController extends Controller
         DB::rollBack();
         return response()->json([
             'success' => false,
-            'error' => 'Failed to save receiving record.',
+            'error'   => 'Failed to save receiving record.',
             'details' => $e->getMessage(),
         ], 500);
     }
 }
+
 
 
 
@@ -347,18 +364,18 @@ public function DisplayRR(Request $request)
 public function updateRR(Request $request, $r_id)
 {
     $request->validate([
-        'supplier_id' => 'required|integer',
-        'po_number' => 'required|string',
-        'dr_number' => 'required|string',
-        'invoice_number' => 'required|string',
-        'remarks' => 'nullable|string',
-        'items' => 'required|array|min:1',
-        'items.*.id' => 'nullable|integer',
-        'items.*.ItemCode_id' => 'required|integer',
-        'items.*.quantity_order' => 'required|numeric',
-        'items.*.quantity_received' => 'required|numeric',
-        'items.*.unit_cost' => 'required|numeric',
-        'items.*.units' => 'required|string',
+        'supplier_id'          => 'required|integer',
+        'po_number'            => 'required|string',
+        'dr_number'            => 'required|string',
+        'invoice_number'       => 'required|string',
+        'remarks'              => 'nullable|string',
+        'items'                => 'required|array|min:1',
+        'items.*.id'           => 'nullable|integer',
+        'items.*.ItemCode_id'  => 'required|integer',
+        'items.*.quantity_order'    => 'required|numeric',
+        'items.*.quantity_received'  => 'required|numeric',
+        'items.*.unit_cost'         => 'required|numeric',
+        'items.*.units'             => 'required|string',
     ]);
 
     DB::beginTransaction();
@@ -366,133 +383,162 @@ public function updateRR(Request $request, $r_id)
     try {
         $rr = ModelReceived::with('receivedItems')->findOrFail($r_id);
 
-        // Save old data for audit
+        // 🔹 Save old data for audit
         $oldData = [
-            'rr' => $rr->toArray(),
+            'rr'    => $rr->toArray(),
             'items' => $rr->receivedItems()->get()->toArray()
         ];
 
+        // Para malaman kung alin ang natira / na-remove
         $existingItems = ModelReceivedItem::where('r_id', $r_id)->get()->keyBy('id');
-        $processedIds = [];
-        $grandTotal = 0;
+        $processedIds  = [];
+        $grandTotal    = 0;
+
+        $rrNumber = $rr->rr_number; // very important: ito ang reference
 
         foreach ($request->items as $row) {
-            $itemId = $row['id'] ?? null;
-            $itemCode = intval($row['ItemCode_id']);
-            $qtyOrder = floatval($row['quantity_order']);
-            $qtyReceived = floatval($row['quantity_received']);
-            $unitCost = floatval($row['unit_cost']);
-            $totalCost = $qtyReceived * $unitCost;
-            $status = ($qtyReceived == $qtyOrder) ? 'Complete' : 'Partial';
+            $itemId       = $row['id'] ?? null;
+            $itemCode     = intval($row['ItemCode_id']);
+            $qtyOrder     = floatval($row['quantity_order']);
+            $qtyReceived  = floatval($row['quantity_received']);
+            $unitCost     = floatval($row['unit_cost']);
+            $totalCost    = $qtyReceived * $unitCost;
+            $status       = ($qtyReceived == $qtyOrder) ? 'Complete' : 'Partial';
 
             $grandTotal += $totalCost;
 
-            // STEP 1: Match existing item
+            // STEP 1: Hanapin existing item
             $item = null;
             if ($itemId) {
                 $item = ModelReceivedItem::find($itemId);
             }
             if (!$item) {
                 $item = ModelReceivedItem::where('r_id', $r_id)
-                        ->where('ItemCode_id', $itemCode)
-                        ->first();
+                    ->where('ItemCode_id', $itemCode)
+                    ->first();
             }
 
             if ($item) {
-                // STEP 2: Reverse old transaction
-                ModelTransactions::where('reference', $r_id)
+                // =======================================
+                //  STEP 2: Reverse old ACTIVE transaction
+                // =======================================
+                ModelTransactions::where('reference', $rrNumber)
                     ->where('ItemCode_id', $item->ItemCode_id)
                     ->where('status', 'ACTIVE')
-                    ->update(['status' => 'REVERSED_CHANGE', 'updated_at' => now()]);
+                    ->update([
+                        'status'     => 'REVERSED_CHANGE',
+                        'updated_at' => now()
+                    ]);
 
-                // STEP 3: Adjust stock
+                // =======================================
+                //  STEP 3: Adjust stock
+                // =======================================
                 $oldItemCode = intval($item->ItemCode_id);
-                $oldQty = floatval($item->quantity_received);
+                $oldQty      = floatval($item->quantity_received);
 
                 if ($oldItemCode !== $itemCode) {
-                    // old item
+                    // 💥 Lumipat sa ibang item code
+
+                    // old item - ibawas yung dati
                     $oldStock = ModelStocks::firstOrCreate(['ItemCode_id' => $oldItemCode]);
-                    $oldStock->quantity_onhand = max(0, $oldStock->quantity_onhand - $oldQty);
+                    $oldStock->quantity_onhand = $oldStock->quantity_onhand - $oldQty;
                     $oldStock->save();
 
-                    // new item
+                    // new item - idagdag yung bago
                     $newStock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
-                    $newStock->quantity_onhand += $qtyReceived;
+                    $newStock->quantity_onhand = $newStock->quantity_onhand + $qtyReceived;
                     $newStock->save();
+
                 } else {
+                    // Still same item code – apply diff
                     $diffQty = $qtyReceived - $oldQty;
                     if ($diffQty != 0) {
                         $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
-                        $stock->quantity_onhand += $diffQty;
+                        $stock->quantity_onhand = $stock->quantity_onhand + $diffQty;
                         $stock->save();
                     }
                 }
 
-                // STEP 4: Update item
+                // =======================================
+                //  STEP 4: Update item row
+                // =======================================
                 $item->update([
-                    'ItemCode_id' => $itemCode,
-                    'quantity_order' => $qtyOrder,
+                    'ItemCode_id'       => $itemCode,
+                    'quantity_order'    => $qtyOrder,
                     'quantity_received' => $qtyReceived,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $totalCost,
-                    'status' => $status,
-                    'units' => $row['units'] ?? '',
+                    'unit_cost'         => $unitCost,
+                    'total_cost'        => $totalCost,
+                    'status'            => $status,
+                    'units'             => $row['units'] ?? '',
                 ]);
 
             } else {
-                // New item
+                // =======================================
+                //  NEW item row
+                // =======================================
                 $item = ModelReceivedItem::create([
-                    'r_id' => $r_id,
-                    'ItemCode_id' => $itemCode,
-                    'quantity_order' => $qtyOrder,
+                    'r_id'              => $r_id,
+                    'ItemCode_id'       => $itemCode,
+                    'quantity_order'    => $qtyOrder,
                     'quantity_received' => $qtyReceived,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $totalCost,
-                    'status' => $status,
-                    'units' => $row['units'] ?? '',
+                    'unit_cost'         => $unitCost,
+                    'total_cost'        => $totalCost,
+                    'status'            => $status,
+                    'units'             => $row['units'] ?? '',
                 ]);
 
                 // Add stock
                 $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $itemCode]);
-                $stock->quantity_onhand += $qtyReceived;
+                $stock->quantity_onhand = $stock->quantity_onhand + $qtyReceived;
                 $stock->save();
             }
 
-            // STEP 5: Insert new ACTIVE transaction
+            // =======================================
+            //  STEP 5: Insert new ACTIVE transaction
+            // =======================================
             ModelTransactions::create([
-                'ItemCode_id' => $itemCode,
-                'movement_type' => 'IN',
-                'transaction_type' => 'RECEIVED',
-                'quantity' => $qtyReceived,
-                'reference' => $r_id,
-                'reference_type' => 'RR id',
-                'status' => 'ACTIVE',
-                'user_id' => auth()->id() ?? null,
-                'created_by' => auth()->user()?->fullname ?? 'System',
+                'ItemCode_id'      => $itemCode,
+                'movement_type'    => 'IN',
+                'transaction_type' => 'Received',   // must match ENUM exactly
+                'quantity'         => $qtyReceived,
+                'reference'        => $rrNumber,    // NOT $r_id
+                'reference_type'   => 'RR #',
+                'status'           => 'ACTIVE',
+                'user_id'          => auth()->id() ?? null,
+                'created_by'       => auth()->user()?->fullname ?? 'System',
             ]);
 
             $processedIds[] = $item->id;
         }
 
-        // STEP 6: Handle removed items
+        // =======================================
+        //  STEP 6: Handle removed items
+        // =======================================
         foreach ($existingItems as $existingItem) {
             if (!in_array($existingItem->id, $processedIds)) {
+
+                // Bawas stock ng na-remove na item
                 $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $existingItem->ItemCode_id]);
-                $stock->quantity_onhand = max(0, $stock->quantity_onhand - $existingItem->quantity_received);
+                $stock->quantity_onhand = $stock->quantity_onhand - $existingItem->quantity_received;
                 $stock->save();
 
-                // Reverse transaction
-                ModelTransactions::where('reference', $r_id)
+                // Mark old ACTIVE transactions as REVERSED_DELETE
+                ModelTransactions::where('reference', $rrNumber)
                     ->where('ItemCode_id', $existingItem->ItemCode_id)
                     ->where('status', 'ACTIVE')
-                    ->update(['status' => 'REVERSED', 'updated_at' => now()]);
+                    ->update([
+                        'status'     => 'REVERSED_DELETE',
+                        'updated_at' => now()
+                    ]);
 
-                // Soft delete item
+                // Soft delete item row
                 $existingItem->delete();
             }
         }
 
-        // STEP 7: Update RR totals and status
+        // =======================================
+        //  STEP 7: Update RR totals and header status
+        // =======================================
         $allComplete = ModelReceivedItem::where('r_id', $r_id)
             ->where('status', '!=', 'Complete')
             ->whereNull('deleted_at')
@@ -500,31 +546,33 @@ public function updateRR(Request $request, $r_id)
 
         $rr->update([
             'grand_total' => $grandTotal,
-            'remarks' => $allComplete ? 'Complete' : 'Partial',
-            'status' => $allComplete ? 'Complete' : 'Partial',
+            'remarks'     => $allComplete ? 'Complete' : 'Partial',
+            'status'      => $allComplete ? 'Complete' : 'Partial', // kung meron kang status field sa tbl_received
         ]);
 
-        // STEP 8: Log history
+        // =======================================
+        //  STEP 8: Log history
+        // =======================================
         $newData = [
-            'rr' => $rr->fresh()->toArray(),
+            'rr'    => $rr->fresh()->toArray(),
             'items' => $rr->receivedItems()->get()->toArray()
         ];
 
         RRHistory::create([
-            'r_id' => $rr->r_id,
-            'user_id' => auth()->id() ?? 0,
+            'r_id'     => $rr->r_id,
+            'user_id'  => auth()->id() ?? 0,
             'old_data' => $oldData,
             'new_data' => $newData,
-            'action' => 'update',
+            'action'   => 'update',
         ]);
 
         DB::commit();
 
         return response()->json([
-            'success' => true,
-            'message' => 'RR updated successfully',
+            'success'     => true,
+            'message'     => 'RR updated successfully',
             'grand_total' => $grandTotal,
-            'status' => $allComplete ? 'Complete' : 'Partial'
+            'status'      => $allComplete ? 'Complete' : 'Partial'
         ]);
 
     } catch (\Exception $e) {
@@ -533,10 +581,11 @@ public function updateRR(Request $request, $r_id)
         return response()->json([
             'success' => false,
             'message' => 'Failed to update RR',
-            'error' => $e->getMessage()
+            'error'   => $e->getMessage()
         ], 500);
     }
 }
+
 
 
 
@@ -564,15 +613,16 @@ public function softDeleteRR($r_id)
             'items' => $rr->receivedItems->toArray()
         ];
 
-        // 3️⃣ Reverse stock and mark transactions REVERSED
+        // 3️⃣ Reverse stock + mark transactions REVERSED_DELETE
         foreach ($rr->receivedItems as $item) {
-            // Reverse stock
+
+            // 🔥 Correct stock reversal — KEEP NEGATIVE SUPPORT
             $stock = ModelStocks::firstOrCreate(['ItemCode_id' => $item->ItemCode_id]);
-            $stock->quantity_onhand = max(0, $stock->quantity_onhand - $item->quantity_received);
+            $stock->quantity_onhand = $stock->quantity_onhand - $item->quantity_received;
             $stock->save();
 
-            // Reverse transactions
-            ModelTransactions::where('reference', $r_id)
+            // 🔥 Correct transaction reversal — use rr_number NOT r_id
+            ModelTransactions::where('reference', $rr->rr_number)
                 ->where('ItemCode_id', $item->ItemCode_id)
                 ->where('status', 'ACTIVE')
                 ->update([
@@ -588,16 +638,14 @@ public function softDeleteRR($r_id)
         ModelReceivedItem::where('r_id', $r_id)->delete();
 
         // 6️⃣ Log history
-        $newData = [
-            'rr' => ModelReceived::withTrashed()->find($r_id),
-            'items' => ModelReceivedItem::withTrashed()->where('r_id', $r_id)->get()
-        ];
-
         RRHistory::create([
             'r_id' => $r_id,
             'user_id' => auth()->id() ?? 0,
             'old_data' => $oldData,
-            'new_data' => $newData,
+            'new_data' => [
+                'rr' => ModelReceived::withTrashed()->find($r_id),
+                'items' => ModelReceivedItem::withTrashed()->where('r_id', $r_id)->get()
+            ],
             'action' => 'soft_delete',
         ]);
 
@@ -610,7 +658,7 @@ public function softDeleteRR($r_id)
 
     } catch (\Exception $e) {
         DB::rollBack();
-        \Log::error('softDeleteRR ERROR: ' . $e->getMessage() . ' -- ' . $e->getTraceAsString());
+        \Log::error('softDeleteRR ERROR: ' . $e->getMessage());
         return response()->json([
             'success' => false,
             'message' => 'Failed to soft delete Receiving Report.',
@@ -618,6 +666,7 @@ public function softDeleteRR($r_id)
         ], 500);
     }
 }
+
 
 
     // -------------------------

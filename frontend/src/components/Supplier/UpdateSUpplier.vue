@@ -13,40 +13,43 @@
                             <label class="form-label">Supplier # <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.supplier_no" type="text" class="form-control" />
                         </div>
-
+                        <div class="col-md-12">
+                            <label class="form-label">AccountCode <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.AccountCode" type="text" class="form-control" />
+                        </div>
                         <div class="col-md-12">
                             <label class="form-label">Contact Person <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.supplier_name" type="text" class="form-control" />
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label">Email <span class="text-danger">*</span></label>
-                            <input v-model="localSupplier.email" type="text" class="form-control" />
+                            <label class="form-label">Address <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.address" type="text" class="form-control" />
                         </div>
-
                         <div class="col-md-12">
                             <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.contact_no" type="text" class="form-control" />
                         </div>
-
+                        
                         <div class="col-md-12">
-                            <label class="form-label">Address <span class="text-danger">*</span></label>
-                            <input v-model="localSupplier.address" type="text" class="form-control" />
+                            <label class="form-label">Contact Person <span class="text-danger">*</span></label>
+                            <input v-model="localSupplier.contact_person" type="text" class="form-control" />
                         </div>
-                         <div class="col-md-12">
+                        <div class="col-md-12">
                             <label class="form-label">Tin <span class="text-danger">*</span></label>
                             <input v-model="localSupplier.tin" type="text" class="form-control" />
                         </div>
-                         <div class="col-md-12">
+                        <div class="col-md-12">
                             <label class="form-label">Vat / Nvat Reg <span class="text-danger">*</span></label>
-                            <input v-model="localSupplier.vat_no" type="text" class="form-control" />
+                            <input v-model="localSupplier.vat_type" type="text" class="form-control" />
                         </div>
                     </form>
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="closeModal">  <i class="bi bi-x me-1"></i>Cancel</button>
-                    <button class="btn btn-success" @click="updateSupplier">  <i class="bi bi-pencil me-1"></i>Update</button>
+                    <button class="btn btn-secondary" @click="closeModal"> <i class="bi bi-x me-1"></i>Cancel</button>
+                    <button class="btn btn-success" @click="updateSupplier"> <i
+                            class="bi bi-pencil me-1"></i>Update</button>
                 </div>
             </div>
         </div>
@@ -133,7 +136,7 @@ async function confirmSave() {
     try {
         appStore.showLoading();
         modalLoading.value = true;
-        await api.put(`/suppliers/update_supplier/${localSupplier.supplier_id}`,localSupplier);
+        await api.put(`/suppliers/update_supplier/${localSupplier.supplier_id}`, localSupplier);
         showConfirm.value = false;
         showSuccess.value = true;
         emit("updated");

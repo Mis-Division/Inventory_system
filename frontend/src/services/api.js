@@ -1,43 +1,60 @@
 import axios from "axios";
-import { useAppStore } from "../stores/appStore"; // ✅ import global store
+import { useAppStore } from "../stores/appStore";
 
+//
+// =====================================================
+//  MAIN API (LOCAL) — ito ang default, pangalan = api
+// =====================================================
+//
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
 });
 
-// ✅ Attach access_token automatically
+// Token + Loader for LOCAL API only
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
 
-    // ✅ show loader globally
-    const appStore = useAppStore();
-    appStore.showLoading();
-
+    useAppStore().showLoading();
     return config;
   },
   (error) => {
-    const appStore = useAppStore();
-    appStore.hideLoading();
+    useAppStore().hideLoading();
     return Promise.reject(error);
   }
 );
 
-// ✅ Hide loader when response arrives
 api.interceptors.response.use(
   (response) => {
-    const appStore = useAppStore();
-    appStore.hideLoading();
+    useAppStore().hideLoading();
     return response;
   },
   (error) => {
-    const appStore = useAppStore();
-    appStore.hideLoading();
+    useAppStore().hideLoading();
     return Promise.reject(error);
   }
 );
 
-export default api;
+export default api;   // 🔥 IMPORTANT: Hindi nagbago pangalan
+
+
+
+//
+// =====================================================
+//  SECONDARY API (REMOTE INTERNET API)
+//  → Hindi apektado ang existing code mo
+//  → Tatawagin mo lang pag kailangan
+// =====================================================
+//
+export const apiRemote = axios.create({
+  baseURL: "http://26.183.28.177:8000/api",
+});
+
+// Optional token kung kailangan ng remote API
+// apiRemote.interceptors.request.use((config) => {
+//   const token = sessionStorage.getItem("access_token");
+//   if (token) config.headers.Authorization = `Bearer ${token}`;
+//   return config;
+// });
+

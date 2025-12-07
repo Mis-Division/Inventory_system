@@ -5,6 +5,8 @@
       <div class="w-100">
         <h1 class="m-0 mb-3">
           <i class="bi bi-info-circle text-primary"></i> Supplier
+<!-- dito para mag uplaod ng supplier via excel format .csv -->
+            <!-- <input type="file" @change="uploadFile" class="form-control"> -->
         </h1>
       </div>
 
@@ -32,15 +34,15 @@
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
     <!-- Supplier Table -->
-    <div v-if="!loading" class="table-responsive">
+    <div v-if="!loading" >
       <table class="table table-hover  align-middle mb-2  text-center">
         <thead class="table-secondary">
           <tr>
             <th style="width: 10%;">Supplier #</th>
-            <th style="width: 40%;">Supplier Name</th>
-            <th style="width: 15%;">Contact #</th>
+            <th style="width: 30%;">Supplier Name</th>
+            <th style="width: 25%;">Address</th>
             <th style="width: 15%;">TIN</th>
-            <th style="width: 15%;">VAT/NVAT</th>
+            <th style="width: 15%;">AccountCode</th>
             <th style="width: 5%;">Action</th>
           </tr>
         </thead>
@@ -49,9 +51,9 @@
           <tr v-for="supplier in suppliers" :key="supplier.supplier_id">
             <td>{{ supplier.supplier_no }}</td>
             <td>{{ supplier.supplier_name }}</td>
-            <td>{{ supplier.contact_no }}</td>
+            <td>{{ supplier.address }}</td>
             <td>{{ supplier.tin }}</td>
-            <td>{{ supplier.vat_no }}</td>
+            <td>{{ supplier.AccountCode }}</td>
             <td>
               <!-- Dropdown toggle -->
               <div @click="toggleDropdown(supplier.supplier_id, $event)" class="cursor-pointer">
@@ -131,7 +133,7 @@ const error = ref(null);
 const searchQuery = ref("");
 const meta = ref({});
 const currentPage = ref(1);
-const perPage = 10;
+const perPage = 30;
 
 const showAddSupply = ref(false);
 const showSupplierInfo = ref(false);
@@ -313,6 +315,23 @@ function clearSearch(){
   searchQuery.value = "";
    fetchSuppliers();
 }
+
+//upload excel file
+// async function uploadFile(e) {
+//   const file = e.target.files[0];
+//   let form = new FormData();
+//   form.append("file", file);
+
+//   try {
+//     const res = await api.post("/suppliers/import_suppliers", form, {
+//       headers: { "Content-Type": "multipart/form-data" }
+//     });
+
+//     alert("Import Success!");
+//   } catch (err) {
+//     alert("Import Failed: " + err.response.data.message);
+//   }
+// }
 </script>
 
 <style scoped>
@@ -320,4 +339,21 @@ function clearSearch(){
 .table td {
   vertical-align: middle;
 }
+.pagination {
+  align-items: center;        /* Centers the pagination items vertically */
+  display: flex !important;   /* Force flex to apply alignment */
+  margin-top: 10px;           /* Adjust spacing above */
+}
+
+.pagination .page-item {
+  display: flex;
+  align-items: center;       /* Center each button vertically */
+}
+
+.pagination .page-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 </style>

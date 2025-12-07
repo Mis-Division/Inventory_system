@@ -31,9 +31,9 @@
                                                         <select class="form-select" v-model="form.item_category">
                                                                 <option value="">Select Category</option>
                                                                 <option value="Line Hardware">Line Hardware</option>
-                                                                <option value="Special Hardware">Special Hardware
-                                                                </option>
-                                                                <option value="Others">Others</option>
+                                                                <option value="Special Hardware">Special Hardware</option>
+                                                                <option value="Motorpool">Motorpool</option>
+                                                                <option value="Tools">Tools</option>
                                                         </select>
                                                 </div>
                                                 <div class="mb-3">

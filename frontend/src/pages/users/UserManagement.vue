@@ -251,3 +251,189 @@ const totalPagesArray = computed(() =>
 
 onMounted(() => fetchUsers());
 </script>
+<style scoped>
+/* ============================================================
+   🌟 HEADER – Elegant Admin Design
+============================================================ */
+.custom-headers {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  border: 1px solid #e3e6ef;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.custom-headers h1 {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #2c364d;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Search Bar */
+.custom-actions .form-control {
+  width: 260px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f5f7fa;
+  border: 1px solid #cfd4df;
+  font-weight: 500;
+  transition: 0.25s ease;
+}
+
+.custom-actions .form-control:focus {
+  background: #ffffff;
+  border-color: #4c82ff;
+  box-shadow: 0 0 0 3px rgba(76,130,255,0.28);
+}
+
+/* Add User Button */
+.btn-primary {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4c82ff, #3a6be0);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3a6be0, #335dcc);
+}
+
+
+/* ============================================================
+   📋 TABLE – Floating modern rows
+============================================================ */
+.table {
+  border-collapse: separate !important;
+  border-spacing: 0 10px !important;
+}
+
+.table thead th {
+  background: #e7eaf3 !important;
+  color: #3b465f;
+  border: none;
+  padding: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.table tbody tr {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: 0.2s ease;
+}
+
+.table tbody tr:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.13);
+}
+
+.table td {
+  padding: 15px 10px !important;
+  color: #3a4255;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Status Badge */
+.badge {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.bg-primary {
+  background: #4c82ff !important;
+}
+
+.bg-danger {
+  background: #ff5c5c !important;
+}
+
+/* ============================================================
+   🎯 ACTION BUTTONS – Modern Icons
+============================================================ */
+.btn-warning {
+  background: #ffb84d;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.btn-warning:hover {
+  background: #e6a240;
+}
+
+.btn-danger {
+  background: #ff5c5c;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.btn-danger:hover {
+  background: #e34d4d;
+}
+
+/* Icons inside action buttons */
+.btn-sm i {
+  font-size: 1rem;
+}
+
+/* ============================================================
+   🔢 PAGINATION – Rounded & elevated
+============================================================ */
+.pagination .page-link {
+  border-radius: 12px;
+  padding: 7px 14px;
+  margin: 0 3px;
+  border: 1px solid #cfd4df;
+  background: white;
+  color: #4a5572;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.pagination .page-item.active .page-link {
+  background: #4c82ff;
+  border: none;
+  color: white;
+  box-shadow: 0 3px 10px rgba(76,130,255,0.35);
+}
+
+.pagination .page-link:hover {
+  background: #eff2fd;
+}
+
+/* Disabled state */
+.pagination .page-item.disabled .page-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   GENERAL LAYOUT CONSISTENCY
+============================================================ */
+.table th,
+.table td {
+  vertical-align: middle !important;
+}
+
+</style>

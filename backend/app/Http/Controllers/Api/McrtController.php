@@ -14,11 +14,13 @@ use Illuminate\Support\Facades\DB;
 
 class McrtController extends Controller
 {
- public function store(Request $request)
+
+
+public function store(Request $request)
 {
+    // VALIDATION
     $request->validate([
         'returned_by' => 'required|string',
-        // ❌ REMOVE 'received_by' — backend auto-sets it
         'work_order'  => 'nullable|string',
         'job_order'   => 'nullable|string',
 
@@ -26,69 +28,86 @@ class McrtController extends Controller
         'items.*.itemcode_id'   => 'required|exists:tbl_item_code,ItemCode_id',
         'items.*.returned_qty'  => 'required|integer|min:1',
         'items.*.cost'          => 'required|numeric|min:0',
-        'items.*.condition'     => 'required|in:G,U', // ✔ EXACT match
+        'items.*.condition'     => 'required|in:G,U',
     ]);
 
     DB::beginTransaction();
 
     try {
 
-        // 1️⃣ Create MCRT
+        // CREATE HEADER
         $mcrt = ModelMcrt::create([
             'returned_by' => $request->returned_by,
             'received_by' => auth()->user()?->fullname ?? 'system',
-            'work_order'  => $request->work_order ?? null,
-            'job_order'   => $request->job_order ?? null,
-            'grand_total' => collect($request->items)->sum(function ($i) {
-                return $i['cost'] * $i['returned_qty'];
-            }),
+            'work_order'  => $request->work_order,
+            'job_order'   => $request->job_order,
+            'grand_total' => collect($request->items)->sum(fn ($i) => $i['cost'] * $i['returned_qty']),
         ]);
 
-        // 2️⃣ Create Items
-        foreach ($request->items as $item) {
+        foreach ($request->items as $row) {
 
+            $itemcodeId  = $row['itemcode_id'];
+            $qty         = (int) $row['returned_qty'];
+            $cost        = (float) $row['cost'];
+            $condition   = $row['condition'];
+
+            // CREATE MCRT ITEM
             ModelMcrtItem::create([
                 'mcrt_id'      => $mcrt->mcrt_id,
-                'itemcode_id'  => $item['itemcode_id'],
-                'returned_qty' => $item['returned_qty'],
-                'cost'         => $item['cost'],
-                'condition'    => $item['condition'], // ✔ exact value
+                'itemcode_id'  => $itemcodeId,
+                'returned_qty' => $qty,
+                'cost'         => $cost,
+                'condition'    => $condition,
             ]);
 
-            // 3️⃣ Update stock
-            $affected = DB::table('tbl_stocks')
-                ->where('ItemCode_id', $item['itemcode_id'])
-                ->increment('quantity_onhand', $item['returned_qty']);
-                if (!$affected) {
-                    // Auto-create stock entry
-                    DB::table('tbl_stocks')->insert([
-                        'ItemCode_id' => $item['itemcode_id'],
-                        'quantity_onhand' => $item['returned_qty'],
+            // GET STOCK (or create if missing)
+            $stock = DB::table('tbl_stocks')->where('ItemCode_id', $itemcodeId)->lockForUpdate()->first();
+
+            if (!$stock) {
+                DB::table('tbl_stocks')->insert([
+                    'ItemCode_id'     => $itemcodeId,
+                    'quantity_onhand' => 0,
+                    'usable_stock'    => 0,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
+                ]);
+
+                $stock = DB::table('tbl_stocks')->where('ItemCode_id', $itemcodeId)->lockForUpdate()->first();
+            }
+
+            // UPDATE STOCK
+            if ($condition === 'G') {
+                // GOOD AS NEW → add to main stock
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemcodeId)
+                    ->update([
+                        'quantity_onhand' => $stock->quantity_onhand + $qty,
+                        'updated_at'      => now(),
                     ]);
+            } 
+            else {
+                // USABLE → add to usable stock
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemcodeId)
+                    ->update([
+                        'usable_stock' => $stock->usable_stock + $qty,
+                        'updated_at'   => now(),
+                    ]);
+            }
 
-                    // continue process
-                    $stockAfter = $item['returned_qty'];
-                }
-
-
-            // Get updated stock for logs
-            $stockAfter = DB::table('tbl_stocks')
-                ->where('ItemCode_id', $item['itemcode_id'])
-                ->value('quantity_onhand');
-
-            // 4️⃣ Add transaction log
+            // CREATE TRANSACTION LOG (ONLY EXISTING FIELDS!)
             ModelTransactions::create([
-                'ItemCode_id'      => $item['itemcode_id'],
+                'ItemCode_id'      => $itemcodeId,
                 'movement_type'    => 'IN',
-                'transaction_type' => 'RETURN',
-                'quantity'         => $item['returned_qty'],
+                'transaction_type' => 'RETURN', // fixed type
+                'quantity'         => $qty,
+                'remarks'           => $condition,
                 'reference'        => $mcrt->mcrt_number,
                 'reference_type'   => 'MCRT',
-                'status'           => 'ACTIVE',
-                'user_id'          => auth()->id() ?? null,
+                'user_id'          => auth()->id(),
                 'created_by'       => auth()->user()?->fullname ?? 'system',
-                'stock_before'     => $stockAfter - $item['returned_qty'],
-                'stock_after'      => $stockAfter,
+                'updated_by'       => null,
+                'status'           => 'ACTIVE',
             ]);
         }
 
@@ -100,7 +119,7 @@ class McrtController extends Controller
             'data'    => $mcrt,
         ]);
 
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
 
         DB::rollBack();
 
@@ -168,119 +187,147 @@ public function updateMcrt(Request $request, $mcrt_id)
     $request->validate([
         'returned_by' => 'required|string',
         'received_by' => 'required|string',
-        'items'       => 'required|array|min:1',
-        'items.*.itemcode_id'  => 'required|exists:tbl_item_code,ItemCode_id',
-        'items.*.returned_qty' => 'required|integer|min:1',
-        'items.*.cost'         => 'required|numeric|min:0',
-        'items.*.condition'    => 'required|in:G,U',
+
+        'items'                   => 'required|array|min:1',
+        'items.*.itemcode_id'     => 'required|exists:tbl_item_code,ItemCode_id',
+        'items.*.returned_qty'    => 'required|integer|min:1',
+        'items.*.cost'            => 'required|numeric|min:0',
+        'items.*.condition'       => 'required|in:G,U',
     ]);
 
     DB::beginTransaction();
 
     try {
-        $mcrt = ModelMcrt::findOrFail($mcrt_id);
 
-        // 1️⃣ Update header (MCRT No. does NOT change)
+        $mcrt = ModelMcrt::with('items')->findOrFail($mcrt_id);
+
+        // UPDATE HEADER
         $mcrt->update([
             'returned_by' => $request->returned_by,
             'received_by' => $request->received_by,
-            'work_order'  => $request->work_order ?? null,
-            'job_order'   => $request->job_order ?? null,
-            'grand_total' => collect($request->items)->sum(function($i){
-                return $i['cost'] * $i['returned_qty'];
-            }),
+            'work_order'  => $request->work_order,
+            'job_order'   => $request->job_order,
+            'grand_total' => collect($request->items)->sum(fn ($i) => $i['cost'] * $i['returned_qty']),
         ]);
 
-        // 2️⃣ Existing items in DB
-        $existingItemIDs = $mcrt->items()->pluck('mcrt_item_id')->toArray();
+        // EXISTING ITEM IDs
+        $existingIDs = $mcrt->items->pluck('mcrt_item_id')->toArray();
 
         foreach ($request->items as $item) {
 
-            /* ==========================================================
-               A. EXISTING ITEM — update row + adjust stock + update transaction
-               ========================================================== */
-            if (isset($item['mcrt_item_id']) && in_array($item['mcrt_item_id'], $existingItemIDs)) {
+            $id        = $item['mcrt_item_id'] ?? null;
+            $itemId    = $item['itemcode_id'];
+            $qtyNew    = $item['returned_qty'];
+            $condition = $item['condition'];
 
-                $mcrtItem = $mcrt->items()->find($item['mcrt_item_id']);
+            // GET STOCK ROW
+            $stock = DB::table('tbl_stocks')
+                ->where('ItemCode_id', $itemId)
+                ->lockForUpdate()
+                ->first();
 
-                // qty difference
-                $diffQty = $item['returned_qty'] - $mcrtItem->returned_qty;
-
-                //  A1. Adjust stock if needed
-                if ($diffQty != 0) {
-                    DB::table('tbl_stocks')
-                        ->where('ItemCode_id', $item['itemcode_id'])
-                        ->increment('quantity_onhand', $diffQty);
-                }
-
-                // current stock after update
-                $stockAfter = DB::table('tbl_stocks')
-                    ->where('ItemCode_id', $item['itemcode_id'])
-                    ->value('quantity_onhand');
-
-                //  A2. Update Transaction (DO NOT INSERT NEW)
-                $transaction = ModelTransactions::where([
-                    'ItemCode_id'    => $item['itemcode_id'],
-                    'reference'      => $mcrt->mcrt_number,
-                    'reference_type' => 'MCRT',
-                    'movement_type'  => 'IN',
-                ])->first();
-
-                if ($transaction) {
-                    // update the existing transaction row
-                    $transaction->update([
-                        'quantity'     => $item['returned_qty'],
-                        'stock_before' => $stockAfter - $item['returned_qty'],
-                        'stock_after'  => $stockAfter,
-                        'updated_at'   => now(),
-                    ]);
-                }
-
-                //  A3. Update the item row
-                $mcrtItem->update([
-                    'returned_qty' => $item['returned_qty'],
-                    'cost'         => $item['cost'],
-                    'condition'    => $item['condition'],
+            if (!$stock) {
+                DB::table('tbl_stocks')->insert([
+                    'ItemCode_id'     => $itemId,
+                    'quantity_onhand' => 0,
+                    'usable_stock'    => 0,
+                    'created_at'      => now(),
+                    'updated_at'      => now(),
                 ]);
 
+                $stock = DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemId)
+                    ->lockForUpdate()
+                    ->first();
             }
 
             /* ==========================================================
-               B. NEW ITEM — create + adjust stock + create transaction
+               A. ITEM EXISTS → UPDATE IT
+               ========================================================== */
+            if ($id && in_array($id, $existingIDs)) {
+
+                $mcrtItem = ModelMcrtItem::find($id);
+
+                $qtyOld = $mcrtItem->returned_qty;
+                $condOld = $mcrtItem->condition;
+
+                // REVERSE OLD STOCK
+                if ($condOld === 'G') {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['quantity_onhand' => $stock->quantity_onhand - $qtyOld]);
+                } else {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['usable_stock' => $stock->usable_stock - $qtyOld]);
+                }
+
+                // UPDATE STOCK ROW AFTER REVERSAL
+                $stock = DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemId)
+                    ->lockForUpdate()
+                    ->first();
+
+                // APPLY NEW STOCK
+                if ($condition === 'G') {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['quantity_onhand' => $stock->quantity_onhand + $qtyNew]);
+                } else {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['usable_stock' => $stock->usable_stock + $qtyNew]);
+                }
+
+                // UPDATE TRANSACTION
+                ModelTransactions::where([
+                    'ItemCode_id'    => $itemId,
+                    'reference'      => $mcrt->mcrt_number,
+                    'reference_type' => 'MCRT',
+                    'movement_type'  => 'IN',
+                ])->update([
+                    'quantity'   => $qtyNew,
+                    'updated_by' => auth()->user()?->fullname ?? 'system',
+                    'updated_at' => now(),
+                ]);
+
+                // UPDATE ITEM RECORD
+                $mcrtItem->update([
+                    'returned_qty' => $qtyNew,
+                    'cost'         => $item['cost'],
+                    'condition'    => $condition,
+                ]);
+            }
+
+            /* ==========================================================
+               B. NEW ITEM ADDED → ADD STOCK + ADD TRANSACTION
                ========================================================== */
             else {
 
-                $newItem = $mcrt->items()->create([
-                    'itemcode_id'  => $item['itemcode_id'],
-                    'returned_qty' => $item['returned_qty'],
+                $mcrtItem = $mcrt->items()->create([
+                    'itemcode_id'  => $itemId,
+                    'returned_qty' => $qtyNew,
                     'cost'         => $item['cost'],
-                    'condition'    => $item['condition'],
+                    'condition'    => $condition,
                 ]);
 
-                DB::table('tbl_stocks')
-                    ->where('ItemCode_id', $item['itemcode_id'])
-                    ->increment('quantity_onhand', $item['returned_qty']);
+                // APPLY NEW STOCK
+                if ($condition === 'G') {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['quantity_onhand' => $stock->quantity_onhand + $qtyNew]);
+                } else {
+                    DB::table('tbl_stocks')->where('ItemCode_id', $itemId)
+                        ->update(['usable_stock' => $stock->usable_stock + $qtyNew]);
+                }
 
-                // current stock after new add
-                $stockAfter = DB::table('tbl_stocks')
-                    ->where('ItemCode_id', $item['itemcode_id'])
-                    ->value('quantity_onhand');
-
-                // create ONLY because it's a new item
+                // CREATE NEW TRANSACTION
                 ModelTransactions::create([
-                    'ItemCode_id'      => $item['itemcode_id'],
+                    'ItemCode_id'      => $itemId,
                     'movement_type'    => 'IN',
                     'transaction_type' => 'RETURN',
-                    'quantity'         => $item['returned_qty'],
+                    'quantity'         => $qtyNew,
                     'reference'        => $mcrt->mcrt_number,
                     'reference_type'   => 'MCRT',
                     'status'           => 'ACTIVE',
                     'user_id'          => auth()->id(),
                     'created_by'       => auth()->user()?->fullname ?? 'system',
-                    'stock_before'     => $stockAfter - $item['returned_qty'],
-                    'stock_after'      => $stockAfter,
                 ]);
-
             }
         }
 
@@ -288,8 +335,7 @@ public function updateMcrt(Request $request, $mcrt_id)
 
         return response()->json([
             'success' => true,
-            'message' => 'MCRT updated successfully',
-            'data'    => $mcrt,
+            'message' => 'MCRT updated successfully.',
         ]);
 
     } catch (\Exception $e) {
@@ -304,49 +350,70 @@ public function updateMcrt(Request $request, $mcrt_id)
 
 
 
+
 public function deleteMcrt($mcrt_id)
 {
     DB::beginTransaction();
 
     try {
+
         $mcrt = ModelMcrt::with('items')->findOrFail($mcrt_id);
 
         foreach ($mcrt->items as $item) {
 
-            // Lock stock
-            $stockRow = DB::table('tbl_stocks')
+            // Lock stock row
+            $stock = DB::table('tbl_stocks')
                 ->where('ItemCode_id', $item->itemcode_id)
                 ->lockForUpdate()
                 ->first();
 
-            $stockAfter = $stockRow->quantity_onhand - $item->returned_qty;
-            $stockBefore = $stockRow->quantity_onhand;
-
-            if ($stockAfter < 0) {
-                throw new \Exception("Stock cannot be negative for ItemCode_id {$item->itemcode_id}");
+            if (!$stock) {
+                throw new \Exception("Stock record missing for ItemCode_id {$item->itemcode_id}");
             }
 
-            // Update stock
-            DB::table('tbl_stocks')
-                ->where('ItemCode_id', $item->itemcode_id)
-                ->update(['quantity_onhand' => $stockAfter]);
+            // Reverse stock based on condition
+            if ($item->condition === 'G') {
 
+                // Reverse MAIN STOCK
+                $newMain = $stock->quantity_onhand - $item->returned_qty;
 
+                if ($newMain < 0) {
+                    throw new \Exception("Stock cannot be negative for ItemCode_id {$item->itemcode_id}");
+                }
+
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $item->itemcode_id)
+                    ->update(['quantity_onhand' => $newMain]);
+
+            } else {
+
+                // Reverse USABLE STOCK
+                $newUsable = $stock->usable_stock - $item->returned_qty;
+
+                if ($newUsable < 0) {
+                    throw new \Exception("Usable stock cannot be negative for ItemCode_id {$item->itemcode_id}");
+                }
+
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $item->itemcode_id)
+                    ->update(['usable_stock' => $newUsable]);
+            }
+
+            // Log reversal in transaction table
             ModelTransactions::create([
                 'ItemCode_id'      => $item->itemcode_id,
-                'movement_type'    => 'OUT',      // reversed
-                'transaction_type' => 'RETURN',   // allowed
+                'movement_type'    => 'OUT',  // reverse
+                'transaction_type' => 'RETURN',
                 'quantity'         => $item->returned_qty,
                 'reference'        => $mcrt->mcrt_number,
                 'reference_type'   => 'MCRT',
-                'status'           => 'REVERSED_DELETE',  // ← KEY
+                'status'           => 'REVERSED_DELETE',
                 'user_id'          => auth()->id(),
                 'created_by'       => auth()->user()?->fullname ?? 'system',
-                'stock_before'     => $stockBefore,
-                'stock_after'      => $stockAfter,
+                'updated_by'       => null,
             ]);
 
-            // Soft delete item
+            // Soft delete item row
             $item->delete();
         }
 
@@ -361,6 +428,7 @@ public function deleteMcrt($mcrt_id)
         ]);
 
     } catch (\Exception $e) {
+
         DB::rollBack();
 
         return response()->json([
@@ -369,6 +437,7 @@ public function deleteMcrt($mcrt_id)
         ], 500);
     }
 }
+
 
 
 

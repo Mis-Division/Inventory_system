@@ -64,6 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get_supplier/{id}', [SupplierController::class, 'GetSupplierById']);
         Route::put('/update_supplier/{id}', [SupplierController::class, 'UpdateSupplier']);
         Route::delete('/delete_supplier/{id}', [SupplierController::class, 'DeleteSupplier']);
+        Route::post('/import_suppliers', [ItemImportController::class, 'importSupplier']);
     });
     // Category routes
     Route::prefix('categories')->group(function () {
@@ -83,7 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('getItemCode/{id}', [ItemsController::class, 'GetItemCodeId']);
     Route::put('updateItemCode/{id}', [ItemsController::class, 'UpdateItemCode']);
     Route::delete('deleteItemCode/{id}', [ItemsController::class, 'DeleteItemCode']);
-    Route::get('displayStocks', [ItemsController::class, 'displayItemsAndStocks']);
+    Route::get('displayStocks', [ItemsController::class, 'GetItemsForMrv']);
     });
 
     // Receiving routes

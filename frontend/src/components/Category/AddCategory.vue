@@ -50,7 +50,10 @@
                                 <option value="">Select Category</option>
                                 <option value="Line Hardware">Line Hardware</option>
                                 <option value="Special Hardware">Special Hardware</option>
-                                <option value="Others">Others</option>
+                                <option value="Others">Motor Pool</option>
+                                <option value="Tools">Tools</option>
+                                <option value="PPE">PPE</option>
+                                <option value="Gen Plant">Gen Plant</option>
                             </select>
                             <div v-if="errors.item_category" class="invalid-feedback">{{ errors.item_category }}</div>
                         </div>

@@ -13,24 +13,27 @@ class SupplierController extends Controller
     {
         $request->validate([
             'supplier_no' => 'required|string|max:255',
+            'AccountCode' => 'required|string|max:255',
             'supplier_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'contact_no' => 'required|string|max:20',
             'address' => 'required|string|max:500',
+            'contact_no' => 'required|string|max:20',
+             'contact_person' => 'required|string|max:255',
             'tin' => 'required|string|max:500',
-            'vat_no' => 'required|string|max:500',
+            'vat_type' => 'required|string|max:500',
+           
         ]);
 
        DB::beginTransaction();
        try {
            $supplier = suppliers::create([
                'supplier_no' => $request->supplier_no,
+               'AccountCode' => $request->AccountCode,
                'supplier_name' => $request->supplier_name,
-               'email' => $request->email,
-               'contact_no' => $request->contact_no,
                'address' => $request->address,
+               'contact_no' => $request->contact_no,
+                'contact_person' => $request->contact_person,
                'tin' => $request->tin,
-               'vat_no'=> $request->vat_no,
+               'vat_type'=> $request->vat_type,
            ]);
 
            DB::commit();
@@ -45,7 +48,7 @@ class SupplierController extends Controller
     try {
         // Get search and pagination parameters from the request
         $search = $request->input('search');
-        $perPage = $request->input('per_page', 10); // Default 10 per page
+        $perPage = $request->input('per_page', 1000); // Default 10 per page
 
         // Query suppliers
         $query = Suppliers::query();
@@ -55,8 +58,10 @@ class SupplierController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('supplier_name', 'like', "%{$search}%")
                   ->orwhere('supplier_no', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('AccountCode', 'like', "%{$search}%")
                   ->orWhere('contact_no', 'like', "%{$search}%")
+                   ->orWhere('supplier_name', 'like', "%{$search}%")
+                  ->orWhere('contact_person', 'like', "%{$search}%")
                   ->orWhere('address', 'like', "%{$search}%");
             });
         }
@@ -115,19 +120,20 @@ class SupplierController extends Controller
     {
         $request->validate([
             'supplier_no' => 'sometimes|required|string|max:255',
+            'AccountCode' => 'sometimes|required|string|max:255',
             'supplier_name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|nullable|email|max:255',
-            'contact_no' => 'sometimes|nullable|string|max:20',
             'address' => 'sometimes|nullable|string|max:500',
+            'contact_no' => 'sometimes|nullable|string|max:20',
+            'contact_person' => 'sometimes|nullable|string|max:255',
             'tin' => 'sometimes|nullable|string|max:500',
-            'vat_no' => 'sometimes|nullable|string|max:500',
+            'vat_type' => 'sometimes|nullable|string|max:500',
         ]);
 
        DB::beginTransaction();
        try {
            $supplier = suppliers::find($id);
 
-           $supplier->update($request->only(['supplier_no', 'supplier_name', 'email', 'contact_no', 'address','tin','vat_no']));
+           $supplier->update($request->only(['supplier_no','AccountCode', 'supplier_name', 'contact_no', 'address','contact_person','tin','vat_type']));
 
            DB::commit();
            return response()->json(['message' => 'Supplier updated successfully', 'supplier' => $supplier], 200);

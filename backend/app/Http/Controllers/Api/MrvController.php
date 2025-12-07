@@ -15,26 +15,27 @@ use App\Models\ModelTransactions;
 
 class MrvController extends Controller
 {
-  public function CreateMrv(Request $request)
+/**
+ * CREATE MRV (with negative stock allowed)
+ */
+public function CreateMrv(Request $request)
 {
     // VALIDATION
     $validated = $request->validate([
         'requested_by' => 'required|string|max:255',
         'department'   => 'required|string|max:255',
         'approved_by'  => 'required|string|max:255',
-        'status'       => 'nullable|string|max:255',
+        'usable_only'  => 'nullable|boolean',   // ⬅ not required anymore
         'items'        => 'required|array|min:1',
         'items.*.itemcode_id'   => 'required|exists:tbl_item_code,ItemCode_id',
         'items.*.requested_qty' => 'required|integer|min:1',
-        'items.*.product_type'  => 'required|string|max:255',
     ]);
 
-    // WRAP EVERYTHING IN A DATABASE TRANSACTION
     DB::beginTransaction();
 
     try {
 
-        // CREATE MRV HEADER
+        // CREATE HEADER
         $createMrv = ModelMrv::create([
             'requested_by' => $validated['requested_by'],
             'department'   => $validated['department'],
@@ -43,55 +44,74 @@ class MrvController extends Controller
             'status'       => 'Approved',
         ]);
 
-        // FETCH ALL STOCKS INVOLVED FOR LOCKING
+        // STOCK LOCK
         $itemIds = collect($validated['items'])->pluck('itemcode_id');
-        $stocks = DB::table('tbl_stocks as s')
-            ->join('tbl_item_code as i', 'i.ItemCode_id', '=', 's.ItemCode_id')
-            ->whereIn('s.ItemCode_id', $itemIds)
-            ->select('s.ItemCode_id', 'i.product_name', 's.quantity_onhand')
+        $stocks = DB::table('tbl_stocks')
+            ->whereIn('ItemCode_id', $itemIds)
             ->lockForUpdate()
             ->get()
-            ->keyBy('ItemCode_id'); // index by item code for easy lookup
+            ->keyBy('ItemCode_id');
 
-        // LOOP ITEMS
+        $useUsableStock = $validated['usable_only'] ?? false; // ⬅ default false
+
         foreach ($validated['items'] as $item) {
+
             $itemId = $item['itemcode_id'];
-            $requested = (int)$item['requested_qty'];
+            $qty    = (int)$item['requested_qty'];
 
-            // GET STOCK
-            $stock = $stocks[$itemId] ?? null;
-            if (!$stock) {
-                throw new \Exception("Item not found: {$itemId}");
+            $stock = $stocks[$itemId];
+
+            $mainStock   = $stock->quantity_onhand ?? 0;
+            $usableStock = $stock->usable_stock ?? 0;
+
+            if ($useUsableStock && $usableStock > 0) {
+
+                // 🔥 DEDUCT FROM USABLE
+                $newUsable = $usableStock - $qty;
+
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemId)
+                    ->update([
+                        'usable_stock' => $newUsable,
+                        'updated_at'   => now(),
+                    ]);
+
+                $remarks = "U";
+
+            } else {
+
+                // 🔥 DEDUCT FROM MAIN STOCK
+                $newMain = $mainStock - $qty;
+
+                DB::table('tbl_stocks')
+                    ->where('ItemCode_id', $itemId)
+                    ->update([
+                        'quantity_onhand' => $newMain,
+                        'updated_at'      => now(),
+                    ]);
+
+                $remarks = null;
             }
 
-            // CHECK STOCK SUFFICIENCY & ATOMIC DECREMENT
-            $affected = DB::table('tbl_stocks')
-                ->where('ItemCode_id', $itemId)
-                ->where('quantity_onhand', '>=', $requested)
-                ->decrement('quantity_onhand', $requested);
-
-            if (!$affected) {
-                throw new \Exception("Insufficient stock for item: {$stock->product_name}");
-            }
-
-            // CREATE MRV ITEM
+            // INSERT ITEMS
             ModelMrvItems::create([
                 'mrv_id'        => $createMrv->mrv_id,
                 'itemcode_id'   => $itemId,
-                'requested_qty' => $requested,
-                'product_type'  => $item['product_type'],
+                'requested_qty' => $qty,
             ]);
 
-            // CREATE TRANSACTION
+            // INSERT TRANSACTION
             ModelTransactions::create([
                 'ItemCode_id'     => $itemId,
                 'movement_type'   => 'OUT',
                 'transaction_type'=> 'REQUEST',
-                'quantity'        => $requested,
+                'quantity'        => $qty,
+                'remarks'         => $remarks, // ⬅ U or null
                 'reference'       => $createMrv->mrv_number,
-                'reference_type'  => 'MRV #',
-                'user_id'         => auth()->id() ?? null,
+                'reference_type'  => 'MRV',
+                'user_id'         => auth()->id(),
                 'created_by'      => auth()->user()?->fullname ?? 'system',
+                'status'          => 'ACTIVE',
             ]);
         }
 
@@ -99,9 +119,9 @@ class MrvController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'MRV successfully created with stock deduction!',
+            'message' => 'MRV successfully created.',
             'mrv_id'  => $createMrv->mrv_id,
-        ], 201);
+        ]);
 
     } catch (\Exception $e) {
         DB::rollBack();
@@ -113,13 +133,17 @@ class MrvController extends Controller
     }
 }
 
-//Display lahat ng request sa MRV        
+
+
+
+/**
+ * DISPLAY ALL MRV LIST
+ */
 public function displayMrv(Request $request)
 {
     $queryStr = $request->input('query');
     $perPage  = $request->input('per_page', 10);
 
-    // Build the query
     $query = DB::table('tbl_mrv as m')
         ->select(
             'm.mrv_id',
@@ -143,23 +167,13 @@ public function displayMrv(Request $request)
         })
         ->orderBy('m.created_at', 'desc');
 
-    // Use Laravel paginate to handle paging in the DB
     $paginated = $query->paginate($perPage);
-
-    // Prepare the response
-    if ($paginated->isEmpty()) {
-        $message = $queryStr
-            ? "No MRV matching '{$queryStr}' found!"
-            : "No MRV found.";
-    } else {
-        $message = $queryStr
-            ? "MRV matching '{$queryStr}' fetched successfully!"
-            : "All MRV fetched successfully.";
-    }
 
     return response()->json([
         'success' => true,
-        'message' => $message,
+        'message' => $paginated->isEmpty()
+            ? ($queryStr ? "No MRV matching '{$queryStr}' found!" : "No MRV found.")
+            : ($queryStr ? "MRV matching '{$queryStr}' fetched successfully!" : "All MRV fetched successfully."),
         'data' => $paginated->items(),
         'meta' => [
             'current_page' => $paginated->currentPage(),
@@ -173,54 +187,57 @@ public function displayMrv(Request $request)
 }
 
 
-    public function gerMrvDetails($mrv_id){
-        $mrv = DB::table('tbl_mrv')
-            ->select(
-                'mrv_id',
-                'mrv_number',
-                'requested_by',
-                'approved_by',
-                'created_by',
-                'created_at',
-                'status',
-            )
-            ->where('mrv_id', $mrv_id)
-            ->whereNull('deleted_at')
-            ->first();
 
-            if(!$mrv){
-                return response()->json([
-                    'success' => failed,
-                    'message' =>'MRV not Found!'
-                ], 404);
-            }
+/**
+ * GET MRV DETAILS
+ */
+public function gerMrvDetails($mrv_id)
+{
+    $mrv = DB::table('tbl_mrv as m')
+        ->select(
+            'm.mrv_id',
+            'm.mrv_number',
+            'm.requested_by',
+            'm.approved_by',
+            'm.created_by',
+            'm.created_at',
+            'm.status'
+        )
+        ->where('m.mrv_id', $mrv_id)
+        ->whereNull('m.deleted_at')
+        ->first();
 
-            $items = DB::table('tbl_mrv_items as m')
-                ->join('tbl_item_code as i', 'i.ItemCode_id',  '=', 'm.itemcode_id')
-                ->select(
-                    'i.ItemCode',
-                    'm.requested_qty',
-                    'm.product_type'
-                )
-                ->where('m.mrv_id', $mrv_id)
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Mrv Id {$mrv_id} fetch successfully",
-                'data' => [
-                    'mrv_id'        =>$mrv->mrv_id,
-                    'mrv_number'   =>$mrv->mrv_number,
-                    'requested_by' =>$mrv->requested_by,
-                    'approved_by'  =>$mrv->approved_by,
-                    'created_by'   =>$mrv->created_by,
-                    'created_at'   =>$mrv->created_at,
-                    'status'       =>$mrv->status,
-                    'items'         =>$items
-                ]
-            ]);
-
-
+    if (!$mrv) {
+        return response()->json([
+            'success' => false,
+            'message' => 'MRV not found!',
+        ], 404);
     }
+
+    $items = DB::table('tbl_mrv_items as m')
+        ->join('tbl_item_code as i', 'i.ItemCode_id', '=', 'm.itemcode_id')
+        ->select(
+            'i.ItemCode',
+            'm.requested_qty',
+            'm.product_type'
+        )
+        ->where('m.mrv_id', $mrv_id)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'message' => "MRV ID {$mrv_id} fetched successfully!",
+        'data' => [
+            'mrv_id'        => $mrv->mrv_id,
+            'mrv_number'    => $mrv->mrv_number,
+            'requested_by'  => $mrv->requested_by,
+            'approved_by'   => $mrv->approved_by,
+            'created_by'    => $mrv->created_by,
+            'created_at'    => $mrv->created_at,
+            'status'        => $mrv->status,
+            'items'         => $items,
+        ]
+    ]);
+}
 
 }

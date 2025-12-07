@@ -60,7 +60,7 @@ public function GetItemCode(Request $request)
         // Get search keyword, category filter and pagination parameters
         $search   = $request->query('search');
         $category = $request->query('category'); // <-- NEW
-        $perPage  = $request->query('per_page', 10);
+        $perPage  = $request->query('per_page', 100000);
 
         // Build base query
         $query = Items::query();
@@ -261,5 +261,28 @@ public function displayItemsAndStocks(Request $request)
 
     }
 }
+
+
+public function GetItemsForMrv()
+{
+    $items = DB::table('tbl_item_code as i')
+        ->leftJoin('tbl_stocks as s', 's.ItemCode_id', '=', 'i.ItemCode_id')
+        ->select(
+            'i.ItemCode_id as id',
+            'i.ItemCode as Material_Code',
+            'i.product_name',
+            'i.units',
+            's.usable_stock as Usable',
+            DB::raw('COALESCE(s.quantity_onhand, 0) as quantity_onhand')
+        )
+        ->orderBy('i.product_name')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $items
+    ]);
+}
+
 
 }

@@ -63,7 +63,7 @@
                                     <th style="width:25%">Description</th>
                                     <th style="width:10%">Units</th>
                                     <th style="width:10%">Qty Return</th>
-                                    <th style="width:15%">Condition</th>
+                                    <th style="width:15%">Remarks</th>
                                     <th style="width:12%">Cost</th>
                                     <th style="width:5%">Action</th>
                                 </tr>
@@ -128,10 +128,12 @@
                                     <td>
                                         <select class="form-select" v-model="item.condition">
                                             <option disabled value="">Select condition</option>
-                                            <option value="G">Good as New</option>
+                                            <option value="G">New</option>
                                             <option value="U">Ussable</option>
                                         </select>
-
+                                        <div v-if="itemErrors[index]?.condition" class="error-text">
+                                            {{ itemErrors[index].condition }}
+                                        </div>
                                     </td>
 
                                     <!-- COST -->
@@ -208,21 +210,22 @@ const itemErrors = ref({});
 const errorMessage = ref("");
 const showSuccess = ref(false);
 
-// ITEM LIST FROM API
+// ITEMS LIST FROM API
 const itemsList = ref([]);
 
-// ITEMS OF THE MCRT
+// MCRT ITEMS (default row)
 const mcrtItems = ref([
     {
         itemcode_id: "",
         description: "",
         units: "",
         qty_return: 1,
-        condition: "",
+        condition: "",  // ⭐ MUST EXIST
         cost: 0,
     },
 ]);
 
+// LOAD ITEM LIST FOR DROPDOWN
 async function fetchItems() {
     try {
         const res = await api.get("/Items/getItemCode");
@@ -259,21 +262,21 @@ function initItemSelect() {
     });
 }
 
-// ADD ITEM ROW
+// ADD NEW ROW
 async function addItem() {
     mcrtItems.value.push({
         itemcode_id: "",
         description: "",
         units: "",
         qty_return: 1,
-        condition: "",
+        condition: "",   // ⭐ IMPORTANT
         cost: 0,
     });
 
     await nextTick(initItemSelect);
 }
 
-// REMOVE ITEM
+// REMOVE ROW
 function removeItem(i) {
     mcrtItems.value.splice(i, 1);
     nextTick(initItemSelect);
@@ -300,7 +303,6 @@ function validateForm() {
         valid = false;
     }
 
-    // ITEM-LEVEL
     const codes = mcrtItems.value.map(i => i.itemcode_id);
 
     mcrtItems.value.forEach((item, idx) => {
@@ -335,6 +337,12 @@ function validateForm() {
             itemErrors.value[idx].cost = "Invalid cost.";
             valid = false;
         }
+
+        // ⭐ CONDITION VALIDATION (THIS FIXES YOUR ERROR)
+        if (!item.condition) {
+            itemErrors.value[idx].condition = "Condition required.";
+            valid = false;
+        }
     });
 
     nextTick(() => {
@@ -347,7 +355,6 @@ function validateForm() {
 
 // SAVE MCRT
 async function saveMcrt() {
-    // Run UI validation
     if (!validateForm()) return;
 
     try {
@@ -360,7 +367,7 @@ async function saveMcrt() {
                 itemcode_id: i.itemcode_id,
                 returned_qty: i.qty_return,
                 cost: i.cost,
-                condition: i.condition, // EXACT string: Good as new / For Repair
+                condition: i.condition,  // REQUIRED: G or U
             }))
         };
 
@@ -368,6 +375,10 @@ async function saveMcrt() {
 
         if (res.data?.success) {
             showSuccess.value = true;
+
+            // 🔥 FIRE EVENT FOR PARENT
+            emit("saved");
+
         } else {
             showError(res.data?.message || "Failed to save.");
         }
@@ -399,6 +410,7 @@ onMounted(async () => {
     await nextTick(initItemSelect);
 });
 </script>
+
 <style scoped>
 .modal-auto-fit {
     max-width: 60vw;
