@@ -79,7 +79,9 @@
                     <a href="#" @click.stop.prevent="deleteCategories(item)" class="text-danger"
                       v-if="canDeleteCategory">
                       <i class="bi bi-trash me-2"></i>Delete</a>
-
+  <div v-if="!canEditCategory && !canDeleteCategory" class="text-muted no-permission">
+                      <i class="bi bi-lock me-2"></i>No permission
+                    </div>
                   </div>
                 </Transition>
               </teleport>
@@ -516,27 +518,23 @@ onBeforeUnmount(() => {
 /* ============================================================
    🔢 PAGINATION – Minimal rounded style
 ============================================================ */
+.pagination {
+  align-items: center;        /* Centers the pagination items vertically */
+  display: flex !important;   /* Force flex to apply alignment */
+  margin-top: 10px;           /* Adjust spacing above */
+}
+
+.pagination .page-item {
+  display: flex;
+  align-items: center;       /* Center each button vertically */
+}
+
 .pagination .page-link {
-  border-radius: 10px !important;
-  padding: 7px 14px;
-  margin: 0 3px;
-  font-weight: 600;
-  color: #5c6b8a;
-  border: 1px solid #ccd3e2;
-  transition: 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.pagination .page-item.active .page-link {
-  background: #5c8dff;
-  color: white;
-  border: none;
-  box-shadow: 0 3px 6px rgba(92, 141, 255, 0.3);
-}
-
-.pagination .page-link:hover {
-  background: #eef2ff;
-  color: #3e4d7b;
-}
 
 /* Circle numbers */
 .page-circle {

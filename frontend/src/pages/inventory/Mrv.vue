@@ -68,6 +68,11 @@
                     <a href="#" v-if="canDeleteMVR" class="text-danger" @click.stop.prevent="deleteMrv(mrv)">
                       <i class="bi bi-trash me-2"></i>Delete
                     </a>
+
+                     <!-- ❌ NO PERMISSION -->
+                    <div v-if="!canEditMVR && !canDeleteMVR" class="text-muted no-permission">
+                      <i class="bi bi-lock me-2"></i>No permission
+                    </div>
                   </div>
                 </transition>
               </teleport>
@@ -411,23 +416,22 @@ function clearSearch() {
 /* ============================================================
    🔢 PAGINATION – minimal rounded
 ============================================================ */
+.pagination {
+  align-items: center;        /* Centers the pagination items vertically */
+  display: flex !important;   /* Force flex to apply alignment */
+  margin-top: 10px;           /* Adjust spacing above */
+}
+
+.pagination .page-item {
+  display: flex;
+  align-items: center;       /* Center each button vertically */
+}
+
 .pagination .page-link {
-  border-radius: 10px !important;
-  padding: 7px 14px;
-  border: 1px solid #cbd4e4;
-  color: #576281;
-  font-weight: 600;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.pagination .active .page-link {
-  background: #6f9bff !important;
-  border: none;
-  color: white !important;
-  box-shadow: 0 2px 6px rgba(111,155,255,0.3);
-}
-
-.page-circle {
-  border-radius: 50% !important;
-}
 
 </style>

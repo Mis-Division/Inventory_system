@@ -1,46 +1,55 @@
 <template>
-  <!-- Table Row -->
-  <tr>
-    <!-- Description -->
-    <td :style="{ paddingLeft: `${level * 20}px` }">
-      <strong style="padding-left: 10px;" v-if="!module.parent_module">{{ module.module_name }}</strong>
-      <span v-else>— {{ module.module_name }}</span>
+  <!-- Row -->
+  <tr :class="['module-row', { 'module-parent': !module.parent_module }]">
+    
+    <!-- Module Description -->
+    <td>
+      <div class="module-label" :style="{ paddingLeft: `${level * 18}px` }">
+        <span v-if="!module.parent_module" class="parent-title">
+          {{ module.module_name }}
+        </span>
+
+        <span v-else class="child-title">
+          <i class="bi bi-caret-right-fill me-1 text-secondary small"></i>
+          {{ module.module_name }}
+        </span>
+      </div>
     </td>
 
     <!-- Permissions -->
-    <td class="text-center align-middle">
-      <div class="form-check d-flex justify-content-center m-0">
-        <input class="form-check-input" type="checkbox" v-model="module.can_add" :true-value="1" :false-value="0"
-          :disabled="!canEdit" />
-      </div>
+    <td class="perm-col">
+      <input type="checkbox" class="perm-check" v-model="module.can_add" 
+        :true-value="1" :false-value="0" :disabled="!canEdit">
     </td>
 
-    <td class="text-center align-middle">
-      <div class="form-check d-flex justify-content-center m-0">
-        <input class="form-check-input" type="checkbox" v-model="module.can_edit" :true-value="1" :false-value="0"
-          :disabled="!canEdit" />
-      </div>
+    <td class="perm-col">
+      <input type="checkbox" class="perm-check" v-model="module.can_edit" 
+        :true-value="1" :false-value="0" :disabled="!canEdit">
     </td>
 
-    <td class="text-center align-middle">
-      <div class="form-check d-flex justify-content-center m-0">
-        <input class="form-check-input" type="checkbox" v-model="module.can_view" :true-value="1" :false-value="0"
-          :disabled="!canEdit" />
-      </div>
+    <td class="perm-col">
+      <input type="checkbox" class="perm-check" v-model="module.can_view" 
+        :true-value="1" :false-value="0" :disabled="!canEdit">
     </td>
 
-    <td class="text-center align-middle">
-      <div class="form-check d-flex justify-content-center m-0">
-        <input class="form-check-input" type="checkbox" v-model="module.can_delete" :true-value="1" :false-value="0"
-          :disabled="!canEdit" />
-      </div>
+    <td class="perm-col">
+      <input type="checkbox" class="perm-check" v-model="module.can_delete" 
+        :true-value="1" :false-value="0" :disabled="!canEdit">
     </td>
   </tr>
 
   <!-- Recursive Children -->
-  <ModuleAccess v-for="child in module.children" :key="child.module_name" :module="child" :level="level + 1"
-    :can-edit="canEdit" :can-delete="canDelete" @delete="$emit('delete', $event)" />
+  <ModuleAccess 
+    v-for="child in module.children"
+    :key="child.module_name"
+    :module="child"
+    :level="level + 1"
+    :can-edit="canEdit"
+    :can-delete="canDelete"
+    @delete="$emit('delete', $event)"
+  />
 </template>
+
 
 <script setup>
 
@@ -54,19 +63,55 @@ const props = defineProps({
 });
 </script>
 <style scoped>
-/* Align checkboxes nicely */
-.form-check-input {
+/* Parent row highlight */
+.module-parent td {
+  background: #f8f9fc;
+  border-left: 4px solid #0d6efd;
+  font-weight: 600;
+}
+
+/* Hover effect */
+.module-row:hover td {
+  background: #eef3ff;
+}
+
+/* Description cell */
+.module-label {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.parent-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.child-title {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Permissions column */
+.perm-col {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Smaller, cleaner checkbox */
+.perm-check {
+  transform: scale(1.15);
   cursor: pointer;
-  transform: scale(1.1);
 }
 
-/* Indentation for nested modules */
-td:first-child {
-  white-space: nowrap;
+/* Align checkboxes */
+td.perm-col {
+  padding: 6px 0;
 }
 
-/* Remove checkbox margin inside cell */
-.form-check {
-  min-height: auto;
+tr.module-row td {
+  border-color: #e4e7ea;
 }
+
 </style>

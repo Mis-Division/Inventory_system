@@ -1,5 +1,5 @@
 <template>
-  <div class="main-container" >
+  <div class="main-container">
 
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -77,7 +77,7 @@
     </div>
 
     <!-- TABLE -->
-    <div v-else >
+    <div v-else>
       <table class="table table-hover table-striped align-middle text-center">
         <thead class="table-secondary">
           <tr>
@@ -90,61 +90,59 @@
           </tr>
         </thead>
         <tbody>
-         <tr v-for="stock in paginatedStocks" :key="stock.ItemCode_id">
-  <td>{{ stock.ItemCode }}</td>
-  <td>{{ stock.product_name }}</td>
-  <td>{{ stock.description || '-' }}</td>
-  <td>{{ stock.accounting_code }}</td>
+          <tr v-for="stock in paginatedStocks" :key="stock.ItemCode_id">
+            <td>{{ stock.ItemCode }}</td>
+            <td>{{ stock.product_name }}</td>
+            <td>{{ stock.description || '-' }}</td>
+            <td>{{ stock.accounting_code }}</td>
 
-  <!-- TOTAL + MAIN + USABLE STOCK DISPLAY -->
-  <td class="text-center">
+            <!-- TOTAL + MAIN + USABLE STOCK DISPLAY -->
+            <td class="text-center">
 
-    <!-- BIG TOTAL STOCK -->
-    <div class="fw-bold fs-4 text-dark">
-      {{ stock.Total_Stock }}
-    </div>
+              <!-- BIG TOTAL STOCK -->
+              <div class="fw-bold fs-4 text-dark">
+                {{ stock.Total_Stock }}
+              </div>
 
-    <!-- BADGES -->
-    <div class="d-flex justify-content-center gap-1 mt-1">
+              <!-- BADGES -->
+              <div class="d-flex justify-content-center gap-1 mt-1">
 
-      <!-- MAIN STOCK -->
-      <span class="badge rounded-pill px-3 py-2"
-            style="background:#e3f2fd; color:#0d6efd; font-size: 0.75rem;">
-        Good Stock: {{ stock.Current_Stock }}
-      </span>
+                <!-- MAIN STOCK -->
+                <span class="badge rounded-pill px-3 py-2"
+                  style="background:#e3f2fd; color:#0d6efd; font-size: 0.75rem;">
+                  Good Stock: {{ stock.Current_Stock }}
+                </span>
 
-      <!-- USABLE STOCK -->
-      <span class="badge rounded-pill px-3 py-2"
-            style="background:#fff3cd; color:#b8860b; font-size: 0.75rem;">
-        Usable: {{ stock.Usable_Stock }}
-      </span>
+                <!-- USABLE STOCK -->
+                <span class="badge rounded-pill px-3 py-2"
+                  style="background:#fff3cd; color:#b8860b; font-size: 0.75rem;">
+                  Usable: {{ stock.Usable_Stock }}
+                </span>
 
-    </div>
-  </td>
+              </div>
+            </td>
 
-  <!-- ACTION MENU -->
-  <td>
-    <div @click="toggleDropdown(stock.ItemCode_id, $event)" class="cursor-pointer">
-      <i class="bi bi-three-dots"></i>
-    </div>
+            <!-- ACTION MENU -->
+            <td>
+              <div @click="toggleDropdown(stock.ItemCode_id, $event)" class="cursor-pointer">
+                <i class="bi bi-three-dots"></i>
+              </div>
 
-    <teleport to="body">
-      <Transition name="fade">
-        <div v-if="activeDropdown === stock.ItemCode_id"
-          ref="el => (dropdownRefs.value ??= {})[stock.ItemCode_id] = el"
-          class="dropdown-menu-teleport"
-          :style="getDropdownStyle(stock.ItemCode_id)"
-          @click.stop>
+              <teleport to="body">
+                <Transition name="fade">
+                  <div v-if="activeDropdown === stock.ItemCode_id"
+                    ref="el => (dropdownRefs.value ??= {})[stock.ItemCode_id] = el" class="dropdown-menu-teleport"
+                    :style="getDropdownStyle(stock.ItemCode_id)" @click.stop>
 
-          <a href="#" @click.stop.prevent="viewLedger(stock)" class="text-warning">
-            <i class="bi bi-eye me-2"></i>View Ledger
-          </a>
+                    <a href="#" @click.stop.prevent="viewLedger(stock)" class="text-warning">
+                      <i class="bi bi-eye me-2"></i>View Ledger
+                    </a>
 
-        </div>
-      </Transition>
-    </teleport>
-  </td>
-</tr>
+                  </div>
+                </Transition>
+              </teleport>
+            </td>
+          </tr>
 
         </tbody>
       </table>
@@ -400,13 +398,13 @@ const lowStockCount = computed(() => {
   overflow: hidden;
   border: none;
   transition: 0.25s ease-in-out;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Card hover */
 .status-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
 }
 
 /* Beautiful gradient overlays */
@@ -493,13 +491,13 @@ const lowStockCount = computed(() => {
 .table tbody tr {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: 0.15s ease;
 }
 
 .table tbody tr:hover {
   transform: scale(1.01);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .table td {
@@ -528,13 +526,20 @@ const lowStockCount = computed(() => {
   min-width: 170px;
   padding: 8px 0;
   border: 1px solid #d4d9e3;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
   animation: dropFade 0.18s ease-out;
 }
 
 @keyframes dropFade {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-menu-teleport a {
@@ -564,12 +569,11 @@ const lowStockCount = computed(() => {
 .btn-primary.rounded-circle {
   background: #5c8dff;
   border: none;
-  box-shadow: 0 3px 6px rgba(92,141,255,0.35);
+  box-shadow: 0 3px 6px rgba(92, 141, 255, 0.35);
 }
 
 .btn-outline-primary.rounded-circle:hover {
-  background: rgba(92,141,255,0.12);
+  background: rgba(92, 141, 255, 0.12);
   color: #3d5ce0;
 }
-
 </style>

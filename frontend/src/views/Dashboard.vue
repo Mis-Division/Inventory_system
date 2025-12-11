@@ -1,4 +1,7 @@
 <template>
+             <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   <div class="flex flex-col h-screen bg-gray-100">
     <!-- Header -->
     <HeaderBar class="flex-shrink-0" />
@@ -133,6 +136,7 @@
 
       <!-- Main content -->
       <main class=" content-wrapper">
+
         <router-view />
       </main>
     </div>
@@ -185,4 +189,59 @@ export default {
   margin-top: 3.5rem;
   /* mt-14 (56px) */
 }
+/* ============================
+   PREMIUM FLOATING ORBS (APPLE)
+   ============================ */
+.orb {
+  position: fixed;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+  animation: float 12s ease-in-out infinite alternate;
+}
+
+/* ORB COLORS (APPLE-LIKE GRADIENTS) */
+.orb-1 {
+  background: radial-gradient(circle at 30% 30%, #4ade80, #22c55e, #16a34a);
+  top: -80px;
+  left: -70px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  background: radial-gradient(circle at 70% 40%, #86efac, #4ade80, #22c55e);
+  bottom: -100px;
+  right: -50px;
+  animation-delay: 2s;
+  width: 380px;
+  height: 380px;
+}
+
+.orb-3 {
+  background: radial-gradient(circle at 50% 60%, #bbf7d0, #86efac, #4ade80);
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 1s;
+  width: 260px;
+  height: 260px;
+}
+
+/* FLOAT ANIMATION */
+@keyframes float {
+  0%   { transform: translate(-10px, -10px) scale(1); }
+  50%  { transform: translate(20px, 15px) scale(1.05); }
+  100% { transform: translate(-15px, 5px) scale(0.95); }
+}
+
+/* ENSURE CONTENT IS ABOVE ORBS */
+.content-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
 </style>

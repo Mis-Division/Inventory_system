@@ -87,6 +87,96 @@ class StockController extends Controller
 }
 
 
+//  public function ledgerById($itemCodeId)
+// {
+//     // Validate item exists
+//     $itemExists = DB::table('tbl_item_code')
+//         ->where('ItemCode_id', $itemCodeId)
+//         ->exists();
+
+//     if (!$itemExists) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'No data found.'
+//         ], 404);
+//     }
+
+//     $ledger = DB::table('tbl_item_code as i')
+
+//         // TRANSACTIONS
+//         ->leftJoin('tbl_transactions as t', function ($join) {
+//             $join->on('i.ItemCode_id', '=', 't.ItemCode_id')
+//                  ->where('t.status', 'ACTIVE');
+//         })
+
+//         // STOCKS
+//         ->leftJoin('tbl_stocks as s', 's.ItemCode_id', '=', 'i.ItemCode_id')
+
+//         // MCRT ITEMS → JOIN USING REGEXP TO EXTRACT NUMBER FROM REFERENCE
+//         ->leftJoin('tbl_mcrt_items as mci', function ($join) {
+//             $join->on('mci.itemcode_id', '=', 't.ItemCode_id')
+//                  ->on('mci.mcrt_id', '=', DB::raw("
+//                     CAST(REGEXP_REPLACE(t.reference, '[^0-9]', '') AS UNSIGNED)
+//                  "));
+//         })
+
+//         ->selectRaw("
+//             i.ItemCode_id,
+//             i.ItemCode,
+//             i.product_name,
+
+//             t.transaction_id,
+//             t.created_at,
+//             t.movement_type,
+//             t.transaction_type,
+//             t.reference,
+//             t.remarks,
+
+//             /* FINAL REMARKS LOGIC */
+//             CASE
+//                 WHEN t.transaction_type = 'RETURN'
+//                     THEN COALESCE(mci.condition, '-')
+//                 WHEN t.transaction_type = 'REQUEST'
+//                     THEN COALESCE(t.remarks, '-')
+//                 ELSE '-'
+//             END AS remarks,
+
+//             /* DEBIT / CREDIT */
+//             CASE WHEN t.movement_type = 'IN'  THEN t.quantity ELSE 0 END AS Debit,
+//             CASE WHEN t.movement_type = 'OUT' THEN t.quantity ELSE 0 END AS Credit,
+
+//             /* RUNNING BALANCE */
+//             COALESCE(
+//                 SUM(
+//                     CASE
+//                         WHEN t.movement_type = 'IN'  THEN t.quantity
+//                         WHEN t.movement_type = 'OUT' THEN -t.quantity
+//                         ELSE 0
+//                     END
+//                 ) OVER (
+//                     PARTITION BY t.ItemCode_id
+//                     ORDER BY t.created_at, t.transaction_id
+//                     ROWS UNBOUNDED PRECEDING
+//                 ),
+//             0) AS Running_Balance,
+
+//             /* STOCKS */
+//             COALESCE(s.quantity_onhand, 0) AS main_stock,
+//             COALESCE(s.usable_stock, 0) AS usable_stock,
+//             (COALESCE(s.quantity_onhand,0) + COALESCE(s.usable_stock,0)) AS Current_Stock
+//         ")
+
+//         ->where('i.ItemCode_id', $itemCodeId)
+//         ->orderBy('t.created_at', 'asc')
+//         ->orderBy('t.transaction_id', 'asc')
+//         ->get();
+
+//     return response()->json([
+//         'success' => true,
+//         'data' => $ledger,
+//     ]);
+// }
+
 public function ledgerById($itemCodeId)
 {
     // Validate item exists
@@ -101,6 +191,17 @@ public function ledgerById($itemCodeId)
         ], 404);
     }
 
+    /* ==========================================
+       TOTAL RR AMOUNT PER ITEM (from total_cost)
+       ========================================== */
+    $totalAmount = DB::table('tbl_receive_items')
+        ->where('ItemCode_id', $itemCodeId)
+        ->sum('total_cost');
+
+
+    /* ==========================================
+       LEDGER QUERY (RR amount only)
+       ========================================== */
     $ledger = DB::table('tbl_item_code as i')
 
         // TRANSACTIONS
@@ -112,7 +213,14 @@ public function ledgerById($itemCodeId)
         // STOCKS
         ->leftJoin('tbl_stocks as s', 's.ItemCode_id', '=', 'i.ItemCode_id')
 
-        // MCRT ITEMS → JOIN USING REGEXP TO EXTRACT NUMBER FROM REFERENCE
+        // RR ITEMS — JOIN ONLY WHEN TRANSACTION IS RR (RECEIVED)
+        ->leftJoin('tbl_receive_items as ri', function ($join) {
+            $join->on('ri.ItemCode_id', '=', 't.ItemCode_id')
+                 ->whereRaw("t.transaction_type = 'RECEIVED'")
+                 ->whereRaw("ri.r_id = CAST(REGEXP_REPLACE(t.reference, '[^0-9]', '') AS UNSIGNED)");
+        })
+
+        // MCRT ITEMS (hang muna logic)
         ->leftJoin('tbl_mcrt_items as mci', function ($join) {
             $join->on('mci.itemcode_id', '=', 't.ItemCode_id')
                  ->on('mci.mcrt_id', '=', DB::raw("
@@ -132,7 +240,7 @@ public function ledgerById($itemCodeId)
             t.reference,
             t.remarks,
 
-            /* FINAL REMARKS LOGIC */
+            /* REMARKS HANDLING */
             CASE
                 WHEN t.transaction_type = 'RETURN'
                     THEN COALESCE(mci.condition, '-')
@@ -141,7 +249,7 @@ public function ledgerById($itemCodeId)
                 ELSE '-'
             END AS remarks,
 
-            /* DEBIT / CREDIT */
+            /* QUANTITY IN/OUT */
             CASE WHEN t.movement_type = 'IN'  THEN t.quantity ELSE 0 END AS Debit,
             CASE WHEN t.movement_type = 'OUT' THEN t.quantity ELSE 0 END AS Credit,
 
@@ -156,27 +264,37 @@ public function ledgerById($itemCodeId)
                 ) OVER (
                     PARTITION BY t.ItemCode_id
                     ORDER BY t.created_at, t.transaction_id
-                    ROWS UNBOUNDED PRECEDING
                 ),
             0) AS Running_Balance,
 
             /* STOCKS */
             COALESCE(s.quantity_onhand, 0) AS main_stock,
             COALESCE(s.usable_stock, 0) AS usable_stock,
-            (COALESCE(s.quantity_onhand,0) + COALESCE(s.usable_stock,0)) AS Current_Stock
+            (COALESCE(s.quantity_onhand,0) + COALESCE(s.usable_stock,0)) AS Current_Stock,
+
+            /* ---- AMOUNT PER ROW ---- */
+            CASE
+                WHEN t.transaction_type = 'RECEIVED' THEN ri.total_cost
+                ELSE 0
+            END AS amount,
+
+            /* ---- TOTAL AMOUNT (RR ONLY) ---- */
+            $totalAmount AS totalAmount
         ")
 
         ->where('i.ItemCode_id', $itemCodeId)
-        ->orderBy('t.created_at', 'asc')
-        ->orderBy('t.transaction_id', 'asc')
+        ->orderBy('t.created_at', 'ASC')
+        ->orderBy('t.transaction_id', 'ASC')
         ->get();
+
 
     return response()->json([
         'success' => true,
-        'data' => $ledger,
+        'item_id' => $itemCodeId,
+        'total_amount_per_item' => $totalAmount ?? 0,
+        'data' => $ledger
     ]);
 }
-
 
 
 

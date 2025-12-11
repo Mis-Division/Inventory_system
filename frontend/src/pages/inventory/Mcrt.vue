@@ -19,7 +19,7 @@
       </div>
 
       <!-- ADD BUTTON -->
-      <button class="btn btn-primary" @click="openCreate">
+      <button v-if="canAddCreditTicket" class="btn btn-primary" @click="openCreate">
         <i class="bi bi-plus-circle me-1"></i> Add MCRT
       </button>
     </div>
@@ -41,7 +41,7 @@
       <div class="col-md-6">
         <div class="status-card bg-warning">
           <div>
-            <h6 class="label-text">For Repair</h6>
+            <h6 class="label-text">Ussable</h6>
             <h3 class="value-text">{{ forRepairCount }}</h3>
           </div>
           <i class="bi bi-wrench-adjustable-circle-fill status-icon"></i>
@@ -56,7 +56,7 @@
     </div>
 
     <!-- ===== TABLE ===== -->
-    <div v-else >
+    <div v-else>
       <table class="table table-hover table-striped align-middle text-center">
         <thead class="table-secondary">
           <tr>
@@ -90,14 +90,24 @@
                 <Transition name="fade">
                   <div v-if="activeDropdown === mcrt.mcrt_id" ref="el => (dropdownRefs.value ??= {})[mcrt.mcrt_id] = el"
                     class="dropdown-menu-teleport" :style="getDropdownStyle(mcrt.mcrt_id)" @click.stop>
-                    <a href="#" @click.prevent="openUpdate(mcrt)" class="text-primary">
-                      <i class="bi bi-pencil me-2"></i>Update
+
+                    <!-- UPDATE -->
+                    <a href="#" @click.prevent="openUpdate(mcrt)" class="text-primary" v-if="canEditCreditTicket">
+                      <i class="bi bi-pencil me-2"></i> Update
                     </a>
 
-                    <a href="#" @click.prevent="openDelete(mcrt)" class="text-danger">
-                      <i class="bi bi-trash me-2"></i>Delete
+                    <!-- DELETE -->
+                    <a href="#" @click.prevent="openDelete(mcrt)" class="text-danger" v-if="canDeleteCreditTicket">
+                      <i class="bi bi-trash me-2"></i> Delete
                     </a>
+
+                    <!-- ❌ NO PERMISSION -->
+                    <div v-if="!canEditCreditTicket && !canDeleteCreditTicket" class="text-muted no-permission">
+                      <i class="bi bi-lock me-2"></i>No permission
+                    </div>
+
                   </div>
+
                 </Transition>
               </teleport>
 
@@ -129,14 +139,15 @@
     <!-- MODALS -->
     <UpdateMcrt v-if="showUpdateModal" :item="selectedItem" @close="closeUpdate" @updated="reload" />
     <DeleteMcrt v-if="showDeleteModal" :item="selectedItem" @close="closeDelete" @confirm="confirmDelete" />
-    <AddMcrt v-if="showAddModal" @close="showAddModal = false"   @saved="handleAddSuccess" />
+    <AddMcrt v-if="showAddModal" @close="showAddModal = false" @saved="handleAddSuccess" />
 
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
+import { ref, onMounted, nextTick, onBeforeUnmount, computed } from "vue";
 import api from "../../services/api";
+import { userStore } from "../../stores/userStore";
 import UpdateMcrt from "../../components/MCRT/UpdateMcrt.vue";
 import DeleteMcrt from "../../components/MCRT/DeleteMcrt.vue";
 import AddMcrt from "../../components/MCRT/AddMcrt.vue";
@@ -165,7 +176,11 @@ const showAddModal = ref(false);
 function openCreate() {
   showAddModal.value = true;
 }
+//users permissions
 
+const canAddCreditTicket = computed(() => userStore.canAddCreditTicket);
+const canEditCreditTicket = computed(() => userStore.canEditCreditTicket);
+const canDeleteCreditTicket = computed(() => userStore.canDeleteCreditTicket);
 
 /* LOAD DATA */
 async function loadData(page = 1) {
@@ -191,8 +206,8 @@ function computeCounts() {
   mcrtList.value.forEach(mcrt => {
     if (mcrt.items) {
       mcrt.items.forEach(i => {
-        if (i.condition === "Good as new") good++;
-        if (i.condition === "For Repair") repair++;
+        if (i.condition === "G") good++;
+        if (i.condition === "U") repair++;
       });
     }
   });
@@ -349,7 +364,7 @@ function handleAddSuccess() {
 .main-container input.form-control:focus {
   border-color: #4c82ff;
   background: white;
-  box-shadow: 0 0 0 3px rgba(76,130,255,0.25);
+  box-shadow: 0 0 0 3px rgba(76, 130, 255, 0.25);
 }
 
 .clear-icon {
@@ -385,7 +400,7 @@ function handleAddSuccess() {
   justify-content: space-between;
   align-items: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   transition: 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -402,7 +417,7 @@ function handleAddSuccess() {
 
 .status-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .label-text {
@@ -440,13 +455,13 @@ function handleAddSuccess() {
 .table tbody tr {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
   transition: 0.18s ease;
 }
 
 .table tbody tr:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 14px rgba(0,0,0,0.14);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.14);
 }
 
 .table td {
@@ -470,19 +485,26 @@ function handleAddSuccess() {
 
 .dropdown-menu-teleport {
   position: absolute;
-  background: rgba(255,255,255,0.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(8px);
   border-radius: 14px;
   min-width: 160px;
   padding: 8px 0;
   border: 1px solid #d2d7e2;
-  box-shadow: 0 10px 30px rgba(60,90,255,0.25);
+  box-shadow: 0 10px 30px rgba(60, 90, 255, 0.25);
   animation: dropdownPop 0.15s ease-out;
 }
 
 @keyframes dropdownPop {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-menu-teleport a {
@@ -512,12 +534,11 @@ function handleAddSuccess() {
 .btn-primary.rounded-circle {
   background: #4c82ff;
   border: none;
-  box-shadow: 0 3px 6px rgba(76,130,255,0.35);
+  box-shadow: 0 3px 6px rgba(76, 130, 255, 0.35);
 }
 
 .btn-outline-primary.rounded-circle:hover {
-  background: rgba(76,130,255,0.1);
+  background: rgba(76, 130, 255, 0.1);
   color: #355dcc;
 }
-
 </style>

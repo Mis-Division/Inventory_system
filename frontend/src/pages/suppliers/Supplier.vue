@@ -5,8 +5,8 @@
       <div class="w-100">
         <h1 class="m-0 mb-3">
           <i class="bi bi-info-circle text-primary"></i> Supplier
-<!-- dito para mag uplaod ng supplier via excel format .csv -->
-            <!-- <input type="file" @change="uploadFile" class="form-control"> -->
+          <!-- dito para mag uplaod ng supplier via excel format .csv -->
+          <!-- <input type="file" @change="uploadFile" class="form-control"> -->
         </h1>
       </div>
 
@@ -34,7 +34,7 @@
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
     <!-- Supplier Table -->
-    <div v-if="!loading" >
+    <div v-if="!loading">
       <table class="table table-hover  align-middle mb-2  text-center">
         <thead class="table-secondary">
           <tr>
@@ -72,6 +72,10 @@
                       v-if="canDeleteSupplier">
                       <i class="bi bi-trash me-2"></i>
                       Delete</a>
+
+                       <div v-if="!canEditSupplier && !canDeleteSupplier" class="text-muted no-permission">
+                      <i class="bi bi-lock me-2"></i>No permission
+                    </div>
                   </div>
                 </Transition>
               </teleport>
@@ -311,9 +315,9 @@ function showErrors(message) {
     error.value = "";
   }, 5000);
 }
-function clearSearch(){
+function clearSearch() {
   searchQuery.value = "";
-   fetchSuppliers();
+  fetchSuppliers();
 }
 
 //upload excel file
@@ -339,15 +343,20 @@ function clearSearch(){
 .table td {
   vertical-align: middle;
 }
+
 .pagination {
-  align-items: center;        /* Centers the pagination items vertically */
-  display: flex !important;   /* Force flex to apply alignment */
-  margin-top: 10px;           /* Adjust spacing above */
+  align-items: center;
+  /* Centers the pagination items vertically */
+  display: flex !important;
+  /* Force flex to apply alignment */
+  margin-top: 10px;
+  /* Adjust spacing above */
 }
 
 .pagination .page-item {
   display: flex;
-  align-items: center;       /* Center each button vertically */
+  align-items: center;
+  /* Center each button vertically */
 }
 
 .pagination .page-link {
@@ -355,5 +364,4 @@ function clearSearch(){
   align-items: center !important;
   justify-content: center !important;
 }
-
 </style>

@@ -87,6 +87,11 @@
                                                 class="dropdown-item-mod text-danger">
                                                 <i class="bi bi-trash me-2"></i>Delete
                                             </a>
+
+                                            <div v-if="!canEditReceivingOrder && !canDeleteReceivingOrder"
+                                                class="text-muted no-permission">
+                                                <i class="bi bi-lock me-2"></i>No permission
+                                            </div>
                                         </div>
                                     </Transition>
                                 </teleport>
@@ -395,7 +400,7 @@ function clearSearch() {
 }
 
 .icon-box {
-    
+
     padding: 12px;
     border-radius: 12px;
 }

@@ -288,7 +288,7 @@ const hasAccess = (moduleName) => {
 }
 
 .nav-item-link:hover {
-  background: #3a7aba;
+  background: radial-gradient(circle at 30% 30%, #4ade80, #22c55e, #16a34a);
   color: white;
 }
 

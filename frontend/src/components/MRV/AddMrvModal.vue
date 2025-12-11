@@ -48,7 +48,7 @@
 
                     <hr class="my-4" />
 
-                    <!-- Add Row Button -->
+
                     <!-- Add Row Button + Usable Filter -->
                     <div class="d-flex justify-content-between align-items-center mb-2">
 
@@ -73,7 +73,7 @@
                         <table class="table align-middle text-center">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 20%;">Material Code</th>
+                                    <th style="width: 20%;">ITEM Code</th>
                                     <th style="width: 35%;">Description</th>
                                     <th style="width: 20%;">Units</th>
                                     <th style="width: 10%;">Stock Qty</th>
@@ -89,9 +89,11 @@
                                         <select class="form-select text-center" v-model="item.id"
                                             :id="'itemSelect' + index" :disabled="item.existing" style="width: 100%;">
                                             <option value="">Select Material Code</option>
-                                            <option v-for="s in filteredStockList" :key="s.id" :value="s.id">
+                                            <option v-for="s in filteredStockList" :key="s.id" :value="s.id"
+                                                :data-product="s.product_name">
                                                 {{ s.Material_Code }}
                                             </option>
+
 
                                         </select>
                                     </td>
@@ -117,11 +119,6 @@
                                     <td>
                                         <input type="number" class="form-control" v-model="item.requested_qty"
                                             min="1" />
-
-
-                                        <div v-if="isQtyInvalid(item)" class="text-danger small">
-                                            * Requested qty exceeds usable stock
-                                        </div>
                                     </td>
 
                                     <!-- Delete Row -->
@@ -146,7 +143,10 @@
                 <!-- Footer -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-warning" @click="$emit('close')">Close</button>
-                    <button class="btn btn-success" @click="saveMrv">Create</button>
+                    <button class="btn btn-success" @click="saveMrv">
+                        Create
+                    </button>
+
                 </div>
 
             </div>
@@ -321,23 +321,49 @@ async function fetchStock() {
 function initMaterialSelectRow(index) {
     const selector = "#itemSelect" + index;
 
+    // Destroy existing Select2 instance if exists
     if ($(selector).data("select2")) $(selector).select2("destroy");
 
-    $(selector)
-        .select2({
-            theme: "bootstrap-5",
-            placeholder: "Material Code",
-            dropdownParent: $(".modal.show"),
-            width: "100%"
-        })
-        .on("change", function () {
-            const selectedId = $(this).val();
-            stockItems.value[index].id = selectedId;
-            updateStockInfo(index, selectedId);
-        });
+    $(selector).select2({
+        theme: "bootstrap-5",
+        placeholder: "Search Code....",
+        dropdownParent: $(".modal.show"),
+        width: "100%",
 
+        // ⭐ CUSTOM MATCHER: search by code + product_name
+        matcher: function (params, data) {
+            // If search box is empty → show all
+            if (!params.term || params.term.trim() === "") {
+                return data;
+            }
+
+            const term = params.term.toLowerCase();
+
+            // Material Code (default select2 text)
+            const code = (data.text || "").toLowerCase();
+
+            // Product Name (from data-product attribute)
+            const product = (data.element?.dataset?.product || "").toLowerCase();
+
+            // Match if either contains the search typed
+            if (code.includes(term) || product.includes(term)) {
+                return data;
+            }
+
+            // Otherwise hide the option
+            return null;
+        }
+    })
+    .on("change", function () {
+        const selectedId = $(this).val();
+        stockItems.value[index].id = selectedId;
+        updateStockInfo(index, selectedId);
+    });
+
+    // Reapply selected value (important after init)
     $(selector).val(stockItems.value[index].id).trigger("change");
 }
+
 
 function initMaterialSelect() {
     stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
@@ -395,26 +421,52 @@ function removeStock(index) {
    SAVE MRV
 ============================================================ */
 async function saveMrv() {
-    showError("");
+    showError(""); // Clear old errors
 
     try {
-        if (!form.value.requested_by || !form.value.department || !form.value.approved_by)
+        // Required fields
+        if (!form.value.requested_by || !form.value.department || !form.value.approved_by) {
             return showError("Requested By, Department, and Department Head are required!");
+        }
 
-        if (!stockItems.value.length)
+        if (!stockItems.value.length) {
             return showError("Add at least 1 item!");
+        }
 
-        // ⭐ NEW VALIDATION ONLY WHEN USABLE MODE IS ON
-        if (usableOnly.value) {
-            for (const item of stockItems.value) {
-                if (Number(item.requested_qty) > Number(item.Qty_usable)) {
+        // ⭐ UNIVERSAL VALIDATION (always check stock limit)
+        for (const item of stockItems.value) {
+            const req = Number(item.requested_qty);
+            const usable = Number(item.Qty_usable);
+            const main = Number(item.Qty_main);
+
+            if (!item.id) {
+                return showError("Please select a material code.");
+            }
+
+            if (!req || req < 1) {
+                return showError(`Requested quantity must be at least 1 for ${item.product_name}.`);
+            }
+
+            // UsableOnly mode
+            if (usableOnly.value) {
+                if (req > usable) {
                     return showError(
-                        `Requested quantity (${item.requested_qty}) is greater than usable stock (${item.Qty_usable}).`
+                        `Requested quantity (${req}) exceeds usable stock (${usable}) for ${item.product_name}.`
+                    );
+                }
+            }
+
+            // Normal mode (main stock)
+            if (!usableOnly.value) {
+                if (req > main) {
+                    return showError(
+                        `Requested quantity (${req}) exceeds available stock (${main}) for ${item.product_name}.`
                     );
                 }
             }
         }
 
+        // === PAYLOAD ===
         const payload = {
             ...form.value,
             usable_only: usableOnly.value,
@@ -439,6 +491,9 @@ async function saveMrv() {
 }
 
 
+
+
+
 /* ============================================================
    ERROR HANDLER
 ============================================================ */
@@ -446,6 +501,9 @@ function showError(msg) {
     errorMessage.value = msg;
     setTimeout(() => (errorMessage.value = ""), 4000);
 }
+
+
+
 
 /* ============================================================
    SUCCESS MODAL CLOSE
@@ -463,14 +521,45 @@ onMounted(async () => {
     await fetchEmployees();
 });
 
-function isQtyInvalid(item) {
-    if (!usableOnly.value) return false;            // off = no validation
-    if (!item.id) return false;                     // no item selected
-    if (!item.requested_qty) return false;          // must input first
-    if (item.Qty_usable == null) return false;      // avoid undefined
+watch(
+    stockItems,
+    (newItems) => {
+        for (const item of newItems) {
+            if (!item.id) continue;
 
-    return Number(item.requested_qty) > Number(item.Qty_usable);
-}
+            const req = Number(item.requested_qty);
+            const usable = Number(item.Qty_usable);
+            const main = Number(item.Qty_main);
+
+            // No qty = no error
+            if (!req || req < 1) {
+                errorMessage.value = "";
+                continue;
+            }
+
+            // Usable mode validation
+            if (usableOnly.value && req > usable) {
+                showError(
+                    `Requested qty (${req}) exceeds usable stock (${usable}) for ${item.product_name}.`
+                );
+                return;
+            }
+
+            // Main stock validation
+            if (!usableOnly.value && req > main) {
+                showError(
+                    `Requested qty (${req}) exceeds available stock (${main}) for ${item.product_name}.`
+                );
+                return;
+            }
+        }
+
+        // All items valid → clear error
+        errorMessage.value = "";
+    },
+    { deep: true }
+);
+
 
 </script>
 
