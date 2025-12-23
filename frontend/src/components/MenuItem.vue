@@ -3,9 +3,7 @@
     <nav class="nav flex-column gap-1">
 
       <!-- Dashboard -->
-      <router-link v-if="hasAccess('Dashboard')" 
-        to="/dashboard" 
-        class="nav-item-link">
+      <router-link v-if="hasAccess('Dashboard')" to="/dashboard" class="nav-item-link">
         <i class="bi bi-house-door me-1 icon"></i>
         <span>Dashboard</span>
       </router-link>
@@ -17,19 +15,18 @@
             <i class="bi bi-list me-1 icon"></i>
             <span>Inventory</span>
           </div>
-          <i class="bi caret" 
-             :class="expanded.includes('inventory') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
+          <i class="bi caret" :class="expanded.includes('inventory') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
           </i>
         </div>
 
         <ul v-show="expanded.includes('inventory')" class="submenu">
 
-          <li v-if="hasAccess('Stocks')">
-            <router-link to="/dashboard/stocks" class="nav-item-link">
-              <i class="bi bi-box-seam me-1 icon"></i> Stocks
+
+          <li v-if="hasAccess('Request Materials')">
+            <router-link to="/dashboard/rfm" class="nav-item-link">
+              <i class="bi bi-clipboard-check me-1 icon"></i> Request for Materials
             </router-link>
           </li>
-
           <li v-if="hasAccess('Material Requisition Voucher')">
             <router-link to="/dashboard/mrv" class="nav-item-link">
               <i class="bi bi-ticket-perforated me-1 icon"></i> Material Requisition Vouchers
@@ -44,8 +41,7 @@
                 <i class="bi bi-ticket me-1 icon"></i>
                 <span>Material Charge Ticket</span>
               </div>
-              <i class="bi caret"
-                 :class="expanded.includes('mct') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
+              <i class="bi caret" :class="expanded.includes('mct') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
               </i>
             </div>
 
@@ -95,7 +91,7 @@
               <i class="bi bi-credit-card me-1 icon"></i> Material Credit Ticket
             </router-link>
           </li>
-          
+
           <li v-if="hasAccess('Material Salvage Ticket')">
             <router-link to="/dashboard/mst" class="nav-item-link">
               <i class="bi bi-exclamation-triangle me-1 icon"></i>Material Salvage Ticket
@@ -107,6 +103,12 @@
               <i class="bi bi-clipboard me-1 icon"></i> Memorandum Receipts
             </router-link>
           </li>
+          <li v-if="hasAccess('Stocks')">
+            <router-link to="/dashboard/stocks" class="nav-item-link">
+              <i class="bi bi-box-seam me-1 icon"></i> Stocks
+            </router-link>
+          </li>
+
         </ul>
       </div>
 
@@ -146,8 +148,7 @@
             <span>Reports</span>
           </div>
 
-          <i class="bi caret" 
-             :class="expanded.includes('Reports') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
+          <i class="bi caret" :class="expanded.includes('Reports') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
           </i>
         </div>
 
@@ -177,7 +178,7 @@
             </router-link>
           </li>
 
-            <li v-if="hasAccess('MCRT Reports')">
+          <li v-if="hasAccess('MCRT Reports')">
             <router-link to="/dashboard/reports_Others" class="nav-item-link">
               <i class="bi bi-credit-card me-1 icon"></i> MCRT
             </router-link>
@@ -213,8 +214,7 @@
             <span>Administration</span>
           </div>
 
-          <i class="bi caret"
-             :class="expanded.includes('administration') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
+          <i class="bi caret" :class="expanded.includes('administration') ? 'bi-caret-up-fill' : 'bi-caret-down-fill'">
           </i>
         </div>
 
@@ -271,6 +271,7 @@ const hasAccess = (moduleName) => {
   overflow-y: auto;
   scrollbar-width: none;
 }
+
 .sidebar::-webkit-scrollbar {
   display: none;
 }

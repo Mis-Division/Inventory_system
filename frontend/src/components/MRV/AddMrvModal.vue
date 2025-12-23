@@ -1,579 +1,484 @@
 <template>
-    <!-- Modal -->
-    <div class="modal fade show" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered modal-l modal-auto-fit" role="document">
-            <div class="modal-content">
+    <div class="modal fade show" tabindex="-1" style="display:block; background:rgba(0,0,0,0.55)">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-auto-fit">
+            <div class="modal-content d-flex flex-column mrv-modal rounded-4 overflow-hidden">
 
-                <!-- Header -->
+                <!-- ================= HEADER ================= -->
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-info-circle "></i> Material Requisition Voucher
+                        <i class="bi bi-info-circle me-1"></i>
+                        Material Requisition Voucher
                     </h5>
-                    <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
+                    <button type="button" class="btn-close btn-close-white" @click="$emit('close')"></button>
                 </div>
 
-                <!-- Body -->
-                <div class="modal-body">
+                <!-- ================= BODY ================= -->
+                <div class="modal-body flex-grow-1 overflow-hidden">
 
-                    <!-- Form -->
-                    <form class="row g-3">
-                        <!-- REQUEST BY (SEARCHABLE DROPDOWN from apiRemote/employees) -->
-                        <div class="col-md-4">
-                            <label class="form-label">Request By</label>
-                            <select id="employeeSelect" class="form-select"></select>
+                    <!-- ================= HEADER FORM ================= -->
+                    <form class="row g-3 mb-2">
+                        <div class="col-md-4 position-relative">
+                            <label class="form-label fw-semibold">RFM #</label>
+                            <input type="text" class="form-control pe-5" v-model="rfmNumber"
+                                placeholder="Enter RFM Number" @keyup.enter="fetchRfm" />
+                            <i v-if="rfmLoaded" class="bi bi-x-circle-fill text-muted clear-icon" @click="clearRfm"></i>
                         </div>
 
-                        <!-- AUTO-FILLED DEPARTMENT -->
                         <div class="col-md-4">
-                            <label class="form-label">Department</label>
-                            <input type="text" class="form-control" v-model="form.department" disabled />
+                            <label class="form-label fw-semibold">Requested By</label>
+                            <input class="form-control" v-model="form.requested_by" disabled />
                         </div>
 
-                        <!-- DEPARTMENT HEAD (UNCHANGED) -->
                         <div class="col-md-4">
-                            <label class="form-label">Department Head</label>
-                            <select class="form-select" v-model="form.approved_by" required>
-                                <option value="">Please Select Department Head</option>
-                                <option value="MARLON O. SALINAS">MARLON O. SALINAS</option>
-                                <option value="Engr. Teodorico B. Dumlao">Engr. Teodorico B. Dumlao</option>
-                                <option value="Engr. Bonifacio Bibat Jr.">Engr. Bonifacio Bibat Jr.</option>
-                                <option value="Leizza M. Niguidula, CPA">Leizza M. Niguidula, CPA</option>
-                                <option value="Manilyn C. Baldos, CPAt">Manilyn C. Baldos, CPAt</option>
-                                <option value="Bonaleth M. Solima, CPA">Bonaleth M. Solima, CPA</option>
-                                <option value="GLEN MARK F. AQUINO, CPA">GLEN MARK F. AQUINO, CPA</option>
-                            </select>
+                            <label class="form-label fw-semibold">Department</label>
+                            <input class="form-control" v-model="form.department" disabled />
                         </div>
 
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Department Head</label>
+                            <input class="form-control" v-model="form.approved_by" disabled />
+                        </div>
                     </form>
 
-                    <hr class="my-4" />
+                    <!-- ================= STATUS MESSAGE ================= -->
+                    <!-- FINAL RULE: ANY EXISTING MRV = BLOCK ADD FLOW -->
+                   
 
+                    <hr class="my-2" />
 
-                    <!-- Add Row Button + Usable Filter -->
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-
-                        <!-- Checkbox LEFT SIDE -->
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" v-model="usableOnly" id="usableOnlyCheck">
-                            <label class="form-check-label" for="usableOnlyCheck">
-                                Show Usable Items Only
-                            </label>
-                        </div>
-
-
-                        <!-- Add button RIGHT SIDE -->
-                        <button class="btn btn-success btn-sm" @click="addItem" type="button">
-                            <i class="bi bi-plus-lg"></i> Add Item
+                    <!-- ================= ADD ITEM BUTTON ================= -->
+                    <div class="d-flex justify-content-end mb-2">
+                        <button class="btn btn-sm btn-success" type="button" @click="addNewItem" :disabled="isLocked">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Add Item
                         </button>
                     </div>
 
-
-                    <!-- Item Table -->
-                    <div class="table_responsive" ref="tableWrapper" style="max-height: 300px; overflow-y: auto;">
-                        <table class="table align-middle text-center">
+                    <!-- ================= ITEMS TABLE ================= -->
+                    <div class="table-responsive mrv-table-wrapper">
+                        <table class="table table-sm align-middle text-center">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 20%;">ITEM Code</th>
-                                    <th style="width: 35%;">Description</th>
-                                    <th style="width: 20%;">Units</th>
-                                    <th style="width: 10%;">Stock Qty</th>
-                                    <th style="width: 10%;">Request Qty</th>
-                                    <th style="width: 5%;">Actions</th>
+                                    <th class="text-start">Material</th>
+                                    <th>Units</th>
+                                    <th>Requested</th>
+                                    <th>Issued</th>
+                                    <th>Stocks</th>
+                                    <th>Remarks</th>
+                                    <th width="40"></th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in stockItems" :key="index">
 
-                                    <!-- Material Code -->
-                                    <td>
-                                        <select class="form-select text-center" v-model="item.id"
-                                            :id="'itemSelect' + index" :disabled="item.existing" style="width: 100%;">
-                                            <option value="">Select Material Code</option>
-                                            <option v-for="s in filteredStockList" :key="s.id" :value="s.id"
-                                                :data-product="s.product_name">
-                                                {{ s.Material_Code }}
-                                            </option>
-
-
-                                        </select>
+                            <!-- SHOW ITEMS ONLY WHEN ADD MRV IS ALLOWED -->
+                            <tbody v-if="showItems">
+                                <tr v-for="(item, i) in items" :key="i">
+                                    <td class="text-start">
+                                        <template v-if="item.is_new">
+                                            <select class="form-select form-select-sm" :id="'itemSelect' + i"></select>
+                                        </template>
+                                        <template v-else>
+                                            <strong>{{ item.material_code }}</strong><br />
+                                            <small class="text-muted">
+                                                {{ item.material_description }}
+                                            </small>
+                                        </template>
                                     </td>
 
-                                    <!-- Description -->
-                                    <td>
-                                        <input type="text" class="form-control" v-model="item.product_name" disabled />
+                                    <td>{{ item.units }}</td>
+
+                                    <td class="fw-semibold">
+                                        {{ item.is_new ? '-' : item.requested_qty }}
                                     </td>
 
-                                    <!-- Units -->
                                     <td>
-                                        <input type="text" class="form-control" v-model="item.units" disabled />
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                            v-model.number="item.issued_qty"
+                                            :max="item.is_new ? item.stocks : item.requested_qty" min="0"
+                                            :disabled="isLocked" />
                                     </td>
 
-                                    <!-- Stock Qty -->
-                                    <td>
-                                        <input type="text" class="form-control" :value="getDisplayedQty(item)"
-                                            disabled />
+                                    <td>{{ item.stocks }}</td>
 
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" v-model="item.remarks"
+                                            placeholder="Remarks" :disabled="isLocked" />
                                     </td>
 
-                                    <!-- Request Qty -->
                                     <td>
-                                        <input type="number" class="form-control" v-model="item.requested_qty"
-                                            min="1" />
-                                    </td>
-
-                                    <!-- Delete Row -->
-                                    <td>
-                                        <button type="button" class="btn btn-danger btn-sm" @click="removeStock(index)">
-                                            <i class="bi bi-trash"></i>
+                                        <button class="btn btn-sm btn-outline-danger" type="button"
+                                            @click="removeItem(i)" :disabled="isLocked">
+                                            <i class="bi bi-x-circle"></i>
                                         </button>
                                     </td>
+                                </tr>
+                            </tbody>
 
+                            <!-- EMPTY / LOCKED STATE -->
+                            <tbody v-else>
+                                <tr>
+                                    <td colspan="7" class="text-muted py-3">
+                                        {{ isLocked
+                                            ? 'Items are not shown in Add MRV. Because the MRV is deleted.'
+                                            : 'Enter RFM # to load items'
+                                        }}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Error Message -->
-                    <div v-if="errorMessage" class="alert alert-danger py-2 mt-2">
+                    <!-- ================= ERROR MESSAGE ================= -->
+                    <div v-if="errorMessage" class="alert alert-danger mt-2">
                         {{ errorMessage }}
                     </div>
-
                 </div>
 
-                <!-- Footer -->
+                <!-- ================= FOOTER ================= -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" @click="$emit('close')">Close</button>
-                    <button class="btn btn-success" @click="saveMrv">
-                        Create
+                    <button class="btn btn-secondary" type="button" @click="$emit('close')">
+                        Close
                     </button>
 
+                    <button class="btn btn-success" type="button" @click="saveMrv" :disabled="isLocked">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Create MRV
+                    </button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div v-if="showSuccess" class="custom-modal-backdrop">
-        <div class="custom-modal">
-            <div class="custom-header bg-success text-white">
-                <h5 class="mb-0">Success</h5>
-            </div>
-            <div class="custom-body text-center">
-                ✅ Material Requisition Voucher Successfully created!
-            </div>
-            <div class="custom-footer text-center">
-                <button class="btn btn-success" @click="closeSuccess">OK</button>
-            </div>
-        </div>
+      <div v-if="showSuccess" class="custom-modal-backdrop">
+    <div class="custom-modal">
+      <div class="custom-header bg-success text-white">
+        <h5 class="mb-0">Success</h5>
+      </div>
+      <div class="custom-body text-center">
+        ✅ MRV successfully created!
+      </div>
+      <div class="custom-footer text-center">
+        <button class="btn btn-success" @click="closeSuccess">OK</button>
+      </div>
     </div>
+  </div>
 </template>
 
 
+
+
 <script setup>
-import { ref, nextTick, onMounted, computed, watch } from "vue";
+import { ref, nextTick, onMounted, onBeforeUnmount, computed } from "vue";
 import api from "../../services/api";
-import { apiRemote } from "../../services/api";
-import { useAppStore } from "../../stores/appStore";
 
 const emit = defineEmits(["close"]);
-const appStore = useAppStore();
 
-/* ============================================================
-   CHECKBOX (show usable items only)
-============================================================ */
-const usableOnly = ref(false);
+/* ======================================================
+   STATE
+   ====================================================== */
+const rfmNumber = ref("");
+const rfmLoaded = ref(false);
+const errorMessage = ref("");
+const showSuccess = ref(false);
+// MRV status returned from backend (PENDING / PARTIAL / APPROVED)
+const mrvStatus = ref(null);
 
-/* ============================================================
-   FORM STATE
-============================================================ */
+// 🔒 MAIN LOCK FLAG
+// true  = ADD MRV is blocked
+// false = allowed
+const isLocked = ref(false);
+
+// Header fields (read-only)
 const form = ref({
     requested_by: "",
     department: "",
     approved_by: ""
 });
 
-const showSuccess = ref(false);
-const errorMessage = ref("");
+// Items for ADD MRV (only when allowed)
+const items = ref([]);
 
-/* ============================================================
-   EMPLOYEES
-============================================================ */
-const employees = ref([]);
-
-/* ============================================================
-   STOCK LIST
-============================================================ */
+// Stock list for Select2
 const stockList = ref([]);
 
-const stockItems = ref([
-    { id: "", product_name: "", units: "", Qty_main: 0, Qty_usable: 0, requested_qty: 1 }
-]);
+/* ======================================================
+   UI HELPERS
+   ====================================================== */
 
-/* ============================================================
-   FILTER STOCK LIST → usableOnly mode
-============================================================ */
-const filteredStockList = computed(() => {
-    if (usableOnly.value) {
-        // ⭐ FIXED: Filter by Qty_usable (correct field)
-        return stockList.value.filter(i => Number(i.Qty_usable) > 0);
-    }
-    return stockList.value;
+// Show items ONLY if:
+// - not locked
+// - has items
+const showItems = computed(() => {
+    return !isLocked.value && items.value.length > 0;
 });
 
-/* ============================================================
-   DISPLAYED QTY (main or usable)
-============================================================ */
-function getDisplayedQty(item) {
-    return usableOnly.value ? (item.Qty_usable ?? 0) : (item.Qty_main ?? 0);
+/* ======================================================
+   RESET STATE
+   ====================================================== */
+function resetState() {
+    items.value = [];
+    mrvStatus.value = null;
+    isLocked.value = false;
+    errorMessage.value = "";
 }
 
-/* ============================================================
-   Watch usableOnly → refresh dropdowns
-============================================================ */
-watch(usableOnly, () => {
-    nextTick(() => {
-        stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
-    });
-});
-
-/* ============================================================
-   FETCH EMPLOYEES
-============================================================ */
-async function fetchEmployees() {
-    try {
-        const res = await apiRemote.get("/employees", {
-            params: { page: 1, per_page: 500 }
-        });
-
-        employees.value = res.data.data.data.filter(
-            emp => emp.DEPTNAME.trim().toUpperCase() !== "RETIRED"
-        );
-
-        await nextTick();
-        initEmployeeSelect();
-
-    } catch (err) {
-        console.error("❌ Employee load failed:", err);
-    }
-}
-
-/* ============================================================
-   INIT SELECT2 EMPLOYEE DROPDOWN
-============================================================ */
-function initEmployeeSelect() {
-    const selector = "#employeeSelect";
-
-    if ($(selector).data("select2")) $(selector).select2("destroy");
-
-    $(selector)
-        .select2({
-            theme: "bootstrap-5",
-            placeholder: "Search employee...",
-            allowClear: true,
-            dropdownParent: $(".modal.show"),
-            width: "100%",
-            minimumResultsForSearch: 0,
-            data: employees.value.map(emp => ({
-                id: emp.NAME,
-                text: emp.NAME,
-                dept: emp.DEPTNAME.trim()
-            }))
-        })
-        .on("change", function () {
-            const selected = $(this).select2("data")[0];
-            form.value.requested_by = selected?.id || "";
-            form.value.department = selected?.dept || "";
-        });
-
-    $(selector).val(null).trigger("change");
-}
-
-/* ============================================================
-   FETCH STOCK
-============================================================ */
+/* ======================================================
+   FETCH STOCK LIST (FOR ADD ITEM)
+   ====================================================== */
 async function fetchStock() {
-    try {
-        const res = await api.get("/Items/displayStocks");
+    const res = await api.get("/Items/displayStocks");
 
-        stockList.value = (res.data.data || []).map(item => ({
-            id: item.id,
-            Material_Code: item.Material_Code,
-            product_name: item.product_name,
-            units: item.units,
-
-            // ⭐ Correct data mapping
-            Qty_main: item.quantity_onhand ?? 0,
-            Qty_usable: item.Usable ?? 0,
-        }));
-
-        await nextTick();
-        initMaterialSelect();
-
-    } catch (err) {
-        console.error("❌ Stock load failed:", err);
-    }
+    stockList.value = res.data.data.map(i => ({
+        id: i.id,
+        code: i.Material_Code,
+        name: i.product_name,
+        units: i.units,
+        stocks: Number(i.quantity_onhand ?? 0),
+        product_type: i.product_type ?? i.item_category ?? "UNKNOWN"
+    }));
 }
 
-/* ============================================================
-   INIT MATERIAL SELECT2 DROPDOWNS
-============================================================ */
-function initMaterialSelectRow(index) {
+/* ======================================================
+   FETCH RFM + CHECK MRV (MAIN LOGIC)
+   ====================================================== */
+async function fetchRfm() {
+    if (!rfmNumber.value) return;
+
+    // Always reset first
+    resetState();
+
+    /* ----------------------------------------------
+       1️⃣ CHECK IF MRV ALREADY EXISTS
+       ---------------------------------------------- */
+    const check = await api.get(`/Mrv/check-mrv/${rfmNumber.value}`);
+    const c = check.data;
+
+    // Normalize status (backend may return Approved / APPROVED)
+    const status = (c.status || "").toUpperCase();
+
+    // 🔒 BLOCK ADD MRV IF ANY MRV EXISTS
+    if (c.exists === true) {
+        mrvStatus.value = status;
+        isLocked.value = true;
+        rfmLoaded.value = true;
+
+        errorMessage.value =
+            "MRV already exists for this RFM#. Either delete or Status Complete for the existing MRV.";
+
+        // ⛔ STOP HERE — DO NOT FETCH RFM ITEMS
+        return;
+    }
+
+    /* ----------------------------------------------
+       2️⃣ FETCH RFM (ONLY IF NO MRV EXISTS)
+       ---------------------------------------------- */
+    const rfmRes = await api.get(`/Rfm/fetchRfmForMrv/${rfmNumber.value}`);
+    if (!rfmRes.data.success) {
+        errorMessage.value = "RFM not found.";
+        return;
+    }
+
+    const rfm = rfmRes.data.data;
+
+    // Fill header fields
+    form.value.requested_by = rfm.requested_by;
+    form.value.department = rfm.department;
+    form.value.approved_by = rfm.area_engineering;
+
+    // Load RFM items for ADD MRV
+    items.value = rfm.items.map(i => ({
+        is_new: false,
+        itemcode_id: i.itemcode_id,
+        material_code: i.material_code,
+        material_description: i.material_description,
+        units: i.units,
+        stocks: Number(i.stocks ?? 0),
+        requested_qty: Number(i.requested_qty),
+        issued_qty: Number(i.requested_qty),
+        remarks: i.remarks ?? "",
+        product_type: i.product_type ?? "UNKNOWN"
+    }));
+
+    rfmLoaded.value = true;
+}
+
+/* ======================================================
+   ADD NEW ITEM (BLOCKED WHEN LOCKED)
+   ====================================================== */
+function addNewItem() {
+    if (isLocked.value) return;
+
+    const idx = items.value.length;
+
+    items.value.push({
+        is_new: true,
+        itemcode_id: "",
+        material_code: "",
+        material_description: "",
+        units: "",
+        stocks: 0,
+        requested_qty: 0,
+        issued_qty: 1,
+        remarks: "",
+        product_type: "UNKNOWN"
+    });
+
+    nextTick(() => initMaterialSelect(idx));
+}
+
+/* ======================================================
+   SELECT2 INITIALIZATION
+   ====================================================== */
+function initMaterialSelect(index) {
     const selector = "#itemSelect" + index;
 
-    // Destroy existing Select2 instance if exists
-    if ($(selector).data("select2")) $(selector).select2("destroy");
+    if ($(selector).data("select2")) {
+        $(selector).select2("destroy");
+    }
 
     $(selector).select2({
         theme: "bootstrap-5",
-        placeholder: "Search Code....",
         dropdownParent: $(".modal.show"),
         width: "100%",
+        placeholder: "Search material",
+        allowClear: true,
+        data: stockList.value.map(s => ({
+            id: s.id,
+            text: `${s.code} - ${s.name}`,
+            ...s
+        })),
+        escapeMarkup: m => m
+    }).on("select2:select", e => {
 
-        // ⭐ CUSTOM MATCHER: search by code + product_name
-        matcher: function (params, data) {
-            // If search box is empty → show all
-            if (!params.term || params.term.trim() === "") {
-                return data;
-            }
+        // Safety guard
+        if (isLocked.value) return;
 
-            const term = params.term.toLowerCase();
+        const s = e.params.data;
 
-            // Material Code (default select2 text)
-            const code = (data.text || "").toLowerCase();
-
-            // Product Name (from data-product attribute)
-            const product = (data.element?.dataset?.product || "").toLowerCase();
-
-            // Match if either contains the search typed
-            if (code.includes(term) || product.includes(term)) {
-                return data;
-            }
-
-            // Otherwise hide the option
-            return null;
+        // Prevent duplicate items
+        if (items.value.some(x => x.itemcode_id === s.id)) {
+            errorMessage.value = "Item already added.";
+            $(selector).val(null).trigger("change");
+            return;
         }
-    })
-    .on("change", function () {
-        const selectedId = $(this).val();
-        stockItems.value[index].id = selectedId;
-        updateStockInfo(index, selectedId);
-    });
 
-    // Reapply selected value (important after init)
-    $(selector).val(stockItems.value[index].id).trigger("change");
-}
-
-
-function initMaterialSelect() {
-    stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
-}
-
-/* ============================================================
-   UPDATE STOCK INFO WHEN ITEM SELECTED
-============================================================ */
-function updateStockInfo(index, id) {
-    const s = stockList.value.find(x => x.id == id);
-
-    if (s) {
-        stockItems.value[index].product_name = s.product_name;
-        stockItems.value[index].units = s.units;
-        stockItems.value[index].Qty_main = s.Qty_main;
-        stockItems.value[index].Qty_usable = s.Qty_usable;
-    } else {
-        stockItems.value[index].product_name = "";
-        stockItems.value[index].units = "";
-        stockItems.value[index].Qty_main = 0;
-        stockItems.value[index].Qty_usable = 0;
-    }
-}
-
-/* ============================================================
-   ADD ITEM ROW
-============================================================ */
-function addItem() {
-    const newIndex = stockItems.value.length;
-
-    stockItems.value.push({
-        id: "",
-        product_name: "",
-        units: "",
-        Qty_main: 0,
-        Qty_usable: 0,
-        requested_qty: 1
-    });
-
-    nextTick(() => initMaterialSelectRow(newIndex));
-}
-
-/* ============================================================
-   REMOVE ITEM ROW
-============================================================ */
-function removeStock(index) {
-    stockItems.value.splice(index, 1);
-
-    nextTick(() => {
-        stockItems.value.forEach((_, i) => initMaterialSelectRow(i));
+        items.value[index] = {
+            ...items.value[index],
+            itemcode_id: s.id,
+            material_code: s.code,
+            material_description: s.name,
+            units: s.units,
+            stocks: s.stocks,
+            product_type: s.product_type
+        };
     });
 }
 
-/* ============================================================
-   SAVE MRV
-============================================================ */
+/* ======================================================
+   SAVE MRV (BLOCKED WHEN LOCKED)
+   ====================================================== */
 async function saveMrv() {
-    showError(""); // Clear old errors
+    // block safety
+    if (isLocked.value) {
+        errorMessage.value =
+            "This RFM already has an MRV. Please use the Edit MRV module.";
+        return;
+    }
+
+    // clear previous messages
+    errorMessage.value = "";
+    showSuccess.value = false;
 
     try {
-        // Required fields
-        if (!form.value.requested_by || !form.value.department || !form.value.approved_by) {
-            return showError("Requested By, Department, and Department Head are required!");
-        }
-
-        if (!stockItems.value.length) {
-            return showError("Add at least 1 item!");
-        }
-
-        // ⭐ UNIVERSAL VALIDATION (always check stock limit)
-        for (const item of stockItems.value) {
-            const req = Number(item.requested_qty);
-            const usable = Number(item.Qty_usable);
-            const main = Number(item.Qty_main);
-
-            if (!item.id) {
-                return showError("Please select a material code.");
-            }
-
-            if (!req || req < 1) {
-                return showError(`Requested quantity must be at least 1 for ${item.product_name}.`);
-            }
-
-            // UsableOnly mode
-            if (usableOnly.value) {
-                if (req > usable) {
-                    return showError(
-                        `Requested quantity (${req}) exceeds usable stock (${usable}) for ${item.product_name}.`
-                    );
-                }
-            }
-
-            // Normal mode (main stock)
-            if (!usableOnly.value) {
-                if (req > main) {
-                    return showError(
-                        `Requested quantity (${req}) exceeds available stock (${main}) for ${item.product_name}.`
-                    );
-                }
-            }
-        }
-
-        // === PAYLOAD ===
-        const payload = {
-            ...form.value,
-            usable_only: usableOnly.value,
-            items: stockItems.value.map(i => ({
-                itemcode_id: i.id,
-                requested_qty: i.requested_qty,
-                product_type: i.units
+        const res = await api.post("/Mrv/MrvCreate", {
+            rfm_number: rfmNumber.value,
+            requested_by: form.value.requested_by,
+            department: form.value.department,
+            approved_by: form.value.approved_by,
+            items: items.value.map(i => ({
+                itemcode_id: i.itemcode_id,
+                issued_qty: i.issued_qty,
+                product_type: i.product_type,
+                remarks: i.remarks || null
             }))
-        };
+        });
 
-        const res = await api.post("/Mrv/MrvCreate", payload);
-
+        // ✅ SUCCESS FROM BACKEND
         if (res.data?.success) {
             showSuccess.value = true;
-        } else {
-            showError(res.data?.message || "Failed to create MRV!");
         }
+          emit("saved");
 
     } catch (err) {
-        showError(err.response?.data?.message || err.message);
+        // ❌ BACKEND ERROR → UI
+        errorMessage.value =
+            err.response?.data?.message ||
+            err.response?.data?.error ||
+            "Failed to create MRV.";
     }
 }
 
 
-
-
-
-/* ============================================================
-   ERROR HANDLER
-============================================================ */
-function showError(msg) {
-    errorMessage.value = msg;
-    setTimeout(() => (errorMessage.value = ""), 4000);
+/* ======================================================
+   REMOVE ITEM (BLOCKED WHEN LOCKED)
+   ====================================================== */
+function removeItem(i) {
+    if (isLocked.value) return;
+    items.value.splice(i, 1);
 }
 
-
-
-
-/* ============================================================
-   SUCCESS MODAL CLOSE
-============================================================ */
-function closeSuccess() {
-    showSuccess.value = false;
-    emit("close");
+/* ======================================================
+   CLEAR RFM INPUT
+   ====================================================== */
+function clearRfm() {
+    rfmNumber.value = "";
+    resetState();
+    rfmLoaded.value = false;
 }
 
-/* ============================================================
-   ON PAGE LOAD
-============================================================ */
+/* ======================================================
+   LIFECYCLE
+   ====================================================== */
 onMounted(async () => {
     await fetchStock();
-    await fetchEmployees();
+    document.body.style.overflow = "hidden";
 });
 
-watch(
-    stockItems,
-    (newItems) => {
-        for (const item of newItems) {
-            if (!item.id) continue;
+onBeforeUnmount(() => {
+    document.body.style.overflow = "";
+});
 
-            const req = Number(item.requested_qty);
-            const usable = Number(item.Qty_usable);
-            const main = Number(item.Qty_main);
-
-            // No qty = no error
-            if (!req || req < 1) {
-                errorMessage.value = "";
-                continue;
-            }
-
-            // Usable mode validation
-            if (usableOnly.value && req > usable) {
-                showError(
-                    `Requested qty (${req}) exceeds usable stock (${usable}) for ${item.product_name}.`
-                );
-                return;
-            }
-
-            // Main stock validation
-            if (!usableOnly.value && req > main) {
-                showError(
-                    `Requested qty (${req}) exceeds available stock (${main}) for ${item.product_name}.`
-                );
-                return;
-            }
-        }
-
-        // All items valid → clear error
-        errorMessage.value = "";
-    },
-    { deep: true }
-);
-
-
+function closeSuccess() { showSuccess.value = false; closeModal(); }
+function closeModal() { emit("close"); }
 </script>
-
 
 
 
 <style scoped>
 .modal-auto-fit {
-    max-width: 70vw;
-    width: auto;
+    max-width: 80vw;
 }
 
-.select2-results__options {
-    max-height: 200px;
+.mrv-modal {
+    max-height: 90vh;
+}
+
+.mrv-table-wrapper {
+    max-height: 320px;
     overflow-y: auto;
+}
+
+.mrv-table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 5;
+}
+
+.clear-icon {
+    position: absolute;
+    right: 10px;
+    top: 38px;
+    cursor: pointer;
 }
 </style>

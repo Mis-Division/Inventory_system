@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ModelMrvItems extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
     protected $table = 'tbl_mrv_items';
     protected $primarykey = 'mrv_item_id';
@@ -18,6 +19,8 @@ class ModelMrvItems extends Model
         'itemcode_id',
         'requested_qty',
         'product_type',
+        'issued_qty',
+        'status'
     ];
 
     public function mrv(){

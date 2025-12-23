@@ -11,34 +11,43 @@ return new class extends Migration
      */
     public function up(): void
     {
-Schema::create('tbl_mrv_items', function (Blueprint $table) {
-    $table->engine = 'InnoDB';
+        Schema::create('tbl_mrv_items', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
 
-    $table->id('mrv_item_id');
+            $table->id('mrv_item_id');
 
-    $table->unsignedBigInteger('mrv_id'); // MUST MATCH tbl_mrv
-    $table->unsignedBigInteger('itemcode_id');
+            // ==========================
+            // FOREIGN KEYS
+            // ==========================
+            $table->unsignedBigInteger('mrv_id');          // FK → tbl_mrv
+            $table->unsignedBigInteger('itemcode_id');     // FK → tbl_item_code
 
-    $table->integer('requested_qty');
-    $table-string('product_type');
-    $table->integer('approved_qty')->nullable();
-    $table->integer('issued_qty')->nullable();
+            // ==========================
+            // ITEM DETAILS
+            // ==========================
+            $table->integer('requested_qty');
+            $table->string('product_type'); // Line Hardware, Special Hardware, etc.
+            $table->integer('issued_qty')->nullable();
+            $table->enum('status',['APPROVED','PARTIAL','REMOVED'])->nullable();
+            // ==========================
+            // CONSTRAINTS
+            // ==========================
+            $table->foreign('mrv_id')
+                ->references('mrv_id')
+                ->on('tbl_mrv')
+                ->onDelete('cascade');
 
-    $table->foreign('mrv_id')
-          ->references('mrv_id')
-          ->on('tbl_mrv')
-          ->onDelete('cascade');
+            $table->foreign('itemcode_id')
+                ->references('ItemCode_id')
+                ->on('tbl_item_code')
+                ->onDelete('cascade');
 
-    $table->foreign('itemcode_id')
-          ->references('ItemCode_id')
-          ->on('tbl_item_code')
-          ->onDelete('cascade');
-
-    $table->timestamps();
-    $table->timestamps('deleted_at');
-});
-
-
+            // ==========================
+            // TIMESTAMPS
+            // ==========================
+            $table->timestamps();
+            $table->softDeletes(); // deleted_at
+        });
     }
 
     /**

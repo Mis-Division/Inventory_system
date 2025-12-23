@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\DeptHead;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
 
 class DepartmentHeadsController extends Controller
 {
@@ -41,4 +43,45 @@ class DepartmentHeadsController extends Controller
             'department' => $deptHead->department,
         ], 200);
     }
+
+    public function index(Request $request)
+{
+    try {
+        $search = $request->query('search');
+
+        $query = DB::table('tbl_depthead as d')
+            ->select(
+                'd.id',
+                'd.depthead_name',
+                'd.department'
+            );
+
+        // 🔍 SEARCH FILTER
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('d.depthead_name', 'LIKE', "%{$search}%")
+                  ->orWhere('d.department', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $deptHeads = $query
+            ->orderBy('d.depthead_name', 'ASC')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Department Heads List',
+            'data'    => $deptHeads,
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch department heads',
+            'error'   => $e->getMessage(),
+        ], 500);
+    }
 }
+
+}
+

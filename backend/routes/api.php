@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\MrvController;
 use App\Http\Controllers\Api\StockCOntroller;
 use App\Http\Controllers\Api\McrtController;
 use App\Http\Controllers\ItemImportController;
+use App\Http\Controllers\Api\MctController;
+use App\http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\RfmController;
+
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -111,7 +115,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('Mrv')->group(function() {
         Route::post('MrvCreate',[MrvController::class, 'CreateMrv']);
         Route::get('MrvDisplay', [MrvController::class, 'displayMrv']);
-        Route::get('MrvDisplay/{mrv_id}', [MrvController::class, 'gerMrvDetails']);
+        Route::get('/MrvDisplaytest', [MrvController::class, 'MrvDisplaytest']);
+        Route::get('/check-mrv/{rfm_number}', [MrvController::class, 'checkMrvByRfm']);
+        Route::get('/showById/{mrv_id}', [MrvController::class, 'showById']);
+        Route::put('/updateMrv/{mrv_id}', [MrvController::class, 'update']);
+        Route::delete('/deleteMrv/{mrv_id}', [MrvController::class, 'deleteMrv']);
+        Route::get('/printMrv/{mrv_id}', [MrvController::class, 'printMrv']);
+
+
     });
 
     Route::prefix('Products')->group(function(){
@@ -129,5 +140,33 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/McrtDelete/{mcrt_id}', [McrtController::class, 'deleteMcrt']);
     });
         Route::post('/items/import', [ItemImportController::class, 'import']);
+
+    //MCT Controller to API
+    Route::prefix('Mct')->group(function() {
+        Route::post('/MctCreate',[MctController::class, 'store']);
+        Route::get('/displayMct', [MctController::class, 'displayMct']);
+        Route::get('/check-mrv', [MctController::class, 'checkMrvForMct']);
+
+    });
+
+    Route::prefix('CodeAccount')->group(function() {
+        Route::get('/Accounts', [AccountController::class, 'getAccountInfo']);
+    });
+
+    //Department heads
+    Route::prefix('DepartmentHeads')->group(function() {
+        Route::get('/heads', [DepartmentHeadsController::class, 'index']);
+    });
+
+    //RFM api Module
+    Route::prefix('Rfm')->group(function() {
+        Route::post('/create', [RfmController::class, 'store']);
+        Route::get('/display', [RfmController::class, 'index']);
+        Route::get('/display/{rfm_id}', [RfmController::class, 'show']);
+        Route::put('/update/{rfm_id}', [RfmController::class, 'update']);
+        Route::delete('/delete/{rfm_id}', [RfmController::class, 'destroy']);
+        Route::get('/print/{rfm_id}', [RfmController::class, 'print']);
+        Route::get('/fetchRfmForMrv/{rfm_number}', [RfmController::class, 'fetchRfmForMrv']);
+    });
 
 });

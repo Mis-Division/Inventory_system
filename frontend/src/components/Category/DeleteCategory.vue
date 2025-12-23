@@ -10,11 +10,10 @@
                                 <div class="modal-body">
                                         <form class="row">
                                                 <div class="col-12 text-center">
-                                                        <label class="form=label fw-bold mb-3">
+                                                        <label class="form-label fw-bold mb-3">
                                                                 Are you sure you want to Delete this Record!
                                                         </label>
-                                                        <div
-                                                                class="form-control bg-light text-center fw-semibold border-0 shadow-sm">
+                                                        <div  class="form-control bg-light text-center fw-semibold border-0 shadow-sm">
                                                                 {{ localCategory.ItemCode }}
                                                         </div>
                                                 </div>

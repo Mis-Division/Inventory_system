@@ -47,4 +47,14 @@ class Kernel extends HttpKernel
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
+
+//     protected function schedule(Schedule $schedule)
+// {
+//     // Run every 1st day of the month at midnight
+//     $schedule->command('depreciation:compute')->monthlyOn(1, '00:00');
+
+//     // (OPTIONAL) run daily for testing
+//     // $schedule->command('depreciation:compute')->daily();
+// }
+
 }

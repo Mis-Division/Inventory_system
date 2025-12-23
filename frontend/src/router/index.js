@@ -20,6 +20,11 @@ import ReceivingPage from "../pages/receiving_order/Recevingpage.vue";
 import PrintRR from "../components/Receiving/PrintRR.vue";
 import ReceivingReports from "../pages/reports/Receiving_reports.vue";
 import Mcrt from "../pages/inventory/Mcrt.vue";
+import RfmPage from "../pages/inventory/RfmPage.vue";
+import PrintMaterials from "../components/RequestMaterials/PrintMaterials.vue";
+import PrintMrv from "../components/Mrv/PrintMrv.vue";
+
+
 
 const routes = [
   {
@@ -32,8 +37,22 @@ const routes = [
     path: '/receiving/DisplayRR/:r_id',
     name: 'PrintRR',
     component: PrintRR,
-    props: true // para ma-access mo ang :id as prop
-  },
+    props: true, // para ma-access mo ang :id as prop
+    meta: { requiresAuth: true, layout: 'blank' }
+  },{
+  path: '/rfm/print/:rfm_id',
+  name: 'PrintRfm',
+  component: PrintMaterials,
+  props: true,
+  meta: { requiresAuth: true, layout: 'blank' }
+},{
+  path: '/mrv/print/:mrv_id',
+  name:'PrintMrv',
+  component: PrintMrv,
+  props: true,
+  meta: { requiresAuth: true, layout: 'blank'}
+},
+
 
   {
     path: "/dashboard",
@@ -75,6 +94,8 @@ const routes = [
       component: ReceivingReports,},
        {path: "/dashboard/mcrt",
       component: Mcrt,},
+      {path: "/dashboard/rfm",
+      component: RfmPage,},
 
     ] // protect all children
   },

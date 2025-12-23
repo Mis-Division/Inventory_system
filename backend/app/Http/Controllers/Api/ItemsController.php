@@ -271,6 +271,7 @@ public function GetItemsForMrv()
             'i.ItemCode_id as id',
             'i.ItemCode as Material_Code',
             'i.product_name',
+            'i.item_category',
             'i.units',
             's.usable_stock as Usable',
             DB::raw('COALESCE(s.quantity_onhand, 0) as quantity_onhand')

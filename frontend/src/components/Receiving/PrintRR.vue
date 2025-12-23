@@ -200,6 +200,7 @@ onMounted(async () => {
 
 .report-title {
     margin: 5px 0 0 0;
+    text-align: center;
 }
 
 .header-row {

@@ -176,6 +176,10 @@ export const userStore = reactive({
   get canViewReceivingReports() { return this.hasPermission("Receiving Reports", "can_view"); },
   get canEditReceivingReports() { return this.hasPermission("Receiving Reports", "can_edit"); },
 
-
+  //Request for Materials
+  get canViewRFM() { return this.hasPermission("Request Materials", "can_view"); },
+  get canEditRFM() { return this.hasPermission("Request Materials", "can_edit"); },
+  get canAddRFM() { return this.hasPermission("Request Materials", "can_add"); },
+  get canDeleteRFM() { return this.hasPermission("Request Materials", "can_delete"); }, 
 
 });

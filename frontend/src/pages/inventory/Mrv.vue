@@ -48,7 +48,11 @@
           <tr v-for="mrv in request" :key="mrv.mrv_id" :class="{
             'table-success': mrv.status?.toLowerCase() === 'approved',
             'table-danger': mrv.status?.toLowerCase() === 'pending'}">
-            <td>{{ mrv.mrv_number }}</td>
+            <td>{{ mrv.mrv_number }}
+              <span v-if="mrv.incharge" class="badge bg-danger ms-2" title="Processed by Warehouse">
+                LOCKED
+              </span>
+            </td>
             <td>{{ mrv.requested_by }}</td>
             <td>{{ mrv.department }}</td>
             <td>{{ mrv.approved_by }}</td>
@@ -62,13 +66,18 @@
                 <transition name="fade">
                   <div v-if="activeDropdown === mrv.mrv_id" ref="el => (dropdownRefs.value ??= {})[mrv.mrv_id] = el"
                     class="dropdown-menu-teleport" :style="getDropdownStyle(mrv.mrv_id)" @click.stop>
-                    <a href="#" v-if="canEditMVR" class="text-success" @click.stop.prevent="editMrv(mrv)">
-                      <i class="bi bi-pencil me-2"></i>Edit
+
+                    <a href="#" v-if="canEditMVR"  @click.stop.prevent="!mrv.incharge && editMrv(mrv)"
+                    :class="mrv.incharge ? 'disabled-link' : 'text-warning'">
+                      <i class="bi bi-pencil me-2"></i>Update
                     </a>
-                    <a href="#" v-if="canDeleteMVR" class="text-danger" @click.stop.prevent="deleteMrv(mrv)">
+                    <a href="#" v-if="canDeleteMVR"  @click.stop.prevent="!mrv.incharge && deleteMrv(mrv)"
+                    :class="mrv.incharge ? 'disabled-link' : 'text-danger'">
                       <i class="bi bi-trash me-2"></i>Delete
                     </a>
-
+                    <a href="#" class="text-success" @click.prevent="handlePrint(mrv)">
+                    <i class="bi bi-printer me-2"></i>Print
+                  </a>
                      <!-- ❌ NO PERMISSION -->
                     <div v-if="!canEditMVR && !canDeleteMVR" class="text-muted no-permission">
                       <i class="bi bi-lock me-2"></i>No permission
@@ -108,9 +117,9 @@
     </nav>
 
     <!-- Modals -->
-    <AddMrvModal v-if="showAddMrvModal" @close="closeAddMrvModal()" />
-    <EditMrvModal v-if="showEditMrvModal" @close="closeEditMrvModal()" />
-    <DeleteMrvModal v-if="showDeleteMrvModal" @close="closeDeleteMrvModal()" />
+    <AddMrvModal v-if="showAddMrvModal" @close="closeAddMrvModal()"  @saved="handleMrvSaved" />
+    <EditMrvModal v-if="showEditMrvModal && selectedMrv" :mrv="selectedMrv" @close="closeUpdateModal()" @updated="closeEditMrvModal()" />
+    <DeleteMrvModal v-if="showDeleteMrvModal && selectedMrv" :mrv="selectedMrv" @close="closeDeleteMrvModal()" @deleted="fetchMrv()" />
   </div>
 </template>
 
@@ -130,6 +139,7 @@ const error = ref(null);
 const meta = ref({});
 const currentPage = ref(1);
 const perPage = 30;
+const selectedMrv = ref(null);
 
 // Modals
 const showAddMrvModal = ref(false);
@@ -176,6 +186,14 @@ onBeforeUnmount(() => {
 watch([showEditMrvModal, showDeleteMrvModal], ([editVal, deleteVal]) => {
   if (editVal || deleteVal) activeDropdown.value = null;
 });
+//8====== print Mrv by Mrv_id ======*///
+async function handlePrint(mrv){
+  closeDropdown();
+  window.open(`/mrv/print/${mrv.mrv_id}`, "_blank");
+}
+function closeDropdown() {
+  activeDropdown.value = null;
+}
 
 // Dropdown position style
 function getDropdownStyle(id) {
@@ -236,8 +254,10 @@ function showError(message) {
   }, 5000);
 }
 async function editMrv(mrv) {
+  selectedMrv.value = { mrv_id: mrv.mrv_id };
   showEditMrvModal.value = true;
 }
+
 
 // Pagination
 function changePage(page) {
@@ -253,8 +273,14 @@ function addMrv() {
 function closeAddMrvModal() {
   showAddMrvModal.value = false;
 }
+function closeUpdateModal() {
+  showEditMrvModal.value = false;
+}
 function closeEditMrvModal() {
   showEditMrvModal.value = false;
+
+    currentPage.value = 1;
+  fetchMrv();
 }
 function closeDeleteMrvModal() {
   showDeleteMrvModal.value = false;
@@ -268,6 +294,25 @@ function clearSearch() {
 
 }
 
+function handleMrvSaved() {
+  showAddMrvModal.value = false;
+
+  // 🔄 RESET + REFRESH LIST
+  currentPage.value = 1;
+  fetchMrv();
+}
+
+/*==================delete MRV ================*/
+async function deleteMrv(mrv) {
+  // FRONTEND BLOCK (extra safety)
+  if (mrv.incharge) {
+    alert("This MRV is already locked by the warehouse.");
+    return;
+  }
+
+  selectedMrv.value = mrv;
+  showDeleteMrvModal.value = true;
+}
 
 
 </script>
@@ -433,5 +478,9 @@ function clearSearch() {
   justify-content: center !important;
 }
 
-
+.disabled-link {
+  color: #adb5bd !important;
+  pointer-events: none;
+  cursor: not-allowed;
+}
 </style>
